@@ -104,8 +104,8 @@ static void ATL_symmR_rec
    nR = nbR*nb + rR;
    B01 = B + (nL*syp->ldb SHIFT);
    C01 = C + (nL*syp->ldc SHIFT);
-   ATL_symmL_rec(syp, Mblks, mr, nbL, rL, A, B, C);
-   ATL_symmL_rec(syp, Mblks, mr, nbR, rR, A+(syp->lda+1)*(nL SHIFT), B01, C01);
+   ATL_symmR_rec(syp, Mblks, mr, nbL, rL, A, B, C);
+   ATL_symmR_rec(syp, Mblks, mr, nbR, rR, A+(syp->lda+1)*(nL SHIFT), B01, C01);
    if (syp->uplo == AtlasLower)
    {
       A10 = A + (nL SHIFT);
@@ -118,7 +118,7 @@ static void ATL_symmR_rec
    }
    else
    {
-      A01 = A + (syp->lda SHIFT);
+      A01 = A + (syp->lda * (nL SHIFT));
       Mjoin(PATL,tgemm)(AtlasNoTrans, AtlasTrans, syp->M, nL, nR,
                         SVVAL((TYPE*)syp->alpha), B01, syp->ldb, A01, syp->lda,
                         ONE, C, syp->ldc);
@@ -263,7 +263,7 @@ void Mjoin(PATL,tsymm)
       nr = M - nblks*nb;
       tblks = ((double)(M*N)) / ( (double)nb * nb );
       p = (nblks+ATL_TSYMM_ADDP-1)/ATL_TSYMM_ADDP;
-      if (p < ATL_NTHREADS)  /* N not big enough to give blk to each proc */
+      if (p < ATL_NTHREADS)  /* M not big enough to give blk to each proc */
       {
 /*
  *       If I can't split M, and N is the dominant cost, use recursion to

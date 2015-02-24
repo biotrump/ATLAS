@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2008 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  */
 #include "atlas_misc.h"
 #include "atlas_lapack.h"
+#ifdef ATL_USEPTHREADS
+   #include "atlas_ptalias_lapack.h"
+#endif
 #include "cblas.h"
 #include "atlas_cblastypealias.h"
 #include "atlas_tst.h"
@@ -131,7 +134,13 @@ TYPE *GetGE(int M, int N, int lda)
 {
    TYPE *A;
    A = malloc(ATL_MulBySize(lda)*N);
-   if (A) Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   if (A)
+   {
+      #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+         ATL_NumaTouchSpread(ATL_MulBySize(lda)*N, A);
+      #endif
+      Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   }
    return(A);
 }
 
@@ -181,6 +190,9 @@ static TYPE *DupMat(enum ATLAS_ORDER Order, int M, int N, TYPE *A, int lda,
    ATL_assert(ldc >= M);
    C = malloc(ATL_MulBySize(ldc)*N);
    ATL_assert(C);
+   #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+      ATL_NumaTouchSpread(ATL_MulBySize(ldc)*N, C);
+   #endif
    for (j=0; j != N; j++)
    {
       for (i=0; i != M2; i++) C[i] = A[i];
@@ -269,7 +281,6 @@ static void MakeHEDiagDom
    int j;
    const int lda2=(lda SHIFT), ldap1=((lda+1)SHIFT);
 
-   Mjoin(PATL,gegen)(N, N, A, lda, N*N+lda);
    if (Order == CblasRowMajor)
    {
       if (Uplo == CblasLower) Uplo = CblasUpper;
@@ -1086,10 +1097,16 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
                int Side, int flsizeKB)
 {
 #if ATL_LINEFLUSH
-   FLSTRUCT *flp;
+   FLSTRUCT *flp=NULL;
 #endif
    TYPE *A, *wrk=NULL, dtmp, dtmp1, *tau=NULL;
    int *ipiv=NULL, itmp, wlen;
+/*
+ * If the matrix alone is larger than four times the flush size, then
+ * the matrix init should be self-flushing, so we avoid the time & memory
+ * waste of doing the flush.  This is critical for large problems.
+ */
+   int DOFLUSH = (((size_t)M)*N*ATL_sizeof < ((size_t)flsizeKB)*1024*4);
    double t0, t1;
 /*
  * Call routs that force particular flop count if requested; they return -1.0
@@ -1136,7 +1153,8 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
  */
    A = GetGE(M, N, lda);
    ATL_assert(A);
-   flp = ATL_GetFlushStruct(A, N*lda*ATL_sizeof, NULL);
+   if (DOFLUSH)
+      flp = ATL_GetFlushStruct(A, N*((size_t)lda)*ATL_sizeof, NULL);
    if (rout == LApotrf)
       PosDefGen(CblasColMajor, Uplo_LA2ATL(Uplo), N, A, lda);
    else if (rout & LAgeqrf)
@@ -1163,21 +1181,25 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
       wlen = dtmp;
       wrk = calloc(wlen, ATL_sizeof);
       ATL_assert(wrk);
-      flp = ATL_GetFlushStruct(wrk, wlen*ATL_sizeof, flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(wrk, wlen*ATL_sizeof, flp);
       itmp = (M >= N) ? M : N;
       tau = calloc(itmp, ATL_sizeof);
-      flp = ATL_GetFlushStruct(tau, itmp*ATL_sizeof, flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(tau, itmp*ATL_sizeof, flp);
    }
    else
    {
       ipiv = calloc(M, sizeof(int));
       ATL_assert(ipiv);
-      flp = ATL_GetFlushStruct(ipiv, M*sizeof(int), flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(ipiv, M*sizeof(int), flp);
    }
 /*
  * Flush cache, and do timing
  */
-   ATL_FlushAreasByCL(flp);
+   if (DOFLUSH)
+      ATL_FlushAreasByCL(flp);
    if (rout == LApotrf)
    {
       t0 = time00();
@@ -1227,7 +1249,8 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
    if (ipiv)
       free(ipiv);
    free(A);
-   ATL_KillAllFlushStructs(flp);
+   if (DOFLUSH)
+      ATL_KillAllFlushStructs(flp);
    return(t1 - t0);
 #endif
 }
@@ -1391,6 +1414,7 @@ void GoToTown(int *nreps, int flsizeKB, int mflopF, int ldagap,  int rout,
                            itst++, r, Uplo2Char(rout, UPLOs[u]+SDs[s]),
                            Side2Char(rout, SDs[s]+UPLOs[u]),
                            M, Ns[n], lda, time, mflop);
+                  fflush(fpout);
                }                                /* end of reps loop */
             }                                   /* end of Side loop */
          }                                      /* end of Uplo loop */

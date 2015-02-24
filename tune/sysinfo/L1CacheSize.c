@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,6 +58,11 @@ int L1CacheSize_read(int MAXL1CACHE, double tol)
       dlen = (dlen >> 3)<<3;
       len = dlen * 8;
       d = p = malloc(len);
+      if (p == NULL)
+      {
+         fprintf(stderr, "malloc failed, len=%d\n", len);
+         assert(p);
+      }
       st = p + dlen;
 
       for (k=0; k != dlen; k += 8)

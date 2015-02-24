@@ -17,10 +17,6 @@ void PrintUsage(char *name, char *arg, int i)
    fprintf(stderr, "   -o <file>  : (stdout) file for reduced vecs\n");
    fprintf(stderr, "   -R # <nam1> ... <nam#>: vectors to collapse\n");
    fprintf(stderr, "   -C # <nam1> ... <nam#>: vectors to combine\n");
-   fprintf(stderr, "   -c [+,<,>,a] : specify how to combine repeated elts:\n");
-   fprintf(stderr, "      +: repeated vector replaced by average of repeats\n");
-   fprintf(stderr, "      <: repeated vector replaced by minimum of repeats\n");
-   fprintf(stderr, "      >: repeated vector replaced by maximum of repeats\n");
    exit (i ? i : -1);
 }
 
@@ -124,7 +120,7 @@ int main(int nargs, char **args)
 {
    FILE *fpin, *fpout;
    char **redarr, **combarr, *cmnt;
-   int N, Nc, Nr, i, j, RNGINC=0, nrep;
+   int N, Nc, Nr, i, j, RNGINC=0;
    ATL_tvec_t *tr, *tc, *tp, *np, *nb=NULL;
 
    combarr = GetFlags(nargs, args, &Nc, &Nr, &fpin, &fpout);
@@ -135,7 +131,7 @@ int main(int nargs, char **args)
  * has specified) from list, and free all unused vectors
  */
 
-   np = ATL_ReadTvecFile(fpin, &cmnt, &N, &nrep);
+   np = ATL_ReadTvecFile(fpin, &cmnt, &N);
    if (fpin != stdin)
       fclose(fpin);
    tc = ATL_PullNamedVecsFromList(Nc, combarr, &np);
@@ -148,8 +144,8 @@ int main(int nargs, char **args)
    for (tp=tc; tp; tp = tp->next)
    {
       ATL_tvec_t *p;
-      p = ATL_SplitRepsVector(tp);
-      ATL_FindLastVecInList(p)->next = nb;
+      p = ATL_SplitRepsTvec(tp);
+      ATL_FindLastTvecInList(p)->next = nb;
       nb = p;
    }
 /*
@@ -158,8 +154,12 @@ int main(int nargs, char **args)
    for (tp=tc; tp; tp = tp->next)
    {
       ATL_tvec_t *p;
-      assert(tp->pre == 'd');         /* relax this later if needed */
-      p = ATL_GetStatVecsDOUBLE(tp);
+      if (tp->pre != 'd')
+      {
+         fprintf(stderr, "%s is %c!\n", tp->name, tp->pre);
+         assert(tp->pre == 'd');         /* relax this later if needed */
+      }
+      p = ATL_GetStatTvecsDOUBLE(tp);
       p->next->next->next = nb;
       nb = p;
    }
@@ -173,18 +173,20 @@ int main(int nargs, char **args)
       int i;
       char *sp;
 
-      p = ATL_GetRep1Vector(tp, 0);
+      p = ATL_GetRep1Tvec(tp, 0);
       p->next = nb;
       nb = p;
 
-      for (sp=p->name,i=0; sp[i] != '_'; i++);   /* fix name back to orig */
-      sp[i] = '\0';                              /* from name_0 */
+      for (sp=p->name,i=0; sp[i]; i++);   /* go to end of name */
+      for (i--; sp[i] != '_'; i--);       /* backup to last _ */
+      sp[i] = '\0';                       /* git rid of bad _0 */
    }
    ATL_KillAllTvecs(tr);
 
-   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTVecsInList(nb), 1, nb);
+   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTvecsInList(nb), nb);
    ATL_KillAllTvecs(nb);
    free(cmnt);
+   free(combarr);
    if (fpout != stdout && fpout != stderr)
       fclose(fpout);
    return(0);

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  * Copyright (C) 2010 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -383,10 +383,14 @@ double TryPFs
 {
    double mf0, mf1;
 
-   mf0 = TryKUs(mmp, pre, verb, MACC, lat, beta, nb, mu, nu, ku, fftch, iftch,
-                nftch, LDTOP, 0);
-   mf1 = TryKUs(mmp, pre, verb, MACC, lat, beta, nb, mu, nu, ku, fftch, iftch,
-                nftch, LDTOP, 1);
+   mf0 = TryKUs(mmp, pre, verb, MACC, lat, beta, nb, mu, nu, ku, fftch,
+                iftch, nftch, LDTOP, 0);
+   #ifndef ATL_NOPREFETCH
+      mf1 = TryKUs(mmp, pre, verb, MACC, lat, beta, nb, mu, nu, ku, fftch,
+                   iftch, nftch, LDTOP, 1);
+   #else
+      mf1 = 0.0;
+   #endif
    mmp->pref = (mf1 > mf0);
    return((mmp->pref) ? mf1 : mf0);
 }
@@ -1196,6 +1200,20 @@ int main(int nargs, char **args)
       nregs = FindNumRegs(pre, verb, nb, ku, &MACC, &lat);
       exit(0);
    }
+/*
+ * If nregs is positive, user has overridden probe, so just write it out
+ */
+   else if (nregs > 0)
+   {
+      char nam[10] = {'r', 'e', 's', '/', 'd', 'n', 'r', 'e', 'g', '\0'};
+      FILE *fp;
+      if (pre == 's' || pre == 'c')
+         nam[4] = 's';
+      fp = fopen(nam, "w");
+      assert(fp);
+      fprintf(fp, "%d\n", nregs);
+      fclose(fp);
+   }
    mmp = ReadMMFile(outfile);
    if (mmp)
    {
@@ -1224,7 +1242,7 @@ int main(int nargs, char **args)
    }
    if (!nregs)
       nregs = FindNumRegs(pre, verb, nb, ku, &MACC, &lat);
-   else if (MACC < 0)
+   if (MACC < 0)
       ConfirmMACC(pre, verb, nregs, nb, ku, &MACC, &lat);
    mmp = FindBestGenGemm(pre, verb, nregs, MACC, lat, FNB, nb, ku);
    WriteMMFile(outfile, mmp);

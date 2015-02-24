@@ -462,6 +462,14 @@ COMPNODE **GetDefaultComps(enum OSTYPE OS, enum MACHTYPE arch, int verb,
       vp = "-msse2";
    else if (vecexts & (1<<ISA_SSE1))
       vp = "-msse";
+   else if (vecexts & (1<<ISA_NEON))
+      vp = "-mfpu=neon";
+   else if (vecexts & (1<<ISA_NEON16))
+      vp = "-mfpu=neon-fp16";
+   else if (vecexts & (1<<ISA_VFP3D32MAC))
+      vp = "-mfpu=vfpv3";
+   else if (vecexts & (1<<ISA_VFP3D16MAC))
+      vp = "-mfpu=vfpv3-d16";
    comps = malloc(sizeof(COMPNODE)*NCOMP);
    q = ReadComps("atlcomp.txt");    /* get all compiler lines */
    if (verb > 1)
@@ -533,10 +541,13 @@ int CompTest(int verb, char *targ, int icomp, char *comp, char *flag)
       assert(trg);
       trg[0] = '\0';
    }
-   if (icomp == ICC_)
-      targ = NULL;
    if (icomp == F77_)
       frm = "make IRunF77Comp F77='%s' F77FLAGS='%s' %s | fgrep SUCCESS";
+   else if (icomp == XCC_)
+   {
+      targ = NULL;
+      frm = "make IRunXCComp CC='%s' CCFLAGS='%s' %s | fgrep SUCCESS";
+   }
    else
       frm = "make IRunCComp CC='%s' CCFLAGS='%s' %s | fgrep SUCCESS";
    i = 1 + strlen(frm) + strlen(comp) + strlen(flag) + strlen(trg);
@@ -618,6 +629,8 @@ char *GetPtrbitsFlag(enum OSTYPE OS, enum MACHTYPE arch, int ptrbits,
          sp = "-m64";
       else if (ptrbits == 32)
          sp = "-m32";
+      else if (ptrbits == -32)
+         sp = "-mx32";
    }
    return(sp);
 }
@@ -1133,6 +1146,21 @@ void GetComps(enum OSTYPE OS, enum MACHTYPE arch, int verb, char *targ,
       free(cmnd);
    }
 }  /* end of routine GetComps */
+
+int NameIsExactGcc(char *nam)
+{
+   int k, ls=(-1);  /* last slash found starts at not found */
+   for (k=0; nam[k]; k++)
+      if (nam[k] == '/')
+         ls = k+1;
+   if (k-ls == 3)
+   {
+      if (nam[ls] == 'g' && nam[ls+1] == 'c' && nam[ls+2] == 'c')
+         return(1);
+   }
+   return(0);
+}
+
 int SelectBestGcc
 (
    int verb,
@@ -1147,10 +1175,11 @@ int SelectBestGcc
  *          i if ith compiler is gnu gcc with matching major & minor
  */
 {
-   int ibest=0, igood=0, ileastbad=0;
+   int ibest=0, igood=0, ileastbad=0, ibgcc=0, iggcc=0;
    int gmaj=0, gmin=0, lmaj=0, lmin=0, i;
    if (!gccs)
       return(0);
+
    for (i=0; gccs[i]; i++)
    {
       int icmp, major, minor, patch;
@@ -1165,13 +1194,21 @@ int SelectBestGcc
             if (CompIsMinGW(gccs[i]) || CompIsAppleGcc(gccs[i]))
                ibest = i+1;
             else if (!CompTest(verb, targ, GCC_, gccs[i], "-O"))
-               return(i+1);
+            {
+               if (NameIsExactGcc(gccs[i]))
+                  return(i+1);
+               ibest = i+1;
+            }
          }
       }
-      else if (major == GMAJOR && minor >= GMINOR)
+      else if (major == GMAJOR && minor >= GMINOR && !ibest)
       {
          if (!CompTest(verb, targ, GCC_, gccs[i], "-O"))
+         {
             ibest = i+1;
+            if (NameIsExactGcc(gccs[i]))
+               ibgcc = i+1;
+         }
       }
       else if (major == GMAJOR)
       {
@@ -1180,6 +1217,8 @@ int SelectBestGcc
             if (!CompTest(verb, targ, GCC_, gccs[i], "-O"))
 	    {
                igood = i+1;
+               if (NameIsExactGcc(gccs[i]))
+                  iggcc = i+1;
 	       gmaj = major;
 	       gmin = minor;
 	    }
@@ -1195,9 +1234,13 @@ int SelectBestGcc
          }
       }
    }
+   if (ibgcc)
+      return(ibgcc);
    if (ibest)
       return(ibest);
-   else if (igood)
+   if (iggcc)
+      return(-iggcc);
+   if (igood)
       return(-igood);
    return(-ileastbad);
 }
@@ -1228,6 +1271,9 @@ void GetBestGccVers(enum OSTYPE OS, enum MACHTYPE arch,
    case IntAtom:
       *GMINOR = 6;
       *GPATCH = 2;
+   case ARM64:
+      *GMINOR = 9;
+      *GPATCH = 1;
    case x86SSE1:
    case x86SSE2:
    case x86SSE3:
@@ -1252,6 +1298,9 @@ char *FindGoodGcc(enum OSTYPE OS, enum MACHTYPE arch, int verb, char *targ)
    FILE *fp;
    int i, lnlen=1024;
    int GMAJOR, GMINOR, GPATCH;
+
+   if (arch == IntPhi)  /* Xeon PHI uses icc for everything, inc gcc */
+      return(NewStringCopy("icc"));
 
    GetBestGccVers(OS, arch, &GMAJOR, &GMINOR, &GPATCH);
    ln = malloc(lnlen*sizeof(char));
@@ -1734,7 +1783,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
               enum OSTYPE *OS,          /* OS to assume */
               int *vec,                 /* Vector ISA extension bitfield */
               enum MACHTYPE *mach,     /* machine/arch to assume */
-              int *ptrbits             /* # of bits in ptr: 32/64 */,
+              int *ptrbits             /* # of bits in ptr: -32/32/64 */,
               char **comps,
               char **outfile,
               char **srcdir,          /* path to top of source directory */
@@ -1909,7 +1958,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
          }
       }
    }
-   if (*ptrbits != 32 && *ptrbits != 64)
+   if (*ptrbits != 32 && *ptrbits != -32 && *ptrbits != 64)
       *ptrbits = 0;
 }
 
@@ -1986,8 +2035,11 @@ int main(int nargs, char **args)
    #else
       if (usrcomps[GCC_])
          goodgcc = NewStringCopy(usrcomps[GCC_]);
+      else if (mach == IntPhi)
+         goodgcc = NewStringCopy("icc");
       else
          goodgcc = FindGoodGcc(OS, mach,  verb, targ);
+
    #endif
    GetComps(OS, mach, verb, targ, ptrbits, usrcomps, nof77, nocygwin, vecexts,
             goodgcc, bindir);

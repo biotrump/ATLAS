@@ -16,6 +16,7 @@ mcc=$5
 #
 defdir=$1/CONFIG/ARCHS/
 mmdir=$1/tune/blas/gemm/$arch/res
+ammdir=$1/tune/blas/ammm/$arch/res
 incdir=$1/include/$arch
 #
 cd $defdir ; rm -rf $mach
@@ -24,6 +25,8 @@ cd $defdir/$mach ; mkdir $dc
 cd $TOPdir/CONFIG/ARCHS ; mkdir $arch
 cp $TOPdir/tune/sysinfo/$arch/res/?MULADD  $defdir/.
 cp $TOPdir/tune/sysinfo/$arch/res/L1CacheSize  $defdir/.
+cp $ammdir/?AMM*.sum $defdir/.
+cp $ammdir/?ARANKK.sum $defdir/.
 cp $mmdir/?MMRES.sum  $defdir/.
 cp $mmdir/?eMMRES.sum  $defdir/.
 cp $mmdir/?MMKSSE.sum  $defdir/.

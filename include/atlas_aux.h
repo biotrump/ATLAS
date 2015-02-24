@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1009,22 +1009,26 @@ void ATL_eztrcollapse(const enum ATLAS_UPLO Uplo, const enum ATLAS_DIAG Diag,
    #define ATL_PTCACHEMUL
 #endif
 double ATL_flushcache(long long size);
+#ifdef ATL_USEPTHREADS
+   void ATL_NumaTouchSpread(size_t N, void *buff);
+#endif
 /*
  * If we have it, use assembly-based explicit cache-line flush algorithm
  */
 #if defined(ATL_ARCH_PPCG5) || defined(ATL_ARCH_PPCG4) || \
     defined(ATL_GAS_PPC) || defined(ATL_SSE2) || \
-    defined(ATL_ARCH_IA64Itan) || defined(ATL_ARCH_IA64Itan2)
+    defined(ATL_ARCH_IA64Itan) || defined(ATL_ARCH_IA64Itan2) || \
+    defined(ATL_ARM64)
 
    #define ATL_LINEFLUSH 1
    typedef struct flStruct FLSTRUCT;
    struct flStruct
    {
       void *p;
-      int length;
+      size_t length;
       FLSTRUCT *next;
    };
-   FLSTRUCT *ATL_GetFlushStruct(void *p, int length, FLSTRUCT *next);
+   FLSTRUCT *ATL_GetFlushStruct(void *p, size_t length, FLSTRUCT *next);
    void ATL_KillAllFlushStructs(FLSTRUCT *p);
    void ATL_flushCacheByAddr(size_t N, void *vp);
    void ATL_FlushAreasByCL(FLSTRUCT *fp);

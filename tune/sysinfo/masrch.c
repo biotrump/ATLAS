@@ -374,7 +374,8 @@ int main(int nargs, char **args)
    if (RUNSRCH)
    {
       fmf = FindMflop(pre, 0, 4);
-      nreg = FindNreg(pre, fmf, 0, 4);
+      if (nreg < 1)
+         nreg = FindNreg(pre, fmf, 0, 4);
       latMA = FindLat(pre, fmf, 0, nreg, &mfMA);
       latMAC = FindLat(pre, fmf, 1, nreg, &mfMAC);
       if (mfMA*1.02 > mfMAC)

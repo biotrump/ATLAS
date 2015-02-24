@@ -1,11 +1,13 @@
 #include "atlas_misc.h"
 #include "atlas_threads.h"
+#define ATL_ESTNCTR 1
 #include "atlas_tlvl3.h"
+#include "atlas_ttypes.h"
+
 int Mjoin(PATL,StructIsInitTRMM)(void *vp)
 {
    return(((ATL_TTRSM_t*)vp)->B != NULL);
 }
-
 
 void Mjoin(PATL,DoWorkTRMM)(ATL_LAUNCHSTRUCT_t *lp, void *vp)
 {

@@ -126,7 +126,7 @@ int main(int nargs, char **args)
    double t0, tlin, tlg2, tdyn, trnk;
    ATL_TUNE_T ta[ATL_NTHREADS];
    volatile double VV[16];
-   size_t flops;
+   tune_spawn_fp `   size_t flops;
 
    tlg2 = tdyn = tlin = 0.0;
    nreps = GetFlags(nargs, args, &which, &flops);

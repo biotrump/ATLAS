@@ -133,18 +133,6 @@ int ProbeMhz()
          free(res);
       }
    }
-/*
- * Try Linux/SPARC lookup
- */
-   if (!mhz)
-   {
-      res = atlsys_1L(NULL, "fgrep 'ClkTck' /proc/cpuinfo", 0, 0);
-      if (res)
-      {
-         mhz = GetLastHex(res) / 1000000;
-         free(res);
-      }
-   }
    return(mhz);
 }
 

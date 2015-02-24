@@ -50,9 +50,10 @@
 #include "atlas_rblas3.h"
 #include "atlas_kernel3.h"
 #include "atlas_lvl3.h"
+#include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_sum.h))
 
 #ifndef SYMM_NB
-#define SYMM_NB      NB
+   #define SYMM_NB ATL_AMM_66KB
 #endif
 
 void Mjoin( PATL, symm )

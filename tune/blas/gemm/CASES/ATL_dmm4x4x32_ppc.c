@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2005 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -268,7 +268,7 @@ Mjoin(.,ATL_USERMM):
 	.globl  Mjoin(_,ATL_USERMM)
 Mjoin(_,ATL_USERMM):
    #else
-      #if defined(ATL_USE64BITS)
+      #if defined(ATL_USE64BITS) && _CALL_ELF != 2
 /*
  *      Official Program Descripter section, seg fault w/o it on Linux/PPC64
  */

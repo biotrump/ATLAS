@@ -183,7 +183,7 @@ char *ProbeComp(int verb, char *targarg, enum OSTYPE OS, enum MACHTYPE arch,
    i = sprintf(ln, "make IRun_comp args=\"-v %d -o atlconf.txt -O %d -A %d -Si nof77 %d -V %d %s %s",
                verb, OS, arch, nof77, vecext, targarg, flags);
    free(flags);
-   if (ptrbits == 64 || ptrbits == 32)
+   if (ptrbits == 64 || ptrbits == 32 || ptrbits == -32)
    {
       sprintf(stmp, "-b %d", ptrbits);
       ln = NewAppendedString(ln, stmp);
@@ -809,7 +809,7 @@ char *ProbePmake(int verb, enum OSTYPE OS, int ncpu)
 
 
 void SpewItForth(int verb, enum OSTYPE OS, enum MACHTYPE arch, int mhz,
-                 enum ASMDIA asmb, int vecexts, int ptrbits,
+                 enum ASMDIA asmb, int vecexts, int ptrbits, int nreg,
                  int ncpu, int *tids, int omp, int AntThr,
                  int l2size, char *srcdir, char *bindir, int bozol1,
                  int archdef, int IEEE, int latune, int nof77, int lapackref,
@@ -829,6 +829,8 @@ void SpewItForth(int verb, enum OSTYPE OS, enum MACHTYPE arch, int mhz,
    i = strlen(frm) + 11*13 + strlen(srcdir) + strlen(bindir);
    if (cdefs)
       i += strlen(cdefs);
+   if (nreg)
+      i += 16;
    if (f2cdefs)
       i += strlen(f2cdefs);
    i += strlen(compsflags);
@@ -853,6 +855,8 @@ void SpewItForth(int verb, enum OSTYPE OS, enum MACHTYPE arch, int mhz,
    }
    else
       i += sprintf(ln+i, " -t %d", ncpu);
+   if (nreg)
+      i += sprintf(ln+i, " -r %d", nreg);
    if (pmake)
       ln = NewAppendedString_SFLAG(ln, "-Ss pmake", pmake);
    if (flapack)
@@ -910,6 +914,10 @@ void PrintUsage(char *name, int iarg, char *arg)
    fprintf(stderr, "   -f <#> : size (in KB) to flush before timing\n");
    fprintf(stderr,
            "   -t <#> : set # of threads (-1: autodect; 0: no threading)\n");
+   fprintf(stderr,
+           "   -tl <#> <list> : set # of threads, use list of affinity IDs\n");
+   fprintf(stderr,
+           "   -r <#>: set the number of floating point registers to #\n");
    fprintf(stderr, "   -m <mhz> : set clock rate\n");
    fprintf(stderr, "   -S[i/s] <handle> <val>  : special int/string arg\n");
    fprintf(stderr,
@@ -932,8 +940,6 @@ void PrintUsage(char *name, int iarg, char *arg)
       fprintf(stderr,
         "      -Si cputhrchk <0/1> : Ignore/heed CPU throttle probe\n");
  */
-      fprintf(stderr,
-           "   -tl <#> <list> : set # of threads, use list of affinity IDs\n");
       fprintf(stderr,
         "      -Si omp <0/1> : don'tuse/use OpenMP for threading\n");
       fprintf(stderr,
@@ -965,7 +971,8 @@ void GetFlags(int nargs,                /* nargs as passed into main */
               int *vec,                 /* Vector ISA extension bitfield */
               enum MACHTYPE *mach,     /* machine/arch to assume */
               int *mhz,                /* Clock rate in Mhz */
-              int *ptrbits             /* # of bits in ptr: 32/64 */,
+              int *ptrbits             /* # of bits in ptr: -32/32/64 */,
+              int *NREGS,
               int *nthreads,           /* # of threads */
               int **tids,              /* thread affinity ID list */
               int *omp,                /* Build OpenMP version of threading? */
@@ -1004,6 +1011,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
    *verb = 0;
    *ADd = NULL;
    *srcdir = *bindir = NULL;
+    *NREGS = 0;
     *bozol1 = 0;
     *IEEE = *latune = *UseArchDef = 1;
     *flapack = NULL;
@@ -1037,6 +1045,11 @@ void GetFlags(int nargs,                /* nargs as passed into main */
          PrintUsage(args[0], i, args[i]);
       switch(args[i][1])
       {
+      case 'r':
+         if (++i >= nargs)
+            PrintUsage(args[0], i, "out of arguments");
+         *NREGS = atoi(args[i]);
+         break;
       case 't':
          if (++i >= nargs)
             PrintUsage(args[0], i, "out of arguments");
@@ -1219,7 +1232,10 @@ void GetFlags(int nargs,                /* nargs as passed into main */
          {
             if (++i >= nargs)
                PrintUsage(args[0], i, "out of arguments");
-            *gccflags = args[i];
+            if (args[i-2][1] == 'C')
+               comps[k] = args[i];
+            else
+               *gccflags = args[i];
          }
          else
          {
@@ -1270,7 +1286,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
    }
    *f2cdefs = fdefs;
    *ecdefs = cdefs;
-   if (*ptrbits != 32 && *ptrbits != 64)
+   if (*ptrbits != 32 && *ptrbits != -32 && *ptrbits != 64)
       *ptrbits = 0;
 }
 
@@ -1279,7 +1295,7 @@ int main(int nargs, char **args)
    enum OSTYPE OS;
    enum MACHTYPE mach;
    int i, verb, asmb, f2cname, f2cint, f2cstr, ncpu, nof77, nocygwin;
-   int thrchk, mhz, omp, AntThr, lapackref;
+   int thrchk, mhz, omp, AntThr, lapackref, nreg;
    int j, k, h, vecexts;
    int ptrbits, l2size, bozol1, latune, archdef, ieee;
    int *tids;
@@ -1289,10 +1305,11 @@ int main(int nargs, char **args)
    char *pmake, *flapack, *smaflags, *dmaflags, *f77libs, *ADd;
 
    GetFlags(nargs, args, &verb, &OS, (enum ASMDIA*) &asmb, &vecexts, &mach,
-            &mhz, &ptrbits, &ncpu, &tids, &omp, &AntThr, comps, &gccflags,
-            &outfile, &srcdir, &bindir, &bozol1, &archdef, &ieee, &latune,
-            &nof77, &nocygwin, &thrchk, &lapackref, &f2cdefs, &cdefs, &pmake,
-            &flapack, &smaflags, &dmaflags, &f77libs, &ADd, &l2size, &targ);
+            &mhz, &ptrbits, &nreg, &ncpu, &tids, &omp, &AntThr, comps,
+            &gccflags, &outfile, &srcdir, &bindir, &bozol1, &archdef, &ieee,
+            &latune, &nof77, &nocygwin, &thrchk, &lapackref, &f2cdefs, &cdefs,
+            &pmake, &flapack, &smaflags, &dmaflags, &f77libs, &ADd,
+            &l2size, &targ);
    if (targ)
       sprintf(targarg, "-T %s", targ);
    else
@@ -1322,7 +1339,7 @@ int main(int nargs, char **args)
       else
          ptrbits = ProbePtrbits(verb, targarg, OS, asmb);
    }
-   if (ProbeCPUThrottle(verb, targarg, OS, asmb))
+   if (mach != TI_C66_BM && ProbeCPUThrottle(verb, targarg, OS, asmb))
    {
       fprintf(stderr,
          "It appears you have cpu throttling enabled, which makes timings\n");
@@ -1338,7 +1355,7 @@ int main(int nargs, char **args)
  */
    if (asmb == gas_x86_64 && ptrbits == 32)
       asmb = gas_x86_32;
-   else if (asmb == gas_x86_32 && ptrbits == 64)
+   else if (asmb == gas_x86_32 && (ptrbits == 64 || ptrbits == -32))
       asmb = gas_x86_64;
 /*
  * Now that we've detected architecture stuff, kill assembly dialect for
@@ -1346,6 +1363,11 @@ int main(int nargs, char **args)
  * there due to incompatable ABI
  */
    if (OS == OSWin64 && ptrbits == 64)
+      asmb = ASM_None;
+/*
+ * Don't try to use assembly for TI accelerator install
+ */
+   if (mach == TI_C66_BM)
       asmb = ASM_None;
 
    sp = ProbeComp(verb, targarg, OS, mach, comps, nof77, nocygwin, ptrbits,
@@ -1359,9 +1381,9 @@ int main(int nargs, char **args)
  * If user has not specified muladd flags (which are suffixed to kernel flags),
  * add flags to keep gcc 4 from hanging, if necessary
  */
-   SpewItForth(verb, OS, mach, mhz, asmb, vecexts, ptrbits, ncpu, tids, omp,
-               AntThr, l2size, srcdir, bindir, bozol1, archdef, ieee, latune,
-               nof77, lapackref, comps, gccflags, f2cdefs, cdefs, pmake,
+   SpewItForth(verb, OS, mach, mhz, asmb, vecexts, ptrbits, nreg, ncpu, tids,
+               omp, AntThr, l2size, srcdir, bindir, bozol1, archdef, ieee,
+               latune, nof77, lapackref, comps, gccflags, f2cdefs, cdefs, pmake,
                flapack, smaflags, dmaflags, f77libs, ADd);
    for (i=0; i < 3*NCOMP; i++)
       if (comps[i])

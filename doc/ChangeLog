@@ -1,25 +1,248 @@
-ATLAS 3.10.2 released 07/10/14, highlights of changes from 3.10.1
-   * Fixed all errataed bugs:
-     + Failure to init workspace can cause NaNs in SYRK
-     + Complex row-major Q-type factorizations produce bad TAU
-     + Failure to cast causes integer overflow on 64-byt platforms
-     + Missing IBM S390 assembly file
-   * Fixed Make.bin to have threaded latime built to do parallel cache flushing
-   * Extended extract string lengths as patched by SAGE folks
-   * Backported fixes & some arch support to configure framework, including
-     host of Itanium and UST1 stuff provided by SAGE folks
-   NOTE: 3.10.2 is terribly out of date, and was released only because the
-      threading rewrite it taking too long.  If possible, you should use a
-      developer release after testing that it works for your particular
-      platform.  In particular, developer releases are *much* faster for any
-      x86 that uses AVX or later SIMD ISA, or any machine with ncores >= 8.
-      The developer release also supports ARM architectures better (though
-      performance is not hugely better if you can get stable installed).
-ATLAS 3.10.1 released 01/08/13, highlights of changes from 3.10.0
-   * Fixed bad SSE guard that prevented PIII archdefs from working
-   * Added return to main of ATLAS/tune/sysinfo/matime.c
-   * Added ability for archinfo_x86.c to recognize more Corei2 platforms
-   * Fixed premature KillAllMMNodes in emit_mm.c
+ATLAS 3.11.30 released 11/02/14, highlights of changes from 3.11.30:
+   * Added basic support for ARM64
+     - Pre-production hardware provided by Applied Micro (www.apm.com)
+     - Extensive patches handling almost all ARM64 functionality provided by
+       Dave Nuechterlein of apm, including assembly kernels
+   * Fixed bug in ammsearch where generated code often used wrong/slow kerns
+   * Fixed bug in 'Right' case of tsymm, where recursion called 'Left'
+   * Fixed bug where threadpool only starts a handful of cores when first
+     call is made with small problem
+ATLAS 3.11.30 released 07/23/14, highlights of changes from 3.11.29:
+   * New timing/ directory, in BLDdir/timing do:
+     - in BLDdir/timing issue "make all" to build scripts
+     - ./tvgenmf[lst,rng].sh wt no args gives help
+     - The following will time LLt,LU,QR and gemm for the 3 problem sizes:
+          ./tvgenmf_lst.sh "3 1000 2000 4000" 5 -P t -b "gemm"
+   * Addition of timing manipulation tools in bin/tvec*
+     - manpages for them in ATLAS/man/tvec
+     - build with "make tvec_all" in BLDdir/bin
+   * New timers xl3time_[ab,sb] available in BLDdir/bin
+   * Made it so latime, l3time & l3blastst stops manual cache flushing when
+     matrix flushes itself due to size
+   * add fflush calls after prints in latime & l3time
+   * Attempted to apply IBM patches for new ppc64le:
+        https://sourceforge.net/p/math-atlas/patches/66/
+        https://sourceforge.net/p/math-atlas/patches/65/
+   * Hacked in a workaround and/or fixed:
+        https://sourceforge.net/p/math-atlas/bugs/238/
+        https://sourceforge.net/p/math-atlas/bugs/237/
+ATLAS 3.11.29 released 07/07/14, highlights of changes from 3.11.28:
+   * Added option to have threadpool that is always polling, and where
+     the master process is assigned affinity 0.  Should provide best perf
+     when ATLAS handles all threading (but will interfere with other threads).
+     -> Presently default, much faster than using mutex or cond vars.
+     -> should work on Windows (untested)
+     -> Force turnoff with -D c -DATL_TP_FULLPOLL=0
+   * Changed atlas_taffinity.h to only have #defines, so it is safe to include
+     in any/every file.
+   * Added ATL_setmyaffinity as standalone file, and made it and 
+     ATL_thread_start handle all #includes formerly done in atlas_taffinity.h
+   * Changed PCA xover in ATL_getrfC to work better wt tpool
+   * Got OpenMP option working again, use: -Si omp 1 -Fa alg -fopenmp
+     -> Performance is horrific compared to pthreads
+   * Removed launch & join option, and quite a bit of associated code
+   * Changed xperctvecs so it can take a scalar divisor as well as vector
+ATLAS 3.11.28 released 06/11/14, highlights of changes from 3.11.27:
+   * Fixed seg fault in archinfo_linux on x86
+   * Added archdefs and archinfo_linux support for AMDLLANO64SSE3
+   * Fixed numerous race conditions in PHI-specific SYRK
+   * Fixed perf bug where LU failed to use PCA for high-core-count machines
+   * Ensured parallel LU uses parallel swap, and serial LU uses serial swap
+   * Added tgemm_amm case for tiny M,N, large K (inner product)
+   * Prototyped access-major ttrsm, but it doesn't provide speedup over the
+     old stuff except on PHI, where it is hugely faster.
+   * Fixed bug in new goParallel so P > nthr is handled correctly
+   * Added atlas_ttypes.h that can be included before thread tuning
+   * Added optional thread pool that polls a bit before sleeping to improve
+     performance where parallel jobs are performed write after each other
+ATLAS 3.11.27 released 03/29/14, highlights of changes from 3.11.26:
+   * Fixed error in k-major cm2am code generator for alpha=X
+   * Made it so C compiler search prioritizes exact match 'gcc' for gcc
+     - Some aliases like c99-gcc don't work with pthreads due include mismatch
+   * Hacked ATLAS to use a thread pool rather than launch & join:
+     - Only pthread version currently works
+   * Wrote some real threaded kernels, using dynamic algorithms:
+     - SYRK cases for large N and small N with large K
+       - Specialized XeonPHI version for large N
+     - GEMM case for tiny N & K, large M (QR & LU panel factorizations)
+     - GEMM case for medium-sized squarish matrices (helps LU & QR)
+   --> These changes provide significant speedup for high-core-count archs
+   * Produced bitvector ops in ATLAS/src/auxil/ATL_bitvec.c
+   * Fixed it so XeonPHI uses 4*(P-1) physical cores in affinity array,
+     and starts affinity IDs at 1 rather than 0.
+ATLAS 3.11.26 released 02/22/14, highlights of changes from 3.11.25:
+   * Unified single & double XeonPHI AMM kernel wt FMAC swizzle, so single
+     automatically gets to use double kernels again 
+   * Added fixed KB=8 double PHI kernel for small-case performance
+   * New XeonPHI archdefs
+   * Fixed bug making 98IDX same as 66IDX
+   * Conjugated TAU for row-major Q-variant factorizations (bugfix!)
+ATLAS 3.11.25 released 02/13/14, highlights of changes from 3.11.24:
+   * Fixed major error in AMM handling of cases where unrolling is larger
+     than the problem dim being solved.  Potentially affects all machines.
+   * Fixed bugs in uammsearch:
+     - Allowed ?AMMMUNU.sum's vlen to turn off generator vectorization
+     - Fixed free of unallocated memory
+     - Fixed bugs triggered by having no usuable user-created kernels
+   * Improved XeonPHI kernel and archdefs
+   * Fixes some cross-compile ATLRUN calls in Make.ttune
+   * Fixed bug in double rank-K for multiples of 3 on XeonPHI
+ATLAS 3.11.24 released 02/08/14, highlights of changes from 3.11.23:
+   * Kludged some limits on parallel scale when using AMM 
+   * New kernels, archdefs and configure changes for XeonPHI
+   * Changed Make.bin's serial testers link to SBLASlib not BLASlib
+ATLAS 3.11.23 released 02/02/14, highlights of changes from 3.11.22:
+   * Got basic cross-compilation working when host/target share filesystem
+     and you can ssh w/o passwd to target: --rtarg=<mach>
+   * Added basic support for XeonPHI working: --accel=2 --rtarg=mic0
+     - Expects icc in path and ready for use
+   * Added SIMD vect support for MIC's AVX-512, called AVXZ in ATLAS
+   * Added basic AMM AVXZ code generator
+     -> presently disabled in search due to errors.
+   * Fixed bugs in ammsearch where very large mu cause M/NB=0
+   * Added PHI-specific assembly kernels
+ATLAS 3.11.22 released 11/26/13, highlights of changes from 3.11.21:
+   * Changed it so complex block-major gemm installed for non-default installs
+   * Changed it so ARM block-major gemm kernels default to HARDFP ABI
+   * Added NB tuning for complex access-major gemm
+   * Uglied up atlas_install to avoid gcc's unalterable BS warnings
+   * Updated archdefs for Corei364AVXMAC
+   * Plugged several one-time mem leaks in lanbsrch
+   * Added basic config support for cross-compilation
+   * Updated complex cmat2blk to correct prototype & type def for complex
+   * Rakib wrote cmat2blk complex 
+   * Changed emit_uamm to handle multiple installs
+   * Boatload of TI_C99_BM accelerator patches from Tony Castaldo
+ATLAS 3.11.21 released 11/16/13, highlights of changes from 3.11.20:
+   * Made it so AMMM result files are included in archdefs
+   * Added ammm archdefs for Corei264AVX
+   * Fixed error in ammm (all precisions) for K-cleanup
+ATLAS 3.11.20 released 11/02/13, highlights of changes from 3.11.19:
+   * Fixed possible memory leak in threaded QR
+   * Updated lanbsrch to work with ammm
+   * Updated Corei264AVX lapack header archdefs to work with ammm
+ATLAS 3.11.19 released 11/01/13, highlights of changes from 3.11.18:
+   * Removed block-major GEMM dep from all threading code
+   * Performed recursion for K > 3000 in order to put a ceiling on workspace
+     in ammm
+   * Added ammm MNK loop order to save workspace for non-square GEMM
+ATLAS 3.11.18 released 10/30/13, highlights of changes from 3.11.17:
+   * Fixed bug in atlas-mmg.base causing shared library build to fail
+   * Fixed bug in ammsearch caused by mu > nb in generated K-cleanup timings
+   * Fixed bug in K=1 case of aliased ammm_rkK (TRMM)
+ATLAS 3.11.17 released 10/30/13, highlights of changes from 3.11.16:
+   * Added missing K=0 || alpha=0 scale case to ATL_ammm.c
+   * Improved handling of K=1,2 cases in ATL_ammm_aliased_rkK
+   * Added ammm dependence in Make.bin
+   * Removed pklib from package
+   * Made access-major install mandatory
+ATLAS 3.11.16 released 10/28/13, highlights of changes from 3.11.15:
+   * Rewrote ammm to respect ATL_MaxMalloc, and to handle extremely large
+     matrices without running out of workspace
+   * Added special case for ammm inner product shape
+   * Improved rank-K performance for case where there is only one
+     panel of C (this case used by 'Right' TRMM)
+   * Added special case for N=NB, M & K large (left-looking shape)
+   * Changed recursive L3BLAS to call new ammm kernels
+ATLAS 3.11.15 released 10/26/13, highlights of changes from 3.11.14:
+   * Got access-major framework working for complex types!
+   * Rewrote ATL_ammm_rkK for bug fixes and clarity
+   * Got complex m-vectorized access-major copy routines working
+   * Got complex k-vectorized access-major copy routines working
+   * Added support for recognizing some haswell chips sent in by:
+       https://sourceforge.net/p/math-atlas/support-requests/913/
+ATLAS 3.11.14 released 10/02/13, highlights of changes from 3.11.13:
+   * Fixed several related bugs in uammsearch, including mixing
+     non-square dimensions and failure to vectorize generated kernels & 
+     not trying K-vectorized kernels
+   * Fixed ATL_damm2x12x2_sse2.S index file, which showed KU=1 not KU=2.
+ATLAS 3.11.13 released 09/07/13, highlights of changes from 3.11.12:
+   * Fixed bug in ATL_ammmNMK that occurred when main ammm kernel was used
+     when K < kbmin or K%ku != 0.
+   * Rewrote ammm_ src routs to call single rout to setup kernel usage
+   * Fixed K=2, beta != 1 bug in ATL_ammm
+   * Fixed bug in ammsearch causing it to use kernels wt out-of-bound KB
+   * Added NB=16,32,64 explicit support to rank-K (32&64 for lapack)
+   * Added kmaj user kernel support for rank-K & KCLEAN
+   * Added ability to build user-generated AMM kerns separate from ATLAS kerns
+   * Fixed bug in k-major kernel where some k-major kerns had MFLOPs inflated
+   * made emit_typ.c cast all ATL_sizeof macros to size_t
+ATLAS 3.11.12 released 07/12/13, highlights of changes from 3.11.11:
+   * Parallelized LASWP, which improves parallel LU speed
+   * Fixed alpha != 1 error in k-access-major copy routines
+ATLAS 3.11.11 released 07/05/13, highlights of changes from 3.11.10:
+   * Commented out block-major dynamically scheduled threaded GEMM code
+     since access-major not usually faster
+   * New kmaj=4 sse3 single precision kernels for old AMD k8/k10
+   * New Kmaj=2 sse3 double precision kernel for old AMD k8/k10
+   * Basic support for k-major access-major storage
+ATLAS 3.11.10 released 06/21/13, highlights of changes from 3.11.9:
+   * Added support for Corei3 (haswell) arch in configure framework
+   * Added archdefs for Corei364AVXMAC
+   * Removed dupB from search (to be replaced by kmaj)
+   * Start of kmajor support, but not yet done (working on code gen)
+   * Removerd MAXALLOC memory assert in tfc.c
+ATLAS 3.11.9 released 04/24/13, highlights of changes from 3.11.8:
+   * Rewrote AMMM framework to support dupB=[2,4] for SSE
+   * Removed dupB=2 single kernel that caused errors in generated cleanup
+   * Changed ATL_damm2x12x2_sse2.S ku from 1 to 2
+   * Vectorized ATL_ablk2cmat (AMMM putblk) for SSE/SSE2
+   * Added configure support for POWERe6500
+   * Changed it so max # regs to use can be set on configure line with -r #
+   * Changed it so atlas_buildinfo.h defines ATL_VERS_[MAJOR,MINOR,PATCH]
+   * Bug fix in ATL_ammm.c to handle when RANKK_KB not same as AMM_KB
+ATLAS 3.11.8 released 02/02/13, highlights of changes from 3.11.7:
+   * Upped default L2SIZE flushing for 64-bit platforms
+   * Added ATL_damm12x4x2_fma3.S and ATL_samm24x4x2_fma3.S which get around 
+     78/83% of peak on AMD piledriver
+   * Added more dependencies on atlas_<pre>use_amm.h
+   * Removed some duplicate filenames in atltar.sh causing problem for
+     bsdtar folks
+ATLAS 3.11.7 released 01/27/13, highlights of changes from 3.11.6:
+   * Added ATL_dammm24x1x256_sse2.S gets 92% of peak on AMDK10-64
+   * Added ATL_dammm6x4x256_fma3.S gets around 72% of peak on AMD piledriver
+   * Added ATL_sammm24x4x256_fma3.S gets around 66% of peak on AMD piledriver
+ATLAS 3.11.6 released 01/23/13, highlights of changes from 3.11.5:
+   * Added ATL_sammm8x4x256_sse2.S, gets 91% of peak on Corei1
+ATLAS 3.11.5 released 01/20/13, highlights of changes from 3.11.4:
+   * Added ?ARANKK.sum rule to mmtune makefile
+   * Added SSE-based fma3 kernel for piledriver
+   * Slight speedup ATL_dammm3x3x256_sse2.S by avoiding prefetch for large NB
+   * Drastic ATL_dammm2x4x256_sse2.S improvement on corei1 by code compaction
+ATLAS 3.11.4 released 12/27/12, highlights of changes from 3.11.3:
+   * Changed compiler flags for ARM for increased efficiency
+   * Fixed premature free in emit_mm.c that was causing ARM install probs
+   * Fixed generated L1MATMUL printout in atlas_install
+ATLAS 3.11.3 released 12/23/12, highlights of changes from 3.11.2:
+   -> Still has known bugs on ARM (fails make ptcheck)
+   * Made it so ammsearch doesn't get bigger than NB=512
+   * Fixed bug causing bad memory reads in ATL_ammm_rkK
+   * Fixed bad blocking in ATL_ammm_rkK
+   * Fixed bug in generated kernel compilation where differing precision
+     kernels could overwrite each other
+   * Added basic C kernel for kb=4 case
+   * Basic AMD Piledriver support & archdefs (kernels not optimized yet)
+   * Archdefs for 64-bit Atom (no specific tuning)
+   * Rewrote ARM configure handling:
+     + Now detect NEON & assume vfpv3 in this case
+     + Now detect NEOND16 & assume vfpv3 in this case
+     + Now detect FPV3D32MAC/FPV3D16MAC
+       - Do not gcc compiler flag VFPV3 without FMAC
+     + Assume hard instead of softfp
+     + Archdefs for hardfp ARMv7FPV3D32MAC
+     + Archdefs for softfp ARMv7FPV3D16MAC (should work for hard)
+     + New damm kernel for ARMv7FBV3D16MAC
+ATLAS 3.11.2 released 12/19/12, highlights of changes from 3.11.1:
+   * Fixed bug in atlas_mmtesttime.h where old-style code used betan=N1
+ATLAS 3.11.1 released 12/18/12, highlights of changes from 3.11.0:
+   * Fixed bug in Kclean generation in ammsearch
+   * Added double/single precision x87 kernel for older machines
+   * Made it so ammsearch double-checks before blowing off AVX
+   * Improved AMM single & double kernels for ARM, including K-cleanup
+ATLAS 3.11.0 released 12/11/12, highlights of changes from 3.10.0:
+   * Fixed incorrect SSE guard in set_x86 and ATL_smm6x1x80_sse.c
+   * Added return(0) to matime's main
+   * Prototype code for real precisions access-major GEMM
 ATLAS 3.10.0 released 07/10/12, highlights of changes from 3.8.4:
    * Rewrite of threading system, providing large parallel speedups, by:
      + Using affinity and master last

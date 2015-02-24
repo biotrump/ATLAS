@@ -206,11 +206,6 @@ int ProbeMhz()
       mhz = GetFirstDouble(res) / 1000000;
       free(res);
    }
-   else if ((res=atlsys_1L(NULL, "sysctl hw.clockrate", 0, 0)))
-   {
-      mhz = GetFirstDouble(res);
-      free(res);
-   }
    return(mhz);
 }
 

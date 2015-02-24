@@ -13,10 +13,14 @@ cmp=MKL
 $(ext) :
 	cd $(BINdir) ; make xextract
 
+xatlcat2tvec : $(mySRCdir)/atlcat2tvec.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/atlcat2tvec.c -lm
 xatl2tvec : $(mySRCdir)/atl2tvec.c
 	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/atl2tvec.c -lm
 xstattime : $(mySRCdir)/stattime.c
 	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/stattime.c -lm
+xrenametvecs : $(mySRCdir)/renametvecs.c $(INCSdir)/atlas_tvec.h
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/renametvecs.c -lm
 xperctvecs : $(mySRCdir)/perctvecs.c $(INCSdir)/atlas_tvec.h
 	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/perctvecs.c -lm
 xcattvecs : $(mySRCdir)/cattvecs.c $(INCSdir)/atlas_tvec.h
@@ -27,6 +31,8 @@ xreducetvec : $(mySRCdir)/reducetvec.c $(INCSdir)/atlas_tvec.h
 	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/reducetvec.c -lm
 xmergetvecs : $(mySRCdir)/mergetvecs.c $(INCSdir)/atlas_tvec.h
 	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/mergetvecs.c -lm
+alltools : xmergetvecs xreducetvec xtvec2plp xcattvecs xperctvecs xrenametvecs \
+           xatl2tvec xatlcat2tvec
 eps2pdf :
 	epstopdf $fin $fout
 clx=1

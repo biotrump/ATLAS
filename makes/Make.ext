@@ -1,13 +1,13 @@
 
 topd = /home/whaley/git/math-atlas/AtlasBase
-ext  = /home/whaley/git/math-atlas/STAB/xextract
+ext  = /home/whaley/git/math-atlas/./TEST/xextract
 extF = $(ext) -langF -lnlen71 -Remtblank -llwarn2 -LAPACK1 $(incs)
 ext9 = $(ext) -langF -lnlen132 -RemtBlank $(incs)
 extC = $(ext) -langC -lnlen79 -Remtblank -llwarn2 $(incs)
 extM = $(ext) -langM -lnlen79 -llwarn2 $(incs)
 incs = -def topd /home/whaley/git/math-atlas/AtlasBase \
        -def incd /home/whaley/git/math-atlas/AtlasBase/Clint \
-       -def ext  /home/whaley/git/math-atlas/STAB/xextract \
+       -def ext  /home/whaley/git/math-atlas/./TEST/xextract \
        -def BASEdir /home/whaley/git/math-atlas/AtlasBase/Antoine/ \
        -def basd /home/whaley/git/math-atlas/AtlasBase/Clint
 
@@ -20,14 +20,15 @@ basdSTU = /home/whaley/git/math-atlas/AtlasBase/Students
 incf = /home/whaley/git/math-atlas/AtlasBase/gen.inc
 
 files = Make.C2Flp Make.Clp Make.Clptst Make.EXtst Make.Flp Make.Flptst \
-        Make.aux Make.bin Make.cblas Make.cblastst Make.dummy Make.f77blas \
-        Make.f77blastst Make.f77refblas Make.gpmm Make.l1ref Make.l1src \
-        Make.l1tune Make.l2 Make.l2aux Make.l2kern Make.l2ref Make.l2src \
-        Make.l2thr Make.l3 Make.l3aux Make.l3kern Make.l3ref Make.l3thr \
-        Make.l3tune Make.lathr Make.latune Make.lib Make.lpsrc Make.mmsrc \
-        Make.mmtune Make.mvsrc Make.mvtune Make.pkl3 Make.plinc Make.r1src \
-        Make.r1tune Make.res_chart Make.res_new Make.res_raw Make.res_tvec \
-        Make.sprk Make.sysinfo Make.thr Make.tstsrc Make.ttune atlas_trsmNB.h
+        Make.ammsrc Make.aux Make.bin Make.cblas Make.cblastst Make.dummy \
+        Make.f77blas Make.f77blastst Make.f77refblas Make.gpmm Make.l1ref \
+        Make.l1src Make.l1tune Make.l2 Make.l2aux Make.l2kern Make.l2ref \
+        Make.l2src Make.l2thr Make.l3 Make.l3aux Make.l3kern Make.l3ref \
+        Make.l3thr Make.l3tune Make.lathr Make.latune Make.lib Make.lpsrc \
+        Make.mmsrc Make.mmtune Make.mvsrc Make.mvtune Make.pkl3 Make.plinc \
+        Make.r1src Make.r1tune Make.res_chart Make.res_new Make.res_raw \
+        Make.res_tvec Make.sprk Make.sysinfo Make.thr Make.tim Make.tstsrc \
+        Make.ttune atlas_trsmNB.h
 
 all : $(files)
 
@@ -53,6 +54,8 @@ Make.ttune : $(basdRCW)/atlas-make.base $(incf)
 Make.lathr : $(basdRCW)/atlas-make.base $(incf)
 	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
 Make.l2aux : $(basdRCW)/atlas-make.base $(incf)
+	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
+Make.tim : $(basdRCW)/atlas-make.base $(incf)
 	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
 Make.thr : $(basdRCW)/atlas-make.base $(incf)
 	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
@@ -119,6 +122,8 @@ Make.tstsrc : $(basdRCW)/atlas-make.base $(incf)
 Make.kbmm : $(basdRCW)/atlas-make.base $(incf)
 	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
 Make.mmsrc : $(basdRCW)/atlas-make.base $(incf)
+	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
+Make.ammsrc : $(basdRCW)/atlas-make.base $(incf)
 	$(extM) -b $(basdRCW)/atlas-make.base -o $@ rout=$@
 Make.C2Flp : $(basdRCW)/atlas-c2flp.base
 	$(extM) -b $(basdRCW)/atlas-c2flp.base -o $@ rout=$@

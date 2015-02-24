@@ -109,11 +109,13 @@ enum MACHTYPE ProbeArch()
       if (res)
       {
          if (strstr(res, "ARMv7") || strstr(res,"v7l")) mach = ARMv7;
+         else if (strstr(res, "AArch64")) mach = ARM64;
          free(res);
       }
       else if ( res=atlsys_1L(NULL, "fgrep cpu /proc/cpuinfo", 0, 0) )
       {
          if (strstr(res, "ARMv7") || strstr(res,"v7l")) mach = ARMv7;
+         else if (strstr(res, "AArch64")) mach = ARM64;
          free(res);
       }
       break;
@@ -125,22 +127,12 @@ enum MACHTYPE ProbeArch()
          res = NULL;
       }
       if (!res)
-      {
-         res = atlsys_1L(NULL, "fgrep 'IA-64' /proc/cpuinfo", 0, 0);
-         if (res && res[0] == '\0')
-         {
-            free(res);
-            res = NULL;
-         }
-      }
-      if (!res)
          res = atlsys_1L(NULL, "fgrep \"model name\" /proc/cpuinfo", 0, 0);
       if (res)
       {
          if (res[0] != '\0')
          {
-            if (strstr(res, "Itanium 2") || strstr(res, "McKinley") ||
-                strstr(res, "IA-64"))
+            if (strstr(res, "Itanium 2") || strstr(res, "McKinley"))
                mach = IA64Itan2;
             else if (strstr(res, "Itanium")) mach = IA64Itan;
          }
@@ -232,9 +224,7 @@ enum MACHTYPE ProbeArch()
       res = atlsys_1L(NULL, "fgrep cpu /proc/cpuinfo", 0, 0);
       if (res)
       {
-         if (strstr(res, "UltraSparc T2")) mach = SunUST2;
-         else if (strstr(res, "UltraSparc T1")) mach = SunUST1;
-         else if (strstr(res, "UltraSparc IV")) mach = SunUSIV;
+         if (strstr(res, "UltraSparc IV")) mach = SunUSIV;
          else if (strstr(res, "UltraSparc III")) mach = SunUSIII;
          else if (strstr(res, "UltraSparc II")) mach = SunUSII;
          else if (strstr(res, "UltraSparc I")) mach = SunUSI;
@@ -298,15 +288,6 @@ int ProbeNCPU()
       {
          for (ncpu=0; res = ATL_fgets(res, &len, fpres); ncpu++);
          fclose(fpres);
-      }
-   }
-   if (!ncpu)
-   {
-      res = atlsys_1L(NULL, "grep 'ncpus active' /proc/cpuinfo", 0, 0);
-      if (res)
-      {
-         ncpu = GetFirstInt(res);
-         free(res);
       }
    }
    return(ncpu);
@@ -375,18 +356,6 @@ int ProbeMhz()
       if (res)
       {
          mhz = GetLastLongWithRound(res);
-         free(res);
-      }
-   }
-/*
- * Try Linux/SPARC lookup
- */
-   if (!mhz)
-   {
-      res = atlsys_1L(NULL, "fgrep 'ClkTck' /proc/cpuinfo", 0, 0);
-      if (res)
-      {
-         mhz = GetLastHex(res) / 1000000;
          free(res);
       }
    }

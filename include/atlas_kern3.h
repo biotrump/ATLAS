@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -31,21 +31,18 @@
 #define ATLAS_KERN3_H
 
 #include "atlas_misc.h"
-#include Mstr(Mjoin(Mjoin(atlas_,PRE),NCmm.h))
 #include "atlas_lvl3.h"
 #include "atlas_kernel3.h"
 #include "atlas_reflevel3.h"
+#include "atlas_amm.h"
+#include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_sum.h))
 /*
  * Gemm entry points
  */
-#define CgemmNN Mjoin(PATL,gemmNN)
-#define CgemmNT Mjoin(PATL,gemmNT)
-#define CgemmTN Mjoin(PATL,gemmTN)
-#define CgemmNC Mjoin(PATL,gemmNC)
-#define CgemmCN Mjoin(PATL,gemmCN)
-
-#define CAgemmNN Mjoin(PATL,aliased_gemmNN)
-#define CAgemmTN Mjoin(PATL,aliased_gemmTN)
+#ifndef ATL_ammm
+   #define ATL_ammm Mjoin(PATL,ammm)
+#endif
+#define ATL_almm Mjoin(PATL,ammm_aliased_rkK)
 
 #ifdef Left_
    #define Side_ AtlasLeft
@@ -83,28 +80,28 @@
 #endif
 
 #ifndef TRSM_Xover
-   #define TRSM_Xover NB
+   #define TRSM_Xover ATL_AMM_66KB
 #endif
 #ifndef TRMM_Xover
-   #define TRMM_Xover NB
+   #define TRMM_Xover ATL_AMM_66KB
 #endif
 #ifndef HER2K_Xover
-   #define HER2K_Xover NB
+   #define HER2K_Xover ATL_AMM_66KB
 #endif
 #ifndef SYR2K_Xover
-   #define SYR2K_Xover NB
+   #define SYR2K_Xover ATL_AMM_66KB
 #endif
 #ifndef HERK_Xover
-   #define HERK_Xover NB
+   #define HERK_Xover ATL_AMM_66KB
 #endif
 #ifndef SYRK_Xover
-   #define SYRK_Xover NB
+   #define SYRK_Xover ATL_AMM_66KB
 #endif
 #ifndef HEMM_Xover
-   #define HEMM_Xover NB
+   #define HEMM_Xover ATL_AMM_66KB
 #endif
 #ifndef SYMM_Xover
-   #define SYMM_Xover NB
+   #define SYMM_Xover ATL_AMM_66KB
 #endif
 
 #endif

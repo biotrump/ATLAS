@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -105,10 +105,14 @@ void Mjoin(Mjoin(PATL,trmmR),ATLP)
       #ifdef TREAL
          if ( SCALAR_IS_ONE(alpha) ) Mjoin(ATL_trcopy,_a1)(N, alpha, A, lda, a);
          else Mjoin(ATL_trcopy,_aX)(N, alpha, A, lda, a);
-         CAgemmNN(M, N, N, one, C, ldc, a, N, zero, C, ldc);
+         ATL_assert(N <= ATL_MAXK_RKK); /* aliasing chk */
+         ATL_almm(AtlasNoTrans, AtlasNoTrans, M, N, N, one, C, ldc, a, N,
+                  zero, C, ldc);
       #else
          ATL_trcopy(N, A, lda, a);
-         CAgemmNN(M, N, N, valpha, C, ldc, a, N, zero, C, ldc);
+         ATL_assert(N <= ATL_MAXK_RKK); /* aliasing chk */
+         ATL_almm(AtlasNoTrans, AtlasNoTrans, M, N, N, valpha, C, ldc, a, N,
+                  zero, C, ldc);
       #endif
       free(va);
    }

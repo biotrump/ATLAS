@@ -125,7 +125,7 @@ int main(int nargs, char **args)
 {
    FILE *fpin, *fpout;
    char **vnams1, **vnamsr, *cmnt;
-   int Nf, N1, Nr, N, i, j, RNGINC=0, nrep;
+   int Nf, N1, Nr, N, i, j, RNGINC=0;
    ATL_tvec_t *tp, *np, *nb=NULL, *rb=NULL;
 
    vnams1 = GetFlags(nargs, args, &Nf, &N1, &Nr, &fpin, &fpout);
@@ -134,7 +134,7 @@ int main(int nargs, char **args)
 /*
  * Grab one copy of all vectors from output
  */
-   tp = ATL_ReadTvecFile(fpin, &cmnt, &N, &nrep);
+   tp = ATL_ReadTvecFile(fpin, &cmnt, &N);
    N = N1 + Nr;
    nb = ATL_PullNamedVecsFromList(N, vnams1, &tp);
    assert(nb);
@@ -147,13 +147,13 @@ int main(int nargs, char **args)
    {
       char suff[16];
 
-      tp = ATL_ReadTvecFile(fpin, &cmnt, &N, &nrep);
+      tp = ATL_ReadTvecFile(fpin, &cmnt, &N);
       np = ATL_PullNamedVecsFromList(Nr, vnamsr, &tp);
       if (!np)
          break;
       sprintf(suff, "_%d", i);
       ATL_SuffixTvecNames(np, suff);
-      ATL_FindLastVecInList(nb)->next = np;
+      ATL_FindLastTvecInList(nb)->next = np;
       if (tp)
          ATL_KillAllTvecs(tp);
    }
@@ -162,9 +162,10 @@ int main(int nargs, char **args)
 /*
  * Write them out, and we are done
  */
-   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTVecsInList(nb), 1, nb);
+   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTvecsInList(nb), nb);
    ATL_KillAllTvecs(nb);
    free(cmnt);
+   free(vnams1);
    if (fpout != stdout && fpout != stderr)
       fclose(fpout);
    return(0);

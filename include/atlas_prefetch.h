@@ -1,5 +1,8 @@
 #ifndef ATLAS_PREFETCH_H
 #define ATLAS_PREFETCH_H
+#ifdef ATL_ARCH_TI_C66_BM
+   #define ATL_NOPREFETCH 1
+#endif
 /*
  * Altivec prefetch model not well utilized by SSE-like prefetch, so have
  * special commands for it.
@@ -47,6 +50,20 @@
       #define ATL_pfl2WO ATL_pfl2W
       #define ATL_GOT_L2PREFETCH
    #endif
+#elif defined(ATL_AVXZ)
+      #define ATL_pfl1R(mem) \
+         __asm__ __volatile__ ("vprefetch0 %0" : : "m" (*((char *)(mem))))
+      #define ATL_pfl1W(mem) \
+         __asm__ __volatile__ ("vprefetche0 %0" : : "m" (*((char *)(mem))))
+      #define ATL_pfl1WO ATL_pfl1W
+      #define ATL_GOT_L1PREFETCH
+
+      #define ATL_pfl2R(mem) \
+         __asm__ __volatile__ ("vprefetch1 %0" : : "m" (*((char *)(mem))))
+      #define ATL_pfl2W(mem) \
+         __asm__ __volatile__ ("vprefetche1 %0" : : "m" (*((char *)(mem))))
+      #define ATL_pfl2WO ATL_pfl2W
+      #define ATL_GOT_L2PREFETCH
 #elif defined(__SUNPRO_C) && defined(__sparc) /* && __SUNPRO_CC > 0x600 */
    #include <sun_prefetch.h>
    #define ATL_pfl1R(mem) sparc_prefetch_read_many((void*)(mem))
@@ -55,6 +72,17 @@
    #define ATL_pfl2R(mem) sparc_prefetch_read_many((void*)(mem))
    #define ATL_pfl2W(mem) sparc_prefetch_write_many((void*)(mem))
    #define ATL_GOT_L2PREFETCH
+#elif defined(ATL_GAS_ARM64)
+   #define ATL_GOT_L1PREFETCH
+   #define ATL_pfl1R(mem) \
+      __asm__ __volatile__ ("PRFM PLDL1KEEP, %0" : : "m" (*((char *)(mem))))
+   #define ATL_pfl1W(mem) \
+      __asm__ __volatile__ ("PRFM PSTL1KEEP, %0" : : "m" (*((char *)(mem))))
+   #define ATL_GOT_L2PREFETCH
+   #define ATL_pfl2R(mem) \
+      __asm__ __volatile__ ("PRFM PLDL2KEEP, %0" : : "m" (*((char *)(mem))))
+   #define ATL_pfl2W(mem) \
+      __asm__ __volatile__ ("PRFM PSTL2KEEP, %0" : : "m" (*((char *)(mem))))
 #elif defined(ATL_GAS_ARM)
    #define ATL_pfl1R(mem) \
       __asm__ __volatile__ ("pld %0" : : "m" (*((char *)(mem))))
@@ -81,7 +109,7 @@
  */
 #elif defined(ATL_ARCH_USIV) || defined(ATL_ARCH_SunUSIII) || \
       defined(ATL_ARCH_SunUSII) || defined(ATL_ARCH_SunUSI) || \
-      defined(ATL_ARCH_SunUST1) || defined(ATL_ARCH_SunUST2)
+      defined(ATL_ARCH_SunUST2)
    #ifdef __GNUC__
       #define ATL_pfl1R(mem) \
          __asm__ __volatile__ ("prefetch %0,0" : : "m" (*((char *)(mem))))
@@ -173,6 +201,10 @@
    #define ATL_pfl1WO ATL_pfl1W
 #endif
 
+#ifdef ATL_NOPREFETCH
+   #define ATL_NOL1PREFETCH 1
+   #define ATL_NOL2PREFETCH 1
+#endif
 #ifdef ATL_NOL1PREFETCH
    #ifdef ATL_GOT_L1PREFETCH
       #undef ATL_pfl1R

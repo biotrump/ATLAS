@@ -1,6 +1,7 @@
 #include "atlas_misc.h"
 #include "atlas_threads.h"
 #include "atlas_tlvl3.h"
+#include Mstr(Mjoin(PRE,mm.h))
 
 /*
  * Prototype functions in ATL_Xtsyrk
@@ -255,7 +256,7 @@ static int ATL_tsyrk_M
    ATL_TSYRK_M_t syp[ATL_NTHREADS];
    int i, p;
    p = ATL_tsyrkdecomp_M(syp, Uplo, TA, N, K, alpha, A, lda, beta, C, ldc,
-                         MB, ATL_mmMU, Mjoin(PATL,shift),
+                         ATL_AMM_LLCMU, ATL_AMM_LMU, Mjoin(PATL,shift),
                          (TA == AtlasNoTrans) ? AtlasTrans : AtlasNoTrans,
                          ATL_TGEMM_PERTHR_MF, (TA == AtlasNoTrans) ?
                          Mjoin(PATL,tsvgemmNT):Mjoin(PATL,tsvgemmTN),
@@ -296,8 +297,32 @@ void Mjoin(PATL,tsyrk)
          Mjoin(PATL,trscal)(Uplo, N, N, beta, C, ldc);
       return;
    }
+   #ifdef TREAL
+   {
+      #ifdef ATL_AMM_98MB
+         #define MY_MB ATL_AMM_98MB
+      #else
+         #define MY_MB ATL_AMM_MAXMB
+      #endif
+      #if ATL_NTHREADS > 8
+          #define MY_NTHR 8
+      #else
+          #define MY_NTHR ATL_NTHREADS
+      #endif
+      if (N >= (MY_MB<<2) ||
+          (N <= ATL_AMM_MAXNB && K > ATL_NTHREADS*(((size_t)ATL_AMM_MAXKB)<<8)))
+      {
+         void Mjoin(PATL,tsyrk_amm)
+            (const enum ATLAS_UPLO, const enum ATLAS_TRANS, ATL_CINT N,
+             ATL_CINT K, const SCALAR alpha, const TYPE *A, ATL_CINT lda,
+             const SCALAR beta, TYPE *C, ATL_CINT ldc);
+         Mjoin(PATL,tsyrk_amm)(Uplo, Trans, N, K, alpha, A, lda, beta, C, ldc);
+         return;
+      }
+   }
+   #endif
 
-   nb = MB;
+   nb = ATL_AMM_LLCMU;
    if (K > (N<<ATL_NTHRPOW2) && (((size_t)N)*N*sizeof(TYPE) <= ATL_PTMAXMALLOC))
    {
       Mjoin(PATL,tsyrk_K_rec)(Uplo, Trans, N, K, alpha, A, lda, beta,

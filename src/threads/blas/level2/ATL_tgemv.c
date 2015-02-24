@@ -14,7 +14,6 @@
     #undef CacheEdge
     #define CacheEdge 262144
 #endif
-
 /*
  * Flag is a bitfield of info, let bx be the xth least sig bit:
  *   b0 : 0-Sticky last col of distro; 1-sticky first col
@@ -172,6 +171,9 @@ void Mjoin(PATL,tgemv)
    P = ((size_t)M*N+P-1) / P;   /* add more procs only when cache is full */
    P = (P&1 && P > 1)?P+1 : P;  /* don't use odd P; it hurts alignment */
    P = Mmin(ATL_NTHREADS, P);
+if (TA == AtlasNoTrans || TA == AtlasConj)
+   P=1;
+//fprintf(stderr, "P=%d, TA=%d, M=%d, N=%d\n", P, (TA==AtlasTrans), M, N);
 /*
  * Make sure we don't overflow 32-bit integer lda
  */

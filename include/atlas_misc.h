@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -102,6 +102,8 @@
    #define ATL_INT int
    #define ATL_CINT const int
 #endif
+#define ATL_SZT size_t
+#define ATL_CSZT const size_t
 
 
 #define ATL_QTYPE long double
@@ -298,7 +300,9 @@
 
 /* any alignment below this forces data copy in gemm */
 #ifndef ATL_MinMMAlign
-   #if defined (ATL_AVX)
+   #if defined (ATL_AVXZ)
+      #define ATL_MinMMAlign 64
+   #elif defined (ATL_AVX)
       #define ATL_MinMMAlign 32
    #else
       #define ATL_MinMMAlign 16
@@ -332,7 +336,11 @@
       ( (((size_t) (ptr))/ATL_MinMMAlign)*ATL_MinMMAlign == (size_t) (ptr) )
 #endif
 
-#define ATL_Cachelen 32
+#if ATL_MinMMAlign > 64
+   #define ATL_Cachelen ATL_MinMMAlign
+#else
+   #define ATL_Cachelen 64
+#endif
 #if (ATL_Cachelen == 4)
    #define ATL_MulByCachelen(N_) ( (N_) << 2 )
    #define ATL_DivByCachelen(N_) ( (N_) >> 2 )

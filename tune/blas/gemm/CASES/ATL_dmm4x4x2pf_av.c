@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -280,6 +280,17 @@ void ATL_USERMM(const int M, const int N, const int K, const TYPE alpha,
 .text
 #ifdef ATL_GAS_LINUX_PPC
    #if defined(ATL_USE64BITS) && _CALL_ELF != 2
+    /*
+      *      Official Program Descripter section, seg fault w/o it on Linux/PPC64
+        */
+        @@ -199,6 +199,12 @@ Mjoin(.,ATL_USERMM):
+            #else
+                .globl  ATL_USERMM
+                 ATL_USERMM:
+                 +   #if _CALL_ELF == 2
+                 +      .type ATL_USERMM,@function
+                 +0:    addis 2,12,.TOC.-0b@ha
+
 /*
  *       No idea what this does, but seg fault without it (I think it is
  *       partially resp for making code callable from both static & PIC code)

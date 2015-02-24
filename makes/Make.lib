@@ -9,7 +9,7 @@ PTDYNlibs = liblapack.so libptf77blas.so libptcblas.so libatlas.so
 CDYNlibs = liblapack.so libcblas.so libatlas.so 
 CPTDYNlibs = liblapack.so libptcblas.so libatlas.so 
 
-VER=3.10.2
+VER=3.11.31
 tmpd = RCW_tMp
 tarnam = atlas$(VER)_$(ARCH)
 tar : tarfile

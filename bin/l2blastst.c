@@ -53,7 +53,9 @@
  * multi-threaded ATLAS routines, define the following macro:
  *    USE_L2_PTHREADS  : multi-threaded ATLAS implementation.
  */
-#define USE_F77_BLAS
+#ifndef USE_L2_REFERENCE
+   #define USE_F77_BLAS
+#endif
 
 #ifdef ATL_USEPTHREADS
    #define USE_L2_PTHREADS

@@ -4,7 +4,7 @@
    .globl _ATL_ResetAtomicCount
    _ATL_ResetAtomicCount:
 #else
-   #if defined(ATL_USE64BITS) && _CALL_ELF != 2
+   #if defined(ATL_USE64BITS) &&  _CALL_ELF != 2
 /*
  *      Official Program Descripter section, seg fault w/o it on Linux/PPC64
  */

@@ -11,8 +11,9 @@ void PrintUsage(char *name, char *arg, int i)
    fprintf(stderr, "   -i <file> : (stdin) input file\n");
    fprintf(stderr, "   -o <file>  : (stdout) output file\n");
    fprintf(stderr,
-           "   -R # <nam1> ... <nam#>: vectors to replace with percentages\n");
+           "   -R # <nam1> ... <nam#>: vectors to scale\n");
    fprintf(stderr, "   -C # <nam1> ... <nam#>: vectors to keep unchanged\n");
+   fprintf(stderr, "   -B <float> : scalar percentage base\n");
    fprintf(stderr, "   -b <nam> : vector to use as percentage base\n");
    fprintf(stderr,
 "   -m <mul> : multiplier for ratio (default 100.0 for %%; 1 for speedup)\n");
@@ -25,6 +26,7 @@ char **GetFlags         /* RETURNS: array of names to combine/reduce */
    char **args,
    int *nkeep,          /* # of vecs to keep unchanged stored at 1 of arr */
    int *nperc,          /* # of vecs to make %, stored at end of ret array */
+   double *fdiv,        /* divisor for percentage */
    double *mul,         /* multiplier for ratio; set to 100.0 for % */
    FILE **fpin,         /* input stream */
    FILE **fpout         /* output stream */
@@ -34,6 +36,7 @@ char **GetFlags         /* RETURNS: array of names to combine/reduce */
    int i, j, n, nk=0, nr=0;
    FILE *fp;
 
+   *fdiv = 0.0;
    *mul = 100.0;
    *fpin = stdin;
    *fpout = stdout;
@@ -59,12 +62,19 @@ char **GetFlags         /* RETURNS: array of names to combine/reduce */
       case 'b':
          if (++i >= nargs)
             PrintUsage(args[0], "out of flags in -R ", i-1);
+         *fdiv = 0.0;
          base = args[i];
          break;
       case 'm':
          if (++i >= nargs)
             PrintUsage(args[0], "out of flags in -m ", i-1);
          *mul = atof(args[i]);
+         break;
+      case 'B':
+         if (++i >= nargs)
+            PrintUsage(args[0], "out of flags in -m ", i-1);
+         base = NULL;
+         *fdiv = atof(args[i]);
          break;
       case 'R':    /* -R # <nam1> ... <nam#> */
          if (++i >= nargs)
@@ -98,6 +108,10 @@ char **GetFlags         /* RETURNS: array of names to combine/reduce */
          PrintUsage(args[0], args[i], i);
       }                                         /* end switch over flags */
    }                                            /* end for over flags */
+   if (*fdiv != 0.0)
+      assert(base == NULL);
+   if (base)
+     assert(*fdiv == 0.0);
    if (nr < 1)
    {
       fprintf(stderr, "Must reduce at least one vector to percentages!\n");
@@ -127,23 +141,25 @@ int main(int nargs, char **args)
    FILE *fpin, *fpout;
    char **redarr, **keeparr, *cmnt, *basev;
    int N, Nk, Nr, nrep, i;
-   double mul;
+   double mul, fdiv;
    ATL_tvec_t *tr, *tk, *tp, *tb, *np;
 
-   keeparr = GetFlags(nargs, args, &Nk, &Nr, &mul, &fpin, &fpout);
+   keeparr = GetFlags(nargs, args, &Nk, &Nr, &fdiv, &mul, &fpin, &fpout);
    basev = keeparr[0];
    keeparr++;
    redarr = keeparr + Nk;
 
 /*
- * Grab only the vectors to be combined and reduced (in the order the user
+ * Grab only the vectors to be scaled (tr) and kept (tk) (in the order the user
  * has specified) from list, and free all unused vectors
  */
-
-   np = ATL_ReadTvecFile(fpin, &cmnt, &i, &nrep);
+   np = ATL_ReadTvecFile(fpin, &cmnt, &i);
    if (fpin != stdin)
       fclose(fpin);
-   tb = ATL_PullNamedVecsFromList(1, &basev, &np);
+   if (basev)
+      tb = ATL_PullNamedVecsFromList(1, &basev, &np);
+   else
+      tb = NULL;
    tr = ATL_PullNamedVecsFromList(Nr, redarr, &np);
    tk = ATL_PullNamedVecsFromList(Nk, keeparr, &np);
    if (np)
@@ -151,19 +167,32 @@ int main(int nargs, char **args)
 /*
  * Create all statistic vectors in queue
  */
-   for (tp=tr; tp; tp = tp->next)
+   if (tb)
    {
-      double *dp=tp->vp, *db=tb->vp;
-      assert(tp->pre == 'd');
-      for (N=tp->N,i=0; i < N; i++)
-         dp[i] = (dp[i] / db[i])*mul;
+      for (tp=tr; tp; tp = tp->next)
+      {
+         double *dp=tp->vp, *db=tb->vp;
+         assert(tp->pre == 'd');
+         for (N=tp->N,i=0; i < N; i++)
+            dp[i] = (dp[i] / db[i])*mul;
+      }
+   }
+   else
+   {
+      for (tp=tr; tp; tp = tp->next)
+      {
+         double *dp=tp->vp;
+         assert(tp->pre == 'd');
+         for (N=tp->N,i=0; i < N; i++)
+            dp[i] = (dp[i] / fdiv)*mul;
+      }
    }
 /*
  * Link lists back up, and write to file
  */
-   ATL_FindLastVecInList(tr)->next = tb;
-   ATL_FindLastVecInList(tk)->next = tr;
-   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTVecsInList(tk), 1, tk);
+   ATL_FindLastTvecInList(tr)->next = tb;
+   ATL_FindLastTvecInList(tk)->next = tr;
+   ATL_WriteTvecFile(fpout, cmnt, ATL_CountTvecsInList(tk), tk);
    ATL_KillAllTvecs(tk);
    free(cmnt);
    free(--keeparr);

@@ -20,7 +20,7 @@ RunTLB :
 
 $(SYSdir)/res/$(pre)MULADD : 
 	rm -f res/$(pre)MULADD
-	cd $(SYSdir) ; $(MAKE) res/$(pre)MULADD pre=$(pre) 
+	cd $(SYSdir) ; $(MAKE) res/$(pre)MULADD pre=$(pre) nreg=$(nreg)
 RunMulAdd: $(SYSdir)/res/$(pre)MULADD
 	ln -s $(SYSdir)/res/$(pre)MULADD res/$(pre)MULADD
 

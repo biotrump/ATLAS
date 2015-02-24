@@ -1062,6 +1062,8 @@ WORDQ *GetMassagedQ(FILE *fpin, int start, int stride, int verb)
    WORDQ *wqb, *wq;    /* base and general ptr, resp. */
 
    wqb = ReadTimerFile(fpin);
+   if (!wqb)
+      return(NULL);
    UpCaseWords(wqb->wlist);        /* upcase labels for ease of strcmp */
    wqb = KillBadLines(wqb, verb);
    if (start == 1 && stride == 1)

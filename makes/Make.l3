@@ -107,16 +107,12 @@ zrblas:
 	( cd rblas;  $(MAKE) zlib )
 #
 sblas3 :
-	cd ../pklevel3 ; $(MAKE) slib
 	$(PMAKE) sblas3.grd
 dblas3 :
-	cd ../pklevel3 ; $(MAKE) dlib
 	$(PMAKE) dblas3.grd
 cblas3 :
-	cd ../pklevel3 ; $(MAKE) clib
 	$(PMAKE) cblas3.grd
 zblas3 :
-	cd ../pklevel3 ; $(MAKE) zlib
 	$(PMAKE) zblas3.grd
 #
 sblas3.grd: $(SRBLAS3)

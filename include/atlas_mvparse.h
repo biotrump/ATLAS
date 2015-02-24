@@ -495,7 +495,7 @@ static ATL_mvnode_t *ATL_SortMVNodesByMflop
  */
 {
    ATL_mvnode_t *p, *prev, *sb=NULL;   /* ptr, prev, sorted base */
-   ATL_mvnode_t *minp;
+   ATL_mvnode_t *minp, *minprev;
    double mf;
 
 /*
@@ -514,7 +514,9 @@ static ATL_mvnode_t *ATL_SortMVNodesByMflop
          {
             minp = p;
             mf = p->mflop[imf];
+            minprev = prev;
          }
+         prev = p;
       }
 /*
  *    Remove it from unsorted queue, and add as new head of sorted
@@ -526,7 +528,7 @@ static ATL_mvnode_t *ATL_SortMVNodesByMflop
       }
       else   /* in the middle of unsorted queue */
       {
-         prev->next = minp->next;
+         minprev->next = minp->next;
          minp->next = sb;
       }
       sb = minp;
@@ -966,6 +968,9 @@ static ATL_mvnode_t *DelBadArchMVKernels(ATL_mvnode_t *bp)
 {
    int asmb=0, die;
    ATL_mvnode_t *p, *prev;
+   #ifdef ATL_GAS_ARM64
+      asmb |= (1<<8);
+   #endif
    #ifdef ATL_GAS_ARM
       asmb |= (1<<7);
    #endif

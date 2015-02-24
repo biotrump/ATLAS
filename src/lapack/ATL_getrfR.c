@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,16 @@
 #ifdef ATL_USEPTHREADS
    #include "atlas_pthreads.h"
    #include "atlas_tcacheedge.h"
+   #include "atlas_pca.h"
+   #ifdef ATL_laswp
+      #undef ATL_laswp
+   #endif
+   #define ATL_laswp Mjoin(PATL,tlaswp)
 #else
    #include "atlas_cacheedge.h"
+#endif
+#ifndef CacheEdge
+   #define CacheEdge 262144
 #endif
 
 

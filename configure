@@ -68,6 +68,9 @@ rm $blddir/TstBld973.txt
 bitwidth=0
 rdbitwidth=0
 dylib=0
+accel=0  # 1: TI_C66_BM, 2: Xeon Phi
+irtarg=0
+rtarg=
 for arg in "$@"
 do
    handled=0
@@ -85,6 +88,11 @@ do
       echo "                        Default: $prefix/include"
       echo "   --libdir=<dirname> : Installation dir for libraries"
       echo "                        Default: $prefix/lib"
+      echo "   --rtarg=<mach> : remote cross-compile target machine"
+      echo "   --accel=[0/1/2] : build for accelerator:"
+      echo "     0: Don't build for accelerator"
+      echo "     1: Build for TI_C66_BM"
+      echo "     2: Build for Xeon Phi"
       echo "   --shared : same as --dylibs"
       echo "   --dylibs : build dynamic/shared libs in addition to static libs"
       echo '   --force-tids="<#> threadIDlist"'
@@ -127,6 +135,7 @@ do
       rdbitwidth=1
    fi
 #
+#
    flag=`echo "$arg" | sed -e "s/--prefix=//"`
    if test "$flag" != "$arg"
    then
@@ -141,10 +150,32 @@ do
       handled=1
    fi
 #
+   flag=`echo "$arg" | sed -e "s/--rtarg=//"`
+   if test "$flag" != "$arg"
+   then
+      irtarg=1
+      rtarg="$flag"
+      handled=1
+   fi
+#
    flag=`echo "$arg" | sed -e "s/--incdir=//"`
    if test "$flag" != "$arg"
    then
       incinstdir="$flag"
+      handled=1
+   fi
+   flag=`echo "$arg" | sed -e "s/--accel=//"`
+   if test "$flag" != "$arg"
+   then
+      if test "$flag" -eq "1"
+      then
+         pass="$pass -A 50 -D c -DATL_NOPREFETCH=1"
+         accel=1
+      elif test "$flag" -eq "2"
+      then
+         accel=2
+         pass="$pass -A 51"
+      fi
       handled=1
    fi
    flag=`echo "$arg" | sed -e "s/--force-tids=//"`
@@ -288,15 +319,58 @@ then
    libinstdir='$(DESTDIR)/lib'
 fi
 #
+# Copy the correct ATLrun.sh over
+#
+if test $accel -eq 1
+then
+   cp "$path"/CONFIG/src/ATLrun_TI.sh ATLrun.sh
+elif test $irtarg -ne 0
+then
+   echo "#!/bin/sh" > ATLrun.sh
+   echo "rtarg=$rtarg" >> ATLrun.sh
+   echo "atldir=\$1" >> ATLrun.sh
+   echo "shift"  >> ATLrun.sh
+   echo "exe=\$1" >> ATLrun.sh
+   echo "shift"  >> ATLrun.sh
+   echo "ssh \$rtarg \"cd \$atldir ; ./\$exe \$*\"" >> ATLrun.sh
+   chmod u+x ATLrun.sh
+else
+   cp "$path"/CONFIG/src/ATLrun.sh ATLrun.sh
+fi
+#
 # Create the Makefile and copy the compiler info file
 #
-echo BLDdir="$blddir" > Makefile
+echo SHELL=/bin/sh > Makefile
+echo BLDdir="$blddir" >> Makefile
 echo TOPdir="$topdir" >> Makefile
+echo "SRCdir = \$(TOPdir)/CONFIG/src" >> Makefile
+echo "INCdir = \$(TOPdir)/CONFIG/include" >> Makefile
+echo "mydir = \$(BLDdir)" >> Makefile
+echo XCC="$cc" >> Makefile
+echo CFLAGS="$cflags" >> Makefile
+echo "INCFLAGS = -I\$(INCdir)" >> Makefile
+echo "MYFLAGS =" >> Makefile
+echo "XCFLAGS = \$(INCFLAGS) \$(MYFLAGS) \$(CFLAGS)" >> Makefile
+if test $accel -eq 2
+then
+   echo "CC = icc" >> Makefile
+   echo "CCFLAGS = \$(XCFLAGS) -mmic" >> Makefile
+else
+   echo "CC = \$(XCC)" >> Makefile
+   echo "CCFLAGS = \$(XCFLAGS)" >> Makefile
+fi
 echo DESTDIR="$prefix" >> Makefile
 echo INCINSTdir="$incinstdir" >> Makefile
 echo LIBINSTdir="$libinstdir" >> Makefile
-echo CC="$cc" >> Makefile
-echo CFLAGS="$cflags" >> Makefile
+if test $accel -eq 1
+then
+   echo atlrun = atlas_runTI >> Makefile
+elif test $irtarg -ne 0
+then
+   echo atlrun = atlas_runX >> Makefile
+else
+   echo atlrun = atlas_run >> Makefile
+fi
 if test $f77 -eq 0
 then
    fulllapack=0

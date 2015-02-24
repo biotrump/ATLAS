@@ -31,6 +31,10 @@ void PrintUsage(char *name, int iarg, char *arg)
    fprintf(stderr, "   -f <#> : size (in KB) to flush before timing\n");
    fprintf(stderr,
            "   -t <#> : set # of threads (-1: autodect; 0: no threading)\n");
+   fprintf(stderr,
+           "   -tl <#> <list> : set # of threads, use list of affinity IDs\n");
+   fprintf(stderr,
+           "   -r <#>: set the number of floating point registers to #\n");
    fprintf(stderr, "   -m <mhz> : set clock rate\n");
    fprintf(stderr, "   -S[i/s] <handle> <val>  : special int/string arg\n");
    fprintf(stderr,
@@ -45,8 +49,6 @@ void PrintUsage(char *name, int iarg, char *arg)
            "      -Si latune <1/0> : do/don't tune F77 LAPACK routines\n");
       fprintf(stderr,
         "      -Si nof77 <0/1> : Have/don't have fortran compiler\n");
-      fprintf(stderr,
-           "   -tl <#> <list> : set # of threads, use list of affinity IDs\n");
       fprintf(stderr,
         "      -Si omp <0/1> : don'tuse/use OpenMP for threading\n");
       fprintf(stderr,
@@ -78,7 +80,8 @@ void GetFlags(int nargs,                /* nargs as passed into main */
               int *vec,                 /* Vector ISA extension bitfield */
               enum MACHTYPE *mach,     /* machine/arch to assume */
               int *mhz,                /* Clock rate in Mhz */
-              int *ptrbits             /* # of bits in ptr: 32/64 */,
+              int *ptrbits             /* # of bits in ptr: -32/32/64 */,
+              int *NREGS,
               int *nthreads,           /* # of threads */
               int **tids,              /* thread affinity ID list */
               int *omp,                /* Build OpenMP version of threading? */
@@ -115,6 +118,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
    *verb = 0;
    *ADd = NULL;
    *srcdir = *bindir = NULL;
+    *NREGS = 0;
     *bozol1 = 0;
     *IEEE = *latune = *UseArchDef = 1;
     *flapack = NULL;
@@ -146,6 +150,11 @@ void GetFlags(int nargs,                /* nargs as passed into main */
          PrintUsage(args[0], i, args[i]);
       switch(args[i][1])
       {
+      case 'r':
+         if (++i >= nargs)
+            PrintUsage(args[0], i, "out of arguments");
+         *NREGS = atoi(args[i]);
+         break;
       case 't':
          if (++i >= nargs)
             PrintUsage(args[0], i, "out of arguments");
@@ -326,7 +335,10 @@ void GetFlags(int nargs,                /* nargs as passed into main */
          {
             if (++i >= nargs)
                PrintUsage(args[0], i, "out of arguments");
-            *gccflags = args[i];
+            if (args[i-2][1] == 'C')
+               comps[k] = args[i];
+            else
+               *gccflags = args[i];
          }
          else
          {
@@ -377,7 +389,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
    }
    *f2cdefs = fdefs;
    *ecdefs = cdefs;
-   if (*ptrbits != 32 && *ptrbits != 64)
+   if (*ptrbits != 32 && *ptrbits != -32 && *ptrbits != 64)
       *ptrbits = 0;
 }
 char *GetPtrbitsFlag(enum OSTYPE OS, enum MACHTYPE arch, int ptrbits,
@@ -425,6 +437,8 @@ char *GetPtrbitsFlag(enum OSTYPE OS, enum MACHTYPE arch, int ptrbits,
          sp = "-m64";
       else if (ptrbits == 32)
          sp = "-m32";
+      else if (ptrbits == -32)
+         sp = "-mx32";
    }
    return(sp);
 }
@@ -438,6 +452,7 @@ int main(int nargs, char **args)
    int ptrbits, l2size;
    int delay=0;  /* change this to come from "special" ints in GetFlags */
    int THREADS=0;
+   int nreg=0;
    int Use3DNow=0;  /* this needs to come from getflags */
    int ncpu, omp, AntThr, lapackref;
    int USEDEFL1, USEARCHDEF, LATUNE, USEIEEE, USEMINGW;
@@ -452,10 +467,10 @@ int main(int nargs, char **args)
    char *adnames[NARDEF] = {"sKERNDEF", "dKERNDEF", "sMMDEF", "dMMDEF"};
 
    GetFlags(nargs, args, &verb, &OS, (enum ASMDIA*) &asmb, &vecexts, &mach,
-            &mhz, &ptrbits, &ncpu, &tids, &omp, &AntThr, comps, &gccflags,
-            &outfile, &srcdir, &blddir, &USEDEFL1, &USEARCHDEF, &USEIEEE,
-            &LATUNE, &nof77, &lapackref, &f2cdefs, &cdefs, &pmake, &flapack,
-            &smaflags, &dmaflags, &f77lib, &ADd, &l2size, &targ);
+            &mhz, &ptrbits, &nreg, &ncpu, &tids, &omp, &AntThr, comps,
+            &gccflags, &outfile, &srcdir, &blddir, &USEDEFL1, &USEARCHDEF,
+            &USEIEEE, &LATUNE, &nof77, &lapackref, &f2cdefs, &cdefs, &pmake,
+            &flapack, &smaflags, &dmaflags, &f77lib, &ADd, &l2size, &targ);
    if (ncpu > 1) THREADS = 1;
    if (!outfile)
       fpout = stdout;
@@ -466,8 +481,17 @@ int main(int nargs, char **args)
 /*
  * Update l2size, and set f2cdefs/cdefs if they are null
  */
-   if (!l2size) l2size = 4*1024*1024;
-   else l2size *= 1024;
+   if (!l2size)
+   {
+      if (mach == IntPhi)
+         l2size = 1024*1024;
+      else if (ptrbits == 64)
+         l2size = 32*1024*1024;
+      else
+         l2size = 4*1024*1024;
+   }
+   else
+      l2size *= 1024;
    if (!f2cdefs) f2cdefs = "";
 /*
  * Append any appended flags, and then we have just compilers and flags
@@ -529,7 +553,7 @@ int main(int nargs, char **args)
          ISAX = i;
 
    fprintf(fpout, "#  ----------------------------\n");
-   fprintf(fpout, "#  Make.inc for ATLAS3.10.2\n");
+   fprintf(fpout, "#  Make.inc for ATLAS3.11.31\n");
    fprintf(fpout, "#  ----------------------------\n\n");
 
    fprintf(fpout, "#  ----------------------------------\n");
@@ -542,6 +566,9 @@ int main(int nargs, char **args)
    fprintf(fpout, "#  -------------------------------------------------\n");
    fprintf(fpout, "   ARCH = %s", machnam[mach]);
    fprintf(fpout, "%d", ptrbits);
+   #if defined(__powerpc64__) && defined(__ORDER_LITTLE_ENDIAN__)
+      fprintf(fpout, "LE");
+   #endif
    if (ISAX)
       fprintf(fpout, "%s", ISAXNAM[ISAX]);
    if (!USEIEEE)
@@ -559,6 +586,7 @@ int main(int nargs, char **args)
    fprintf(fpout, "   LIBdir = $(BLDdir)/lib\n\n");
    fprintf(fpout, "   SYSdir = $(BLDdir)/tune/sysinfo\n");
    fprintf(fpout, "   GMMdir = $(BLDdir)/src/blas/gemm\n");
+   fprintf(fpout, "   AMMdir = $(BLDdir)/src/blas/ammm\n");
    fprintf(fpout, "   GMVdir = $(BLDdir)/src/blas/gemv\n");
    fprintf(fpout, "   GR1dir = $(BLDdir)/src/blas/ger\n");
    fprintf(fpout, "   L1Bdir = $(BLDdir)/src/blas/level1\n");
@@ -586,7 +614,7 @@ int main(int nargs, char **args)
 "#  Name and location of scripts for running executables during tuning\n");
    fprintf(fpout,
 "#  ---------------------------------------------------------------------\n");
-   fprintf(fpout, "   ATLRUN = $(BLDdir)/bin/ATLrun.sh\n");
+   fprintf(fpout, "   ATLRUN = $(BLDdir)/ATLrun.sh\n");
    fprintf(fpout, "   ATLFWAIT = $(BLDdir)/bin/xatlas_waitfile\n\n");
 
    fprintf(fpout, "#  ---------------------\n");
@@ -596,6 +624,7 @@ int main(int nargs, char **args)
    fprintf(fpout, "   CBLASlib = $(LIBdir)/libcblas.a\n");
    fprintf(fpout, "   F77BLASlib = $(LIBdir)/libf77blas.a\n");
    fprintf(fpout, "   LAPACKlib = $(LIBdir)/liblapack.a\n");
+   fprintf(fpout, "   UAMMlib = $(LIBdir)/libuamm.a\n");
    if (THREADS)
    {
       fprintf(fpout, "   PTCBLASlib = $(LIBdir)/libptcblas.a\n");
@@ -660,7 +689,7 @@ int main(int nargs, char **args)
          fprintf(fpout, " %d", tids[k]);
    }
    else
-      fprintf(fpout, "TIDLIST=");
+      fprintf(fpout, "   TIDLIST=");
    fprintf(fpout, "\n\n");
 
    fprintf(fpout,
@@ -677,7 +706,14 @@ int main(int nargs, char **args)
 
    sprintf(ln, "%s/CONFIG/src/CompMake.txt", srcdir);
    DisplayFile(ln, fpout, 0);
-   fprintf(fpout, "   NPROC=%d\n", ncpu);
+/*
+ * For PHI, have plenty of cores, so don't press luck by using core that
+ * may be busy communicating with host
+ */
+   if (mach == IntPhi && ncpu > 4)
+      fprintf(fpout, "   NPROC=%d\n", ncpu-4);
+   else
+      fprintf(fpout, "   NPROC=%d\n", ncpu);
    fprintf(fpout, "   CDEFS = $(L2SIZE) $(INCLUDES) $(F2CDEFS) $(ARCHDEFS)");
    if (!USEIEEE)
       fprintf(fpout, " -DATL_NONIEEE=1");
@@ -691,6 +727,8 @@ int main(int nargs, char **args)
       fprintf(fpout, " -m32");
    else if (strstr(comps[NCOMP+DKC_], " -m64"))
       fprintf(fpout, " -m64");
+   else if (strstr(comps[NCOMP+DKC_], " -mx32"))
+      fprintf(fpout, " -mx32");
    if (cdefs) fprintf(fpout, " %s", cdefs);
    if (THREADS)
    {
@@ -740,7 +778,10 @@ int main(int nargs, char **args)
          break;
    }
    goodgcc = (i < NCOMP) ? comps[i] : "gcc";
-   fprintf(fpout, "   GOODGCC = %s", goodgcc);
+   if (mach == IntPhi)
+      fprintf(fpout, "   GOODGCC = icc");
+   else
+      fprintf(fpout, "   GOODGCC = %s", goodgcc);
    if (gccflags)
       fprintf(fpout, " %s", gccflags);
    GetGccVers(goodgcc, &i, &j, &k, &k);
@@ -767,6 +808,8 @@ int main(int nargs, char **args)
             fprintf(fpout, " -melf_i386");
          else if (ptrbits == 64)
             fprintf(fpout, " -melf_x86_64");
+         else if (ptrbits == -32)
+            fprintf(fpout, " -melf_x32_x86_64");
          if (OS == OSFreeBSD)
             fprintf(fpout, "_fbsd");
       }
@@ -787,6 +830,8 @@ int main(int nargs, char **args)
       fprintf(fpout, " -nofor_main");
    if (USEMINGW)
       fprintf(fpout, "\n   ARCHIVER = $(BLDdir)/mgwar\n");
+   else if (mach == TI_C66_BM)
+      fprintf(fpout, "\n   ARCHIVER = ar6x # For TI_C66_BM.\n");
    else
       fprintf(fpout, "\n   ARCHIVER = ar\n");
    fprintf(fpout, "   ARFLAGS  = r\n");
@@ -806,7 +851,10 @@ int main(int nargs, char **args)
    fprintf(fpout, "   TAR    = tar\n");
    fprintf(fpout, "   BZIP   = bzip2\n");
    fprintf(fpout, "   BUNZIP = bunzip2\n");
-   fprintf(fpout, "   PMAKE  = %s\n\n", pmake ? pmake : "$(MAKE)");
+   if (mach == IntPhi)
+      fprintf(fpout, "   PMAKE  = $(MAKE) -j 4\n\n");
+   else
+      fprintf(fpout, "   PMAKE  = %s\n\n", pmake ? pmake : "$(MAKE)");
 /*
  * Need to add libs to GetFlags and update GetSysLib to do this right
 */
@@ -869,8 +917,12 @@ int main(int nargs, char **args)
       fprintf(fpout, "%s\n", sp);
       free(sp);
    }
-   fprintf(fpout, "   INSTFLAGS = -1 %d -a %d -l %d\n\n",
-           USEDEFL1, USEARCHDEF, LATUNE);
+   if (!nreg)
+      fprintf(fpout, "   INSTFLAGS = -1 %d -a %d -l %d\n\n",
+              USEDEFL1, USEARCHDEF, LATUNE);
+   else
+      fprintf(fpout, "   INSTFLAGS = -1 %d -a %d -l %d -r %d\n\n",
+              USEDEFL1, USEARCHDEF, LATUNE, nreg);
 
 fprintf(fpout,
    "#  -------------------------------------------------------------------\n");

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
  *               2007, 2008, 2009, 2010 R. Clint Whaley
  *
@@ -1426,22 +1426,24 @@ void gmmsearch(char pre, int MULADD, int Fku, int nNBs, int *NBs, int nreg,
                    lat, &latB, &kuB);
    nbB = NBs[0];
 
+   #ifndef ATL_NOPREFETCH
 /*
- * Now, find if prefetching helps this kernel; may want to user different
- * NB if prefetch is a win (esp., smaller NB)
+ *    Now, find if prefetching helps this kernel; may want to user different
+ *    NB if prefetch is a win (esp., smaller NB)
  */
-   mf  = SearchNBs(pre, MULADD,  Fku, nNBs, NBs, muB, nuB, 1|(ldbot<<9),
-                   lat, &lat, &ku);
-   nbB = NBs[0];
-   if (mf > mfB)
-   {
-      fprintf(stdout, "\nPrefetch kernel %.2f faster.\n", mf/mfB);
-      mfB = mf;
-      latB = lat;
-      kuB = ku;
-      pfA = 1;
-   }
-   else fprintf(stdout, "\nNon-prefetch kernel %.2f faster.\n", mfB/mf);
+      mf  = SearchNBs(pre, MULADD,  Fku, nNBs, NBs, muB, nuB, 1|(ldbot<<9),
+                      lat, &lat, &ku);
+      nbB = NBs[0];
+      if (mf > mfB)
+      {
+         fprintf(stdout, "\nPrefetch kernel %.2f faster.\n", mf/mfB);
+         mfB = mf;
+         latB = lat;
+         kuB = ku;
+         pfA = 1;
+      }
+      else fprintf(stdout, "\nNon-prefetch kernel %.2f faster.\n", mfB/mf);
+   #endif
 /*
  * With whatever the prefetch setting, try reversing load-C-at-top/bottom
  * After this, load-C setting stuck in pfA; give bottom preference due error
@@ -1531,13 +1533,15 @@ void gmmsearch(char pre, int MULADD, int Fku, int nNBs, int *NBs, int nreg,
  */
    ldbot = pfA & 512;
    pfA = pfA ^ ldbot;
-   mf = mms_case(pre, MULADD, nbB, muB, nuB, kuB, (!pfA)|ldbot, lat);
-   if (mf > mfB*1.01)
-   {
-      fprintf(stdout, "\n\nPREFETCH SWAPPED TO %d\n\n", pfA);
-      pfA = !pfA;
-      mfB = mf;
-   }
+   #ifndef ATL_NOPREFETCH
+      mf = mms_case(pre, MULADD, nbB, muB, nuB, kuB, (!pfA)|ldbot, lat);
+      if (mf > mfB*1.01)
+      {
+         fprintf(stdout, "\n\nPREFETCH SWAPPED TO %d\n\n", pfA);
+         pfA = !pfA;
+         mfB = mf;
+      }
+   #endif
 /*
  * Try changing load at of C from top to bottom or vice versa; give
  * load-at-bottom benefit of doubt, since it is the least error-prone
@@ -1971,13 +1975,15 @@ int FindNoCopyNB(char pre, int nb, int mu, int nu, int ku0, int muladd,
  */
       mfB = NCcase(pre, nb, mu, nu, ku0, muladd, pfA, lat,
                    FFetch, ifetch, nfetch);
-      mf0 = NCcase(pre, nb, mu, nu, ku0, muladd, !pfA, lat,
-                   FFetch, ifetch, nfetch);
-      if (mf0 > mfB)
-      {
-         mfB = mf0;
-         pfA = !pfA;
-      }
+      #ifndef ATL_NOPREFETCH
+         mf0 = NCcase(pre, nb, mu, nu, ku0, muladd, !pfA, lat,
+                      FFetch, ifetch, nfetch);
+         if (mf0 > mfB)
+         {
+            mfB = mf0;
+            pfA = !pfA;
+         }
+      #endif
       mfB *= dmul;
       mf0 = mfB;
       i = (nb>>2)<<2;
@@ -1999,13 +2005,15 @@ int FindNoCopyNB(char pre, int nb, int mu, int nu, int ku0, int muladd,
 /*
  *    For safety, check opposite of prefetch result wt new NB
  */
-      mf = NCcase(pre, nbB, mu, nu, ku, muladd, !pfA, lat,
-                  FFetch, ifetch, nfetch);
-      if (mf > mfB)
-      {
-         mfB = mf;
-         pfA = !pfA;
-      }
+      #ifndef ATL_NOPREFETCH
+         mf = NCcase(pre, nbB, mu, nu, ku, muladd, !pfA, lat,
+                     FFetch, ifetch, nfetch);
+         if (mf > mfB)
+         {
+            mfB = mf;
+            pfA = !pfA;
+         }
+      #endif
 
       fp = fopen(fnam, "w");
       assert(fp);
@@ -2020,13 +2028,15 @@ int FindNoCopyNB(char pre, int nb, int mu, int nu, int ku0, int muladd,
       ku = kuIsNB ? nbB : (Mmin(ku0,nbB));
       mfB = NCcase(pre, nbB, mu, nu, ku, muladd, pfA, lat,
                    FFetch, ifetch, nfetch);
-      mf  = NCcase(pre, nbB, mu, nu, ku, muladd, !pfA, lat,
-                   FFetch, ifetch, nfetch);
-      if (mf > mfB)
-      {
-        pfA = !pfA;
-        mfB = mf;
-      }
+      #ifndef ATL_NOPREFETCH
+         mf  = NCcase(pre, nbB, mu, nu, ku, muladd, !pfA, lat,
+                      FFetch, ifetch, nfetch);
+         if (mf > mfB)
+         {
+           pfA = !pfA;
+           mfB = mf;
+         }
+      #endif
    }
    fclose(fp);
    fprintf(stdout, "\n%cNB = %d (%.2f), No copy %cNB = %d (%.2f)\n\n",
@@ -2054,6 +2064,9 @@ void FindNoCopy(char pre)
    muladd = mmp->muladd;
    lat = mmp->lat;
    pfA = mmp->pref;
+   #ifndef ATL_NOPREFETCH  /* if no prefetch allowed */
+      pfA &= 512;          /* just preserve load-at-bottom flag */
+   #endif
    nb = mmp->next ? mmp->next->nbB : mmp->nbB;
    mu = mmp->mu; nu = mmp->nu;  ku = mmp->ku;
    FFetch = mmp->fftch; ifetch = mmp->iftch; nfetch = mmp->nftch;
@@ -2471,8 +2484,12 @@ void FindAllUserClean0(char pre)
 
    mmp = GetOrTransMMRES(pre);
    assert(mmp);
+   pfA = mmp->pref;
+   #ifndef ATL_NOPREFETCH  /* if no prefetch allowed */
+      pfA &= 512;          /* just preserve load-at-bottom flag */
+   #endif
    FindAllUserClean(pre, mmp->next ? mmp->next->nbB : mmp->nbB,
-                    mmp->mu, mmp->nu, mmp->ku, mmp->muladd, mmp->pref,
+                    mmp->mu, mmp->nu, mmp->ku, mmp->muladd, pfA,
                     mmp->lat, mmp->fftch, mmp->iftch, mmp->nftch);
    KillAllMMNodes(mmp);
 }

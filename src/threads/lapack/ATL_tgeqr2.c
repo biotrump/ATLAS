@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  * Copyright (C) 2009 Siju Samuel
  *
  * Code contributers : Siju Samuel, Anthony M. Castaldo, R. Clint Whaley
@@ -1141,7 +1141,7 @@ int ATL_tgexx2(int M, int N, TYPE *A, int LDA, TYPE *TAU, TYPE *WORK,
 /* We use a data-owner split, each thread gets 1/p of the data,               */
 /* and does all computation related to it.                                    */
 /*----------------------------------------------------------------------------*/
-   TYPE *myA = A, *myOldA = A, *allMem, *workMem;
+   TYPE *myA = A, *myOldA = A, *allMem=NULL, *workMem;
    int i, j, k, b0, b, th;
    long unsigned int CPU;
    size_t mem[ATL_NTHREADS], totmem, workSize;
@@ -1275,9 +1275,8 @@ int ATL_tgexx2(int M, int N, TYPE *A, int LDA, TYPE *TAU, TYPE *WORK,
    ATL_goparallel(th, ATL_geqr2Worker, ts, NULL);
 
 
-   #if defined(local_copy)
-   free(allMem);                            /* release copied area.           */
-   #endif                                   /* defined(local_copy)            */
+   if (allMem)
+      free(allMem);                         /* release copied area.           */
    free(workMem);                           /* release work area.             */
    return(0);                               /* Done with dgeqr2.              */
 }  /* END ATL_t_dgeqr2. */

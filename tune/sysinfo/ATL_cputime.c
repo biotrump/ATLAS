@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,33 @@
  *
  */
 
-#if defined(UseClock)
+
+#if defined(ATL_ARCH_TI_C66_BM) && (!defined(ATL_USING_XCC))
+   /* The following code is used because ATL_ARCH_TI_C66_BM is defined.    */
+   /* Note: timer overhead has been measured; it is 2 cycles. TSCH, TSCL   */
+   /* are C66 registers we access directly; TSCL=0 restarts timer. It is   */
+   /* C66 specific; it cannot be used when compiling for the host, e.g.    */
+   /* ATL_Xwalltime. Also, their time.h file has the wrong CLOCKS_PER_SEC. */
+   #include <c6x.h>
+   double ATL_cputime(void)
+   {
+      static int INIT=0;                  /* First time in, reset timer. */
+      long long unsigned int now;
+      static const double CPS = 1.0 / (1000000000.0);
+      double d;
+
+      if (INIT==0)                        /* Reset timer if first run. */
+      {
+         INIT = 1;                        /* Remember we did it. */
+         TSCL = 0;                        /* Ensure hardware time is running. */
+      }
+
+      now = _itoll(TSCH, TSCL);           /* Convert timer regs to long long. */
+      d = (double) (now);                 /* get as a double. */
+      d *= CPS;                           /* Convert to seconds. */
+      return(d);                          /* Exit with answer.  */
+   } /* END ATL_cputime */
+#elif defined(UseClock)
    #include <time.h>
    double ATL_cputime(void)
    {

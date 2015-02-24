@@ -259,13 +259,37 @@ MACH=P4,PM OS=WinNT,Win64 LVL=0 COMPS=icc,dmc,smc,dkc,skc,xcc
 # ARM defaults
 #
 MACH=ARMv7 OS=ALL LVL=1000 COMPS=xcc
-   'gcc' '-mcpu=cortex-a8 -O1 -mfpu=vfpv3 -mfloat-abi=softfp '
+   'gcc' '-O2'
 MACH=ARMv7 OS=ALL LVL=1000 COMPS=smc,skc,gcc,icc
-   'gcc' '-O1 -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -fno-expensive-optimizations'
+   'gcc' '-O2 -fselective-scheduling2'
 MACH=ARMv7 OS=ALL LVL=1000 COMPS=dmc,dkc
-   'gcc' '-O1 -mcpu=cortex-a8 -mtune=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -fno-schedule-insns2'
+   'gcc' '-O2 -fno-schedule-insns -fno-schedule-insns2 -fprefetch-loop-arrays'
 MACH=ARMv7 OS=ALL LVL=1000 COMPS=f77
-   'gfortran' '-mcpu=cortex-a8 -mfpu=vfpv3 -mfloat-abi=softfp -O'
+   'gfortran' '-O2'
+#
+# ARM64 defaults
+#
+MACH=ARM64 OS=ALL LVL=1000 COMPS=xcc
+   'gcc' '-O2'
+MACH=ARM64 OS=ALL LVL=1000 COMPS=icc
+   'gcc' ' -mcpu=xgene1 -mtune=xgene1 -O2'
+MACH=ARM64 OS=ALL LVL=1000 COMPS=skc,gcc,dkc
+   'gcc' ' -mcpu=xgene1 -mtune=xgene1 -O3  -ftree-vect-loop-version -ftree-vectorize -fprefetch-loop-arrays'
+MACH=ARM64 OS=ALL LVL=1000 COMPS=smc
+   'gcc' '-O2 -mcpu=xgene1 -mtune=xgene1 -fprefetch-loop-arrays'
+MACH=ARM64 OS=ALL LVL=1000 COMPS=dmc
+   'gcc' '-O1 -mcpu=xgene1 -mtune=xgene1 -fexpensive-optimizations -fprefetch-loop-arrays'
+MACH=ARM64 OS=ALL LVL=1000 COMPS=f77
+   'gfortran' '-O2'
+#
+# Untuned flags for XeonPHI
+#
+MACH=XeonPHI OS=ALL LVL=1000 COMPS=smc,dmc,skc,dkc,icc,gcc
+   'icc' '-fomit-frame-pointer -O2 -mmic -pthread'
+MACH=XeonPHI OS=ALL LVL=1000 COMPS=xcc
+   'icc' '-fomit-frame-pointer -O2 -g'
+MACH=XeonPHI OS=ALL LVL=1000 COMPS=f77
+   'ifort' '-fomit-frame-pointer -O2 -mmic -reentrancy threaded'
 #
 # Generic defaults
 #

@@ -260,7 +260,7 @@ sl2lib : sl1lib auxlib
 	cd $(GR1dir) ; $(MAKE) slib
 	cd $(L2Bdir) ; $(MAKE) slib
 sl3lib :
-	cd $(GMMdir) ; $(MAKE) slib
+	cd $(AMMdir) ; $(MAKE) slib
 	cd $(L3Bdir) ; $(MAKE) slib
 dptilvl3 :
 	cd $(FBLdir) ; $(MAKE) dptlvl3
@@ -281,7 +281,7 @@ dl2lib : dl1lib auxlib
 	cd $(GR1dir) ; $(MAKE) dlib
 	cd $(L2Bdir) ; $(MAKE) dlib
 dl3lib :
-	cd $(GMMdir) ; $(MAKE) dlib
+	cd $(AMMdir) ; $(MAKE) dlib
 	cd $(L3Bdir) ; $(MAKE) dlib
 cptilvl3 :
 	cd $(FBLdir) ; $(MAKE) cptlvl3
@@ -302,7 +302,7 @@ cl2lib : cl1lib auxlib
 	cd $(GR1dir) ; $(MAKE) clib
 	cd $(L2Bdir) ; $(MAKE) clib
 cl3lib :
-	cd $(GMMdir) ; $(MAKE) clib
+	cd $(AMMdir) ; $(MAKE) clib
 	cd $(L3Bdir) ; $(MAKE) clib
 zptilvl3 :
 	cd $(FBLdir) ; $(MAKE) zptlvl3
@@ -323,7 +323,7 @@ zl2lib : zl1lib auxlib
 	cd $(GR1dir) ; $(MAKE) zlib
 	cd $(L2Bdir) ; $(MAKE) zlib
 zl3lib :
-	cd $(GMMdir) ; $(MAKE) zlib
+	cd $(AMMdir) ; $(MAKE) zlib
 	cd $(L3Bdir) ; $(MAKE) zlib
 
 

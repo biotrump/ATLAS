@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2009 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,8 +27,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
+#define DMM_H 1
+#define SMM_H 1
+#define CMM_H 1
+#define ZMM_H 1
 #include "atlas_misc.h"
 #include "atlas_lapack.h"
+#ifdef ATL_USEPTHREADS
+   #include "atlas_ptalias_lapack.h"
+#endif
 #ifdef ATL_ilaenv
    #undef ATL_ilaenv
 #endif
@@ -137,7 +144,13 @@ TYPE *GetGE(int M, int N, int lda)
 {
    TYPE *A;
    A = malloc(ATL_MulBySize(lda)*N);
-   if (A) Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   if (A)
+   {
+      #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+         ATL_NumaTouchSpread(ATL_MulBySize(lda)*N, A);
+      #endif
+      Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   }
    return(A);
 }
 
@@ -187,6 +200,9 @@ static TYPE *DupMat(enum ATLAS_ORDER Order, int M, int N, TYPE *A, int lda,
    ATL_assert(ldc >= M);
    C = malloc(ATL_MulBySize(ldc)*N);
    ATL_assert(C);
+   #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+      ATL_NumaTouchSpread(ATL_MulBySize(ldc)*N, C);
+   #endif
    for (j=0; j != N; j++)
    {
       for (i=0; i != M2; i++) C[i] = A[i];
@@ -275,7 +291,6 @@ static void MakeHEDiagDom
    int j;
    const int lda2=(lda SHIFT), ldap1=((lda+1)SHIFT);
 
-   Mjoin(PATL,gegen)(N, N, A, lda, N*N+lda);
    if (Order == CblasRowMajor)
    {
       if (Uplo == CblasLower) Uplo = CblasUpper;
@@ -706,9 +721,9 @@ int GetGoodNForFlopRate(int rout, double nsec, int restM, int restN)
       pre = 'd';
    #endif
    #ifdef ATL_USEPTHREADS
-      k = ((4000+NB-1)/NB)*NB;
+      k = 4000;
    #else
-      k = ((2000+NB-1)/NB)*NB;
+      k = 2000;
    #endif
    mmp = ReadMMFileWithPath(pre, "../blas/gemm/res", "MMRES.sum");
    if (!mmp)
@@ -723,16 +738,16 @@ int GetGoodNForFlopRate(int rout, double nsec, int restM, int restN)
    #endif
    if (floprate < 100)  /* nonsensical result */
       return(k);
-   k = (600/NB)*NB;
+   k = 600;
    do
    {
-       k += NB;
+       k += 80;
        m = (restM) ? restM : k;
        n = (restN) ? restN : k;
-       time = GetFlopCount(rout, 0, m, n, 0, 0, NB) / (floprate*1000000.0);
+       time = GetFlopCount(rout, 0, m, n, 0, 0, 80) / (floprate*1000000.0);
    }
    while (time < nsec);
-   k -= NB;
+   k -= 80;
 /*
  * Don't let K be too huge, or extremely tiny regardless of computation
  */
@@ -758,9 +773,9 @@ void GetFlags(int nargs, char **args, int *nreps, int *flsizeKB, int *mflop,
    *ldagap = 0;
    *flsizeKB = L2SIZE/1024;
    #ifdef ATL_USEPTHREADS
-      *maxN = ((4000+NB-1)/NB)*NB;
+      *maxN = 4000;
    #else
-      *maxN = ((2000+NB-1)/NB)*NB;
+      *maxN = 2000;
    #endif
    *maxN = 0;
    *rout = LAgeqrf;
@@ -893,6 +908,8 @@ void GetFlags(int nargs, char **args, int *nreps, int *flsizeKB, int *mflop,
       *maxN = GetGoodNForFlopRate(*rout, 3.00, *restM, *restN);
       fprintf(stderr, "maxN = %d\n", *maxN);
    }
+   if (NBs)
+      free(NBs);
    if (!ups)
       ups = GetIntList1(LAUpper);
    if (!sds)
@@ -1359,10 +1376,16 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
                int Side, int flsizeKB)
 {
 #if ATL_LINEFLUSH
-   FLSTRUCT *flp;
+   FLSTRUCT *flp=NULL;
 #endif
    TYPE *A, *wrk=NULL, dtmp, dtmp1, *tau=NULL;
    int *ipiv=NULL, itmp, wlen;
+/*
+ * If the matrix alone is larger than four times the flush size, then
+ * the matrix init should be self-flushing, so we avoid the time & memory
+ * waste of doing the flush.  This is critical for large problems.
+ */
+   int DOFLUSH = (((size_t)M)*N*ATL_sizeof < ((size_t)flsizeKB)*1024*4);
    double t0, t1;
 /*
  * Call routs that force particular flop count if requested; they return -1.0
@@ -1409,7 +1432,8 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
  */
    A = GetGE(M, N, lda);
    ATL_assert(A);
-   flp = ATL_GetFlushStruct(A, N*lda*ATL_sizeof, NULL);
+   if (DOFLUSH)
+      flp = ATL_GetFlushStruct(A, N*((size_t)lda)*ATL_sizeof, NULL);
    if (rout == LApotrf)
       PosDefGen(CblasColMajor, Uplo_LA2ATL(Uplo), N, A, lda);
    else if (rout & LAgeqrf)
@@ -1436,21 +1460,25 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
       wlen = dtmp;
       wrk = calloc(wlen, ATL_sizeof);
       ATL_assert(wrk);
-      flp = ATL_GetFlushStruct(wrk, wlen*ATL_sizeof, flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(wrk, wlen*ATL_sizeof, flp);
       itmp = (M >= N) ? M : N;
       tau = calloc(itmp, ATL_sizeof);
-      flp = ATL_GetFlushStruct(tau, itmp*ATL_sizeof, flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(tau, itmp*ATL_sizeof, flp);
    }
    else
    {
       ipiv = calloc(M, sizeof(int));
       ATL_assert(ipiv);
-      flp = ATL_GetFlushStruct(ipiv, M*sizeof(int), flp);
+      if (DOFLUSH)
+         flp = ATL_GetFlushStruct(ipiv, M*sizeof(int), flp);
    }
 /*
  * Flush cache, and do timing
  */
-   ATL_FlushAreasByCL(flp);
+   if (DOFLUSH)
+      ATL_FlushAreasByCL(flp);
    if (rout == LApotrf)
    {
       t0 = time00();
@@ -1500,7 +1528,8 @@ double GetTime(int rout, int mflopF, int lda, int M, int N, int nb, int Uplo,
    if (ipiv)
       free(ipiv);
    free(A);
-   ATL_KillAllFlushStructs(flp);
+   if (DOFLUSH)
+      ATL_KillAllFlushStructs(flp);
    return(t1 - t0);
 #endif
 }
@@ -1611,6 +1640,7 @@ void WriteCFile(char *outnam, int N, int *flgs, int *ms, int *ns, int *nbs,
    ATL_assert(ln);
    sprintf(ln, "%s.h", outnam);
    nbout = my_fopen(ln, "w");
+   free(ln);
    nameNoPath = NameExcludingPath(outnam);
    fprintf(nbout, "#ifndef %s\n\n", nameNoPath);
    fprintf(nbout, "/*\n * NB selection for %s: Side='%s', Uplo='%s'\n",
@@ -1740,6 +1770,7 @@ void WriteNbFile(int F77out, char *outnam, int N, int *flgs, int *ms, int *ns,
    else
       ip = CompressDecisionTree(N, ms, nbs);
    WriteCFile(outnam, N, flgs, ms, ns, nbs, ip[0], ip+1+ip[0], ip+1);
+   free(ip);
 }
 
 int GetMyReps(int N, int *nreps)
@@ -1801,6 +1832,7 @@ double GetMultSampleTimes
    return(retavg ? avgtime/i : mintime);
 }
 
+#include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_blk.h))
 int findNB
 (
    int rout,                    /* routine to time */
@@ -1810,7 +1842,7 @@ int findNB
    int mflopF,                  /* mflops to force in one timing*/
    int uplo, int side,
    int M, int N, int lda,       /* prob dims */
-   int minNB, int maxNB,        /* smallest & largest NB to try */
+   int minNB, int maxNB,        /* index of smallest & largest NB to try */
    double *tLeft,               /* % time minNB took for this problem size */
    double *tRight               /* time maxNB took for this problem size */
 )
@@ -1820,146 +1852,68 @@ int findNB
  * used to determine if the blocking factors are really different
  */
 {
-   int i, nbB, n, mul1, mul2, nbL, nbR, TINYCASE;
-   double time, timeL, timeR, mintime, lasttime;
-
-   timeL = timeR = 0.0;
+   int i, imin;
+   double tmin, timeL, timeR;
+/*
+ * Time smallest case to compute timeL & initial tmin
+ */
+   i = ATL_AMM_KBs[minNB];
    printf("   FINDING NB FOR M=%d, N=%d, LDA=%d:\n", M, N, lda);
+   imin = minNB;
+   printf("      nb=%d:", i);
+   tmin = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
+                             uplo, side, M, N, lda, i);
+   timeL = tmin;
+   printf("--> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, tmin));
 /*
- * Try all multiples of NB between min & max NB
+ * Right now, lanbsrch only use for QR, which is rank-K.  For other lapack
+ * operations, may need to use dim other than KB!
  */
-   TINYCASE = Mmin(M,N) < 2*NB;
-   i = (minNB/NB)*NB;  /* smallest mul of NB >= floor(min,NB) */
-   if (i < 1)
-      i = NB;
-   nbB = Mmin(M,N)/2;
-   if (!nbB)
-      nbB = 1;
-   if (nbB > i)
-      nbB = i;
-   else
-      i = nbB;
-   printf("      nb=%d: ", i);
-   mintime = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
-                                uplo, side, M, N, lda, i);
-   printf("--> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, mintime));
-   n = Mmin(N,M)>>1;
-   n = Mmin(maxNB, n);
-   n = (n/NB)*NB;
-   for (i += NB; i <= n; i += NB)
+   for (i=minNB+1; i < maxNB; i++)
    {
-      printf("      nb=%d: ", i);
-      time = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
-                                uplo, side, M, N, lda, i);
-      printf("--> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, time));
-      if (i == minNB)
-        timeL = time;
-      if (i == maxNB)
-         timeR = time;
-      if (mintime*1.05 < time) break;  /* quit once we see big perf loss */
-/*
- *    Force larger NB to be significantly faster before we use it
- */
-      if (time < mintime)
-      {
-         if (i < nbB || time*1.01 < mintime)
-         {
-            mintime = time;
-            nbB = i;
-         }
-      }
-   }
+      int nb = ATL_AMM_KBs[i];
+      double t0;
 
-   if (nbB <= 3*NB)  /* don't bother to refine for very large NB */
-   {
-      printf("\n      NB refinement search:\n");
+      if (nb > (Mmin(M,N)>>1))
+         break;
+      printf("      nb=%d:", nb);
+      t0 = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
+                              uplo, side, M, N, lda, nb);
+      printf("--> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, t0));
 /*
- *    Try all multiples of lcm(MU,NU) the NBs on either side of the best found
- *    NB.  If lcm is large, and nbB is small, also try all modulo 4 cases.
- *    Require non-multiples of NB to be noticiably better than multiples
+ *    Quit if problem has gotten noticiably slower
  */
-      mul1 = ATL_lcm(ATL_mmMU, ATL_mmNU);
-      n = Mmin(M,N);
-      mul2 = (nbB >= 2*NB || n > 1000) ? 8 : 4;  /* granularity of refinement */
-      mul2 = (nbB >= 3*NB) ? 12 : mul2; /* make more granular for huge NB */
-      while (mul1 < mul2)
-         mul1 *= 2;
-      if (mul1 > 6 && nbB <= NB && n <= 1000)
-         mul2 = 4;   /* now, mul2 is a second thing to try beyond mul1 */
-      else
-         mul2 = 0;
-      n = Mmin(nbB,N);
-      if (mul2)
-         n = nbB + NB - mul2;
-      else
-         n = nbB + NB - mul1;
-      if (n > N/2)
-         n = N/2;
-      if (n > M/2)
-         n = M/2;
-      i = nbB - NB + mul1;
-      if (i < 1) i = 1;
-      printf("      *** i=%d, nbB=%d, NB=%d, mul1=%d, mul2=%d ***\n",
-             i, nbB, NB, mul1, mul2);
-      if (TINYCASE)
+      if (nb > 64 && t0 > 1.05*tmin)
+         break;
+      if (t0*1.005 < tmin || i < imin)
       {
-         i = 1;
-         n = Mmin(M,N)/2;
-         mul1 = 1;
-         mul2 = 0;
-      }
-      for (; i <= n; i++)
-      {
-         if (i == nbB) continue;  /* already timed */
-         if (mul2)
-         {
-            if (i%mul2 && i%mul1) continue;
-         }
-         else if (i%mul1) continue;
-
-         printf("      nb=%d: ", i);
-         time = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
-                                   uplo, side, M, N, lda, i);
-         printf(" --> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, time));
-         if (i == minNB)
-           timeL = time;
-         if (i == maxNB)
-            timeR = time;
-         if (time*1.02 < mintime)  /* non-mul-NB must be much better */
-         {
-            mintime = time;
-            nbB = i;
-         }
+         imin = i;
+         tmin = t0;
       }
    }
-   if (timeL == 0.0)
+/*
+ * Time largest case to compute timeR
+ */
+   i = ATL_AMM_KBs[maxNB];
+   if (i+i <= Mmin(M,N))
    {
-      printf("      nb=%d: ", minNB);
-      timeL = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
-                                 uplo, side, M, N, lda, minNB);
-      printf(" --> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, timeL));
-      if (timeL < mintime)
-      {
-         mintime = timeL;
-         nbB = minNB;
-      }
-   }
-   if (timeR == 0.0)
-   {
-      printf("      nb=%d: ", maxNB);
+      printf("      nb=%d:", i);
       timeR = GetMultSampleTimes(1, 0, nreps, nsecs, flshszKB, mflopF, rout,
-                                 uplo, side, M, N, lda, maxNB);
-      printf(" --> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, timeR));
-      if (timeR < mintime)
+                                 uplo, side, M, N, lda, i);
+      printf("--> %.2f MFLOP.\n", Time2Flops(rout, uplo, M, N, timeR));
+      if (timeR*1.005 < tmin)
       {
-         mintime = timeR;
-         nbB = maxNB;
+         imin = maxNB;
+         tmin = timeR;
       }
    }
-   *tLeft  = timeL / mintime;
-   *tRight = timeR / mintime;
-   printf("   FOR M=%d, N=%d, LDA=%d, BEST NB=%d\n\n", M, N, lda, nbB);
-   return(nbB);
+   else
+      timeR = 2*tmin;
+   printf("   FOR M=%d, N=%d, LDA=%d, BEST NB=%d\n\n",
+          M, N, lda, ATL_AMM_KBs[imin]);
+   *tLeft = timeL / tmin;
+   *tRight = timeR / tmin;
+   return(imin);
 }
 
 int *FindAllNBs
@@ -1988,9 +1942,8 @@ int *FindAllNBs
    double Lperc, Rperc;
 
    k = (nnb[iR] + nnb[iL])>>1;
-   k = (k/NB)*NB;          /* keep N a mul of NB to avoid cleanup affects */
-   if (k-nnb[iL] < NB || nnb[iR]-k < NB)
-      return(nnb);   /* don't get finer grained than NB in search */
+   if (k-nnb[iL] < 40 || nnb[iR]-k < 40)
+      return(nnb);   /* don't get finer grained than 40 in search */
    m = (restM) ? restM : k;
    n = (restN) ? restN : k;
    lda = m + ldagap;
@@ -2015,8 +1968,7 @@ int *FindAllNBs
    nnb[iM+1] = findNB(rout, nreps, nsecs, flshszKB, mflopF, uplo, side,
                       m, n, lda, nnb[iL+1], nnb[iR+1], &Lperc, &Rperc);
    nnb[1] = i + 2;
-   printf("   M=%d, N=%d, lda=%d, NB=%d\n", m, n, lda, nnb[iM+1]);
-
+   printf("   M=%d, N=%d, lda=%d, NB=%d\n", m, n, lda, ATL_AMM_KBs[nnb[iM+1]]);
 /*
  * If middle NB greater than left NB, and loss of using different NB is more
  * than 2%, must search space between
@@ -2056,18 +2008,18 @@ int *FindNBByN
  */
 {
    int *nnb;
-   int m, n, lda;
+   int i, m, n, lda;
    double t0, tN, percL, percR;
 /*
  * Find best NB for minimum problem (dimension 4)
  */
    nnb = malloc(sizeof(int)*4000);
    nnb[2] = 25;
-   m = (restM) ? restM : 25;
-   n = (restN) ? restN : 25;
+   m = (restM) ? restM : 24;
+   n = (restN) ? restN : 24;
    lda = m + ldagap;
    nnb[3] = findNB(rout, nreps, nsecs, flshszKB, mflopF, uplo, side,
-                   m, n, lda, 1, 12, &percL, &percR);
+                   m, n, lda, 0, ATL_AMM_NCASES-1, &percL, &percR);
 /*
  * Find best NB for maximum size problem
  */
@@ -2076,12 +2028,21 @@ int *FindNBByN
    n = (restN) ? restN : maxN;
    lda = m + ldagap;
    nnb[5] = findNB(rout, nreps, nsecs, flshszKB, mflopF, uplo, side, m, n, lda,
-                   nnb[3], 10*NB, &percL, &percR);
+                   nnb[3], ATL_AMM_NCASES-1, &percL, &percR);
 
    nnb[0] = 4000;   /* length of array in pos 0 */
    nnb[1] = 6;      /* number of entries used so far in pos 1 */
    nnb = FindAllNBs(rout, nreps, nsecs, flshszKB, mflopF, uplo, side,
                     restM, restN, ldagap, 2, 4, nnb);
+/*
+ * Translate indices into actual NBs
+ */
+   for (n=nnb[1], i=3; i < n; i += 2)
+   {
+      int j = nnb[i];
+      assert(j >= 0 && j < ATL_AMM_NCASES);
+      nnb[i] = ATL_AMM_KBs[j];
+   }
    return(nnb);
 }
 
@@ -2145,8 +2106,6 @@ int TransNNB(int rout, int restM, int restN, int side, int uplo, int *nnb,
    ATL_assert(ms);
    ns = malloc(sizeof(int)*n);
    ATL_assert(ns);
-   ns = malloc(sizeof(int)*n);
-   ATL_assert(ns);
    nbs = malloc(sizeof(int)*n);
    ATL_assert(nbs);
    flags = malloc(sizeof(int)*n);
@@ -2193,6 +2152,8 @@ int main(int nargs, char **args)
    n = TransNNB(rout, restM, restN, SIDEs[1], UPLOs[1], nnb,
                 &flags, &Ms, &Ns, &NBs);
    free(nnb);
+   free(UPLOs);
+   free(SIDEs);
    WriteNbFile(F77out, outnam, n, flags, Ms, Ns, NBs);
    free(Ms);
    free(Ns);

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -57,10 +57,11 @@ int f77getrf(const enum ATLAS_ORDER Order, const int M, const int N,
       #define F77ipiv ipiv
    #endif
    ATL_assert(Order == AtlasColMajor);
-      #define F77ipiv ipiv
    #ifdef ATL_FunkyInts
       F77ipiv = malloc(MN * sizeof(F77_INTEGER));
       ATL_assert(F77ipiv);
+   #else
+      #define F77ipiv ipiv
    #endif
 
    F77GETRF(&F77M, &F77N, A, &F77lda, F77ipiv, &info);

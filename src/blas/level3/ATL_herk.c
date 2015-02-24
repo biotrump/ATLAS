@@ -44,19 +44,16 @@
  *
  * ---------------------------------------------------------------------
  */
-#define USE_SPRK
 /*
  * Include files
  */
 #include "atlas_rblas3.h"
 #include "atlas_kernel3.h"
 #include "atlas_lvl3.h"
-#ifdef USE_SPRK
-#include "atlas_pkblas.h"
-#endif
+#include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_sum.h))
 
 #ifndef HERK_NB
-#define HERK_NB      NB
+   #define HERK_NB ATL_AMM_66KB
 #endif
 
 void Mjoin( PATL, herk )

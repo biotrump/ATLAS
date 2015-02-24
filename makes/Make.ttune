@@ -1,5 +1,6 @@
 include Make.inc
 mySRCdir = $(SRCdir)/tune/threads
+myBLDdir = $(BLDdir)/tune/threads
 CONFdir = $(SRCdir)/CONFIG
 myTHRdir = $(SRCdir)/src/threads
 THRdir = $(BLDdir)/src/threads
@@ -45,12 +46,57 @@ IRun_nthr : IRun_aff xprobe_nthr
 	rm -f $(INCAdir)/atlas_pthreads.h
 	./xprobe_nthr -o $(INCAdir)/atlas_pthreads.h
 ITune_aff : IRun_nthr xtune_aff
-	./xtune_aff -o $(INCAdir)/atlas_taffinity.h
+	$(ATLRUN) $(myBLDdir) xtune_aff -o $(INCAdir)/atlas_taffinity.h
 tlib : 
 	cd $(BLDdir)/src/threads ; $(MAKE)
+
 xprobe_aff : probe_aff.o atlconf_misc.o
 	$(XCC) $(XCCFLAGS) -o xprobe_aff probe_aff.o atlconf_misc.o $(LIBS)
+xsammtim0 : sammtim0.o $(ATLASlib)
+	$(SKC) $(SKCFLAGS) -o $@ sammtim0.o $(ATLASlib) $(LIBS)
+sammtim0.o : $(mySRCdir)/ammtim.c
+	$(SKC) $(SKCFLAGS) $(CDEFS) -o $@ -DSREAL=1 \
+            -c $(mySRCdir)/ammtim.c
+xsammtim1 : sammtim1.o $(ATLASlib)
+	$(SKC) $(SKCFLAGS) -o $@ sammtim1.o $(ATLASlib) $(LIBS)
+sammtim1.o : $(mySRCdir)/ammtim.c
+	$(SKC) $(SKCFLAGS) $(CDEFS) -o $@ -DSREAL=1 \
+           -DMANAGE_NODES=1 -c $(mySRCdir)/ammtim.c
+xsammtim2 : sammtim2.o $(ATLASlib)
+	$(SKC) $(SKCFLAGS) -o $@ sammtim2.o $(ATLASlib) $(LIBS)
+sammtim2.o : $(mySRCdir)/ammtim.c
+	$(SKC) $(SKCFLAGS) $(CDEFS) -o $@ -DSREAL=1 \
+           -DKSYNC=1 -DMANAGE_NODES=1 -c $(mySRCdir)/ammtim.c
+xdammtim0 : dammtim0.o $(ATLASlib)
+	$(DKC) $(DKCFLAGS) -o $@ dammtim0.o $(ATLASlib) $(LIBS)
+dammtim0.o : $(mySRCdir)/ammtim.c
+	$(DKC) $(DKCFLAGS) $(CDEFS) -o $@ -DDREAL=1 \
+            -c $(mySRCdir)/ammtim.c
+xdammtim1 : dammtim1.o $(ATLASlib)
+	$(DKC) $(DKCFLAGS) -o $@ dammtim1.o $(ATLASlib) $(LIBS)
+dammtim1.o : $(mySRCdir)/ammtim.c
+	$(DKC) $(DKCFLAGS) $(CDEFS) -o $@ -DDREAL=1 \
+           -DMANAGE_NODES=1 -c $(mySRCdir)/ammtim.c
+xdammtim2 : dammtim2.o $(ATLASlib)
+	$(DKC) $(DKCFLAGS) -o $@ dammtim2.o $(ATLASlib) $(LIBS)
+dammtim2.o : $(mySRCdir)/ammtim.c
+	$(DKC) $(DKCFLAGS) $(CDEFS) -o $@ -DDREAL=1 \
+           -DKSYNC=1 -DMANAGE_NODES=1 -c $(mySRCdir)/ammtim.c
 
+xprobe_atomic_arm64 : test_count.o
+	rm -f $(BLDdir)/src/threads/atomic.inc
+	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
+	$(MAKE) tlib
+	cd $(BLDdir)/src/threads ; $(MAKE) ATL_SetAtomicCount_arch.o \
+           ATL_ResetAtomicCount_arm64.o ATL_DecAtomicCount_arm64.o \
+           ATL_FreeAtomicCount_arch.o
+	$(CC) $(CCFLAGS) -o xtst_arch test_count.o \
+              $(BLDdir)/src/threads/ATL_SetAtomicCount_arch.o \
+              $(BLDdir)/src/threads/ATL_ResetAtomicCount_arm64.o \
+              $(BLDdir)/src/threads/ATL_DecAtomicCount_arm64.o \
+              $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
+              $(ATLASlib) $(LIBS)
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_win64 : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -64,7 +110,7 @@ xprobe_atomic_win64 : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_win64.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_amd64 : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -78,7 +124,7 @@ xprobe_atomic_amd64 : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_amd64.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_ia32 : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -92,7 +138,7 @@ xprobe_atomic_ia32 : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_ia32.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_ppc : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -106,7 +152,7 @@ xprobe_atomic_ppc : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_ppc.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_sparc : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -120,7 +166,7 @@ xprobe_atomic_sparc : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_sparc.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_mips : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -134,7 +180,7 @@ xprobe_atomic_mips : test_count.o
               $(BLDdir)/src/threads/ATL_DecAtomicCount_mips.o \
               $(BLDdir)/src/threads/ATL_FreeAtomicCount_arch.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 xprobe_atomic_mut : test_count.o
 	rm -f $(BLDdir)/src/threads/atomic.inc
 	echo "aobj =" > $(BLDdir)/src/threads/atomic.inc
@@ -146,12 +192,12 @@ xprobe_atomic_mut : test_count.o
               $(BLDdir)/src/threads/ATL_ResetAtomicCount_mut.o \
               $(BLDdir)/src/threads/ATL_DecAtomicCount_mut.o \
               $(ATLASlib) $(LIBS)
-	./xtst_arch
+	$(ATLRUN) $(myBLDdir) xtst_arch
 
 iTune_atomic :
 	if $(MAKE) mutcnt ; then \
            if $(MAKE) iFind_atomic_arch ; then \
-              $(MAKE) xtune_count ; ./xtune_count -r 1000000 -o yes; \
+              $(MAKE) xtune_count ; $(ATLRUN) $(myBLDdir) xtune_count -r 1000000 -o yes; \
            fi ; \
         else \
            $(MAKE) iFind_atomic_arch ; \
@@ -203,10 +249,13 @@ iFind_atomic_arch :
 	- rm -f $(BLDdir)/src/threads/lib.grd
 	$(MAKE) tlib
 iForceUseMutex:
+	cd $(BLDdir)/src/threads ; make killaobj
 	rm $(BLDdir)/src/threads/atomic.inc 
 	echo "aobj = ATL_SetAtomicCount_mut.o ATL_ResetAtomicCount_mut.o ATL_DecAtomicCount_mut.o ATL_FreeAtomicCount_mut.o" > $(BLDdir)/src/threads/atomic.inc 
 xprobe_nthr : probe_nthr.o
-	$(CC) $(CCFLAGS) -o xprobe_nthr probe_nthr.o $(ATLASlib) $(LIBS)
+	$(XCC) $(XCCFLAGS) -o xprobe_nthr probe_nthr.o $(ATLASlib) $(LIBS)
+probe_nthr.o : $(mySRCdir)/probe_nthr.c
+	$(XCC) $(XCCFLAGS) -o probe_nthr.o -c $(mySRCdir)/probe_nthr.c
 mutcnt :
 	cd $(THRdir) ; $(MAKE) $(acnt_mut0)
 xtune_count : tune_count.o tlib mutcnt iFind_atomic_arch
@@ -218,32 +267,6 @@ xtest_count_glb : test_count_glb.o tlib  # mutcnt arccnt
 xtest_count : test_count.o tlib  # mutcnt arccnt
 	$(CC) $(CCFLAGS) -o xtest_count test_count.o $(ATLASlib) $(LIBS)
 
-xtune_spawn_fp : tune_spawn_fp.o tlib ATL_goparallel_lin.o ATL_goparallel_log2.o \
-               ATL_goparallel_dyn.o
-	$(CC) $(CCFLAGS) -o xtune_spawn_fp tune_spawn_fp.o ATL_goparallel_lin.o \
-              ATL_goparallel_log2.o ATL_goparallel_dyn.o $(ATLASlib) $(LIBS)
-xtune_spawn : tune_spawn.o tlib ATL_goparallel_lin.o ATL_goparallel_log2.o \
-               ATL_goparallel_dyn.o
-	$(CC) $(CCFLAGS) -o xtune_spawn tune_spawn.o ATL_goparallel_lin.o \
-              ATL_goparallel_log2.o ATL_goparallel_dyn.o $(ATLASlib) $(LIBS)
-xtune_aff : tune_aff.o tlib  ATL_goparallel_noaff.o ATL_log2tlaunch_noaff.o \
-             ATL_goparallel_aff.o ATL_log2tlaunch.o \
-             ATL_thread_start_noaff.o ATL_thread_start.o
-	$(CC) $(CCFLAGS) -o xtune_aff tune_aff.o ATL_goparallel_noaff.o \
-              ATL_goparallel_aff.o ATL_log2tlaunch_noaff.o ATL_log2tlaunch.o \
-              ATL_thread_start_noaff.o ATL_thread_start.o $(ATLASlib) $(LIBS)
-
-ATL_goparallel_aff.o : $(myTHRdir)/ATL_goparallel.c
-	$(CC) $(CCFLAGS) -o $@ -DATL_TUNING -c $(myTHRdir)/ATL_goparallel.c
-ATL_goparallel_log2.o : $(myTHRdir)/ATL_goparallel.c
-	$(CC) $(CCFLAGS) -o $@ -DATL_TUNING -DATL_LAUNCH_LOG2 \
-              -c $(myTHRdir)/ATL_goparallel.c
-ATL_goparallel_dyn.o : $(myTHRdir)/ATL_goparallel.c
-	$(CC) $(CCFLAGS) -o $@ -DATL_TUNING -DATL_LAUNCH_DYNAMIC \
-              -c $(myTHRdir)/ATL_goparallel.c
-ATL_goparallel_lin.o : $(myTHRdir)/ATL_goparallel.c
-	$(CC) $(CCFLAGS) -o $@ -DATL_TUNING -DATL_LAUNCH_LINEAR \
-              -c $(myTHRdir)/ATL_goparallel.c
 ATL_goparallel.o : $(myTHRdir)/ATL_goparallel.c
 	$(CC) $(CCFLAGS) -o $@ -c $(myTHRdir)/ATL_goparallel.c
 ATL_log2tlaunch.o : $(myTHRdir)/ATL_log2tlaunch.c
@@ -298,8 +321,6 @@ ATL_SetAtomicCount_arch.o : ATL_SetAtomicCount_arch.c
 
 tune_aff.o : $(mySRCdir)/tune_aff.c
 	$(CC) $(CCFLAGS) -o tune_aff.o -c $(mySRCdir)/tune_aff.c
-probe_nthr.o : $(mySRCdir)/probe_nthr.c
-	$(CC) $(CCFLAGS) -o probe_nthr.o -c $(mySRCdir)/probe_nthr.c
 test_count.o : $(mySRCdir)/test_count.c
 	$(CC) $(CCFLAGS) -o test_count.o -c $(mySRCdir)/test_count.c
 tune_count.o : $(mySRCdir)/tune_count.c
@@ -321,59 +342,59 @@ IRun_WIN64 :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_WIN64 \
                $(CONFdir)/src/backend/probe_aff_WIN64.c $(LIBS)
-	./xprobe_WIN64 $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_WIN64 $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_WIN :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_WIN \
                $(CONFdir)/src/backend/probe_aff_WIN.c $(LIBS)
-	./xprobe_WIN $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_WIN $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_CPUSET :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_CPUSET \
                $(CONFdir)/src/backend/probe_aff_CPUSET.c $(LIBS)
-	./xprobe_CPUSET $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_CPUSET $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_SETPROCNP :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_SETPROCNP \
                $(CONFdir)/src/backend/probe_aff_SETPROCNP.c $(LIBS)
-	./xprobe_SETPROCNP $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_SETPROCNP $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_SETAFFNP :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_SETAFFNP \
                $(CONFdir)/src/backend/probe_aff_SETAFFNP.c $(LIBS)
-	./xprobe_SETAFFNP $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_SETAFFNP $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_SCHED :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_SCHED \
                $(CONFdir)/src/backend/probe_aff_SCHED.c $(LIBS)
-	./xprobe_SCHED $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_SCHED $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_RUNON :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_RUNON \
                $(CONFdir)/src/backend/probe_aff_RUNON.c $(LIBS)
-	./xprobe_RUNON $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_RUNON $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_PLPA :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_PLPA \
                $(CONFdir)/src/backend/probe_aff_PLPA.c $(LIBS)
-	./xprobe_PLPA $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_PLPA $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_PBIND :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_PBIND \
                $(CONFdir)/src/backend/probe_aff_PBIND.c $(LIBS)
-	./xprobe_PBIND $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_PBIND $(args) > res/probeB.out
 	- cat res/probeB.out
 IRun_BINDP :
 	- rm res/probeB.out
 	$(CC) $(CCFLAGS) -o xprobe_BINDP \
                $(CONFdir)/src/backend/probe_aff_BINDP.c $(LIBS)
-	./xprobe_BINDP $(args) > res/probeB.out
+	$(ATLRUN) $(myBLDdir) xprobe_BINDP $(args) > res/probeB.out
 	- cat res/probeB.out

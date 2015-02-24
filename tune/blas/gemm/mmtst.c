@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -260,11 +260,13 @@
 #ifdef TREAL
    #define NBmm Mjoin(Mjoin(Mjoin(Mjoin(Mjoin(ppre,MNKnam), TRnam),ldnam), ALPHAnam), BETAnam)
 
-#ifdef NEWMM
-   #ifndef ATL_CINT
-      #define ATL_CINT const int
+#ifdef ATL_NEWTIME
+   #ifndef ATL_CSZT
+      #define ATL_CSZT const size_t
    #endif
-   void NBmm(ATL_CINT M, ATL_CINT N, ATL_CINT K, TYPE *A, TYPE *B, TYPE *C);
+   void NBmm(ATL_CSZT mblks, ATL_CSZT nblks, ATL_CSZT K, const TYPE *A,
+             const TYPE *B, TYPE *C, const TYPE *pAn, const TYPE *pBn,
+             const TYPE *pCn);
 #else
    void NBmm(const int, const int, const int, const SCALAR, const TYPE*,
              const int, const TYPE*, const int, const SCALAR, TYPE*, const int);
@@ -497,6 +499,11 @@ void tst_mm(const int M, const int N, const int K, const SCALAR alpha,
 }
 int mmtst(void)
 {
+   #ifdef ATL_Cachelen
+      #define ATL_AS (ATL_Cachelen/ATL_sizeof)
+   #else
+      #define ATL_AS (32/ATL_sizeof)
+   #endif
    char fnam[80];
 #if defined(LDA) && LDA != 0
       const int lda=LDA;

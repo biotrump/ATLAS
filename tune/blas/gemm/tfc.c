@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -101,6 +101,11 @@ void matgen(ATL_INT M0, ATL_INT N, TYPE *A, ATL_INT lda0, int seed)
    }
 }
 
+/*
+ * Returns non-zero on malloc failure, 0 & correct mf0, mf1 otherwise
+ * mf0: speed of small-case (no-copy) GEMM
+ * mf1: speed of large-case (copy) GEMM
+ */
 int mmcase(char TA, char TB, int M, int N, int K, SCALAR alpha, SCALAR beta,
            double *mf0, double *mf1)
 {
@@ -152,7 +157,6 @@ int mmcase(char TA, char TB, int M, int N, int K, SCALAR alpha, SCALAR beta,
    i = Mmax(ldc*N, j);
    i += Mmax(la, j);
    i += Mmax(lb, j);
-   if (i*ATL_sizeof > MAXALLOC) return(1);
 
    i = la;
    j = (ATL_DivBySize(L2SIZE) / i);
@@ -281,33 +285,45 @@ int mmcase(char TA, char TB, int M, int N, int K, SCALAR alpha, SCALAR beta,
    return(0);
 }
 
-void GetDims(enum ATLAS_MATSHAPE shape, int n, int nb, int *M, int *N, int *K)
+/*
+ * RETURNS: max size to actually time for each shape
+ */
+int GetDims(enum ATLAS_MATSHAPE shape, int n, int nb, int *M, int *N, int *K)
 {
+   const int max_nb0=4000, max_nb1=8000, max_nb2=20000;
+   int nmax;
    *M = *N = *K = n;
    switch(shape)
    {
    case AtlasM_NB:
+      nmax = max_nb1;
       *M = nb;
       break;
    case AtlasN_NB:
+      nmax = max_nb1;
       *N = nb;
       break;
    case AtlasMN_NB:
+      nmax = max_nb2;
       *M = *N = nb;
       break;
    case AtlasK_NB:
+      nmax = max_nb1;
       *K = nb;
       break;
    case AtlasMN_REST:  /* restricted M & N, but basically square */
+      nmax = max_nb1;
       if (n > 6*nb)
          *M = *N = 6*nb;
       break;
    case Atlas0_NB:
+      nmax = max_nb0;
      break;
    default:
       fprintf(stderr, "SHAPE=%d\n", shape);
       exit(-1);
    }
+   return(nmax);
 }
 
 void SortPoints(int N, int *Ns, double *mfs0, double *mfs1)
@@ -414,7 +430,13 @@ unsigned long tloop(enum ATLAS_MATSHAPE shape, char TA, char TB,
    GetDims(shape, smallN, nb, &M, &N, &K);
    assert(mmcase(TA, TB, M, N, K, alpha, beta, &mf0, &mf1) == 0);
    Ns[0] = smallN; mfs0[0] = mf0; mfs1[0] = mf1;
-   if (mf0 < mf1) return(M*N*K);
+   if (mf0 < mf1)
+   {
+      free(Ns);
+      free(mfs0);
+      free(mfs1);
+      return(M*N*K);
+   }
 /*
  * Find crossover point
  */
@@ -422,7 +444,10 @@ unsigned long tloop(enum ATLAS_MATSHAPE shape, char TA, char TB,
    i = 1;
    do
    {
-      GetDims(shape, n, nb, &M, &N, &K);
+      int maxn;
+      maxn = GetDims(shape, n, nb, &M, &N, &K);
+      if (n > maxn)
+         break;
       if (mmcase(TA, TB, M, N, K, alpha, beta, &mf0, &mf1))
       {
          n = n - stepN;
@@ -491,7 +516,8 @@ void DoShapes(FILE *fpout, char TA, char TB, int nb, int N0, int NN, int incN,
    for (shape=AtlasM_NB; shape <= Atlas0_NB; shape++)
    {
       n = tloop(shape, TA, TB, nb, alpha, beta);
-      fprintf(fpout, "#define %c%c_MNK_%s %ld\n", TA, TB, nm[shape], n);
+      fprintf(fpout, "#define %c%c_MNK_%s (unsigned long)(%ld)\n",
+              TA, TB, nm[shape], n);
    }
 }
 

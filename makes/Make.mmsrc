@@ -115,52 +115,52 @@ susergemm :
 
 susermm :
 	touch susermm
-ATL_stgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_stgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DNoTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_sgemmRecNN.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmRecNN.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_sgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_sAgemmNN.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sAgemmNN.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_stgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_stgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_sgemmRecNT.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmRecNT.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_sgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_sAgemmNT.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sAgemmNT.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_stgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_stgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DNoTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_sgemmRecTN.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmRecTN.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_sgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_sAgemmTN.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sAgemmTN.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_stgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_stgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_sgemmRecTT.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmRecTT.o : $(mySRCdir)/ATL_gemmRecXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_sgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_sAgemmTT.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_sAgemmTT.o : $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_AgemmXX.c
 
@@ -218,29 +218,35 @@ ATL_sputblk_b1.o : $(mySRCdir)/ATL_putblk.c $(sINCdep)
 ATL_sputblk_b0.o : $(mySRCdir)/ATL_putblk.c $(sINCdep)
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DBETA0 $(mySRCdir)/ATL_putblk.c
 
-ATL_saliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c $(sINCdep) \
-                           $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
+ATL_saliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c \
+                       $(sINCdep) $(INCAdir)/atlas_samm_use.h \
+                       $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DALIASED_GEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 
 ATL_ssmallK_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
-                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DSMALLK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_ssmall_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
-                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DSMALL_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_sbignork_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
-                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DBIGNORK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_sbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
-                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/sXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_sgemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
-                  $(INCAdir)/atlas_cacheedge.h $(INCAdir)/sXover.h
+              $(INCAdir)/atlas_cacheedge.h $(INCAdir)/sXover.h \
+              $(INCAdir)/atlas_samm_use.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DATLGEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_sFindCE_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(sINCdep) \
@@ -277,52 +283,52 @@ dusergemm :
 
 dusermm :
 	touch dusermm
-ATL_dtgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_dtgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DNoTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_dgemmRecNN.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmRecNN.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_dgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmNN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_dAgemmNN.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dAgemmNN.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DNoTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_dtgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_dtgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_dgemmRecNT.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmRecNT.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_dgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmNT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_dAgemmNT.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dAgemmNT.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DNoTransA_ -DTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_dtgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_dtgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DNoTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_dgemmRecTN.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmRecTN.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_dgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmTN.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_dAgemmTN.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dAgemmTN.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DNoTransB_ $(mySRCdir)/ATL_AgemmXX.c
-ATL_dtgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h
+ATL_dtgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_tcacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DTransB_ -DATL_TGEMM $(mySRCdir)/ATL_gemmXX.c
-ATL_dgemmRecTT.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmRecTT.o : $(mySRCdir)/ATL_gemmRecXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_gemmRecXX.c
-ATL_dgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dgemmTT.o : $(mySRCdir)/ATL_gemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_gemmXX.c
-ATL_dAgemmTT.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h
+ATL_dAgemmTT.o : $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) $(INCAdir)/atlas_cacheedge.h $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL \
               -DTransA_ -DTransB_ $(mySRCdir)/ATL_AgemmXX.c
 
@@ -380,29 +386,35 @@ ATL_dputblk_b1.o : $(mySRCdir)/ATL_putblk.c $(dINCdep)
 ATL_dputblk_b0.o : $(mySRCdir)/ATL_putblk.c $(dINCdep)
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DBETA0 $(mySRCdir)/ATL_putblk.c
 
-ATL_daliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c $(dINCdep) \
-                           $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
+ATL_daliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c \
+                       $(dINCdep) $(INCAdir)/atlas_damm_use.h \
+                       $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DALIASED_GEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 
 ATL_dsmallK_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
-                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DSMALLK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_dsmall_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
-                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DSMALL_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_dbignork_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
-                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DBIGNORK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_dbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
-                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/dXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_dgemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
-                  $(INCAdir)/atlas_cacheedge.h $(INCAdir)/dXover.h
+              $(INCAdir)/atlas_cacheedge.h $(INCAdir)/dXover.h \
+              $(INCAdir)/atlas_damm_use.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DATLGEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_dFindCE_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(dINCdep) \
@@ -672,25 +684,30 @@ ATL_cputblk_b1.o : $(mySRCdir)/ATL_putblk.c $(cINCdep)
 ATL_cputblk_b0.o : $(mySRCdir)/ATL_putblk.c $(cINCdep)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DBETA0 $(mySRCdir)/ATL_putblk.c
 
-ATL_caliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c $(cINCdep) \
-                           $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
+ATL_caliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c \
+                       $(cINCdep) $(INCAdir)/atlas_camm_use.h \
+                       $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DALIASED_GEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 
 ATL_csmallK_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
-                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_camm_use.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DSMALLK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_csmall_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
-                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_camm_use.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DSMALL_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_cbignork_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
-                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_camm_use.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DBIGNORK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_cbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
-                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/cXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_camm_use.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_csbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
@@ -699,7 +716,8 @@ ATL_csbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DCRBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_cgemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
-                  $(INCAdir)/atlas_cacheedge.h $(INCAdir)/cXover.h
+              $(INCAdir)/atlas_cacheedge.h $(INCAdir)/cXover.h \
+              $(INCAdir)/atlas_camm_use.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX -DATLGEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_cFindCE_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(cINCdep) \
@@ -969,25 +987,30 @@ ATL_zputblk_b1.o : $(mySRCdir)/ATL_putblk.c $(zINCdep)
 ATL_zputblk_b0.o : $(mySRCdir)/ATL_putblk.c $(zINCdep)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DBETA0 $(mySRCdir)/ATL_putblk.c
 
-ATL_zaliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c $(zINCdep) \
-                           $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
+ATL_zaliased_gemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_AgemmXX.c \
+                       $(zINCdep) $(INCAdir)/atlas_zamm_use.h \
+                       $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DALIASED_GEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 
 ATL_zsmallK_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
-                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_zamm_use.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DSMALLK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zsmall_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
-                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_zamm_use.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DSMALL_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zbignork_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
-                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_zamm_use.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DBIGNORK_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
-                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h
+                  $(INCAdir)/zXover.h $(INCAdir)/atlas_cacheedge.h \
+                  $(INCAdir)/atlas_zamm_use.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zdbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
@@ -996,7 +1019,8 @@ ATL_zdbig_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DCRBIG_MM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zgemm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \
-                  $(INCAdir)/atlas_cacheedge.h $(INCAdir)/zXover.h
+              $(INCAdir)/atlas_cacheedge.h $(INCAdir)/zXover.h \
+              $(INCAdir)/atlas_zamm_use.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DATLGEMM -I./ \
               $(mySRCdir)/ATL_gemm.c
 ATL_zFindCE_mm.o : $(mySRCdir)/ATL_gemm.c $(mySRCdir)/ATL_gemmXX.c $(zINCdep) \

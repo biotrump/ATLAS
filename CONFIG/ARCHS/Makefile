@@ -68,6 +68,9 @@ skern: xnegflt xnegr1 xnegmv
 	./xnegr1 $(adefd)/kern/$(skc)/[s,c]R?K.sum
 	- cp $(L1Tdir)/res/[s,c]*_SUMM $(adefd)/kern/$(skc)/.
 sgemm_put:
+	- cp $(adefd)/gemm/$(smc)/[s,c]*AMM*.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(smc)/[s,c]ARANKK.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(smc)/[s,c]WORKING.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(smc)/[s,c]MMRES.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(smc)/[s,c]gMMRES.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(smc)/[s,c]guMMRES.sum $(MMTdir)/res/.
@@ -85,6 +88,9 @@ sgemm_put:
 	- cp $(adefd)/gemm/$(smc)/[s,c]Xover.h $(MMTdir)/res/.
 sgemm: xnegflt xnegmm
 	rm -f $(adefd)/gemm/$(smc)/[s,c]*
+	- cp $(MMTdir)/res/[s,c]*AMM*.sum $(adefd)/gemm/$(smc)/.
+	- cp $(MMTdir)/res/[s,c]ARANKK.sum $(adefd)/gemm/$(smc)/.
+	- cp $(MMTdir)/res/[s,c]WORKING.sum $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]Clean[M,N,K] $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]best[N,T][N,T]_* $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]uMMRES $(adefd)/gemm/$(smc)/.
@@ -96,7 +102,8 @@ sgemm: xnegflt xnegmm
 	- cp $(MMTdir)/res/[s,c]guMMRES.sum $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]eMMRES.sum $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]MMKSSE.sum $(adefd)/gemm/$(smc)/.
-	- ./xnegmm $(adefd)/gemm/$(smc)/*MM*.sum
+	- ./xnegmm $(adefd)/gemm/$(smc)/[s,c]*MM*.sum \
+                   $(adefd)/gemm/$(smc)/[s,c]ARANKK.sum
 	- cp $(MMTdir)/res/[s,c]nreg $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]fpuMM $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]NCNB $(adefd)/gemm/$(smc)/.
@@ -139,6 +146,9 @@ dkern: xnegflt xnegr1 xnegmv
 	./xnegr1 $(adefd)/kern/$(dkc)/[d,z]R?K.sum
 	- cp $(L1Tdir)/res/[d,z]*_SUMM $(adefd)/kern/$(dkc)/.
 dgemm_put:
+	- cp $(adefd)/gemm/$(dmc)/[d,z]*AMM*.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(dmc)/[d,z]ARANKK.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(dmc)/[d,z]WORKING.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(dmc)/[d,z]MMRES.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(dmc)/[d,z]gMMRES.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(dmc)/[d,z]guMMRES.sum $(MMTdir)/res/.
@@ -156,6 +166,9 @@ dgemm_put:
 	- cp $(adefd)/gemm/$(dmc)/[d,z]Xover.h $(MMTdir)/res/.
 dgemm: xnegflt xnegmm
 	rm -f $(adefd)/gemm/$(dmc)/[d,z]*
+	- cp $(MMTdir)/res/[d,z]*AMM*.sum $(adefd)/gemm/$(dmc)/.
+	- cp $(MMTdir)/res/[d,z]ARANKK.sum $(adefd)/gemm/$(dmc)/.
+	- cp $(MMTdir)/res/[d,z]WORKING.sum $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]Clean[M,N,K] $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]best[N,T][N,T]_* $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]uMMRES $(adefd)/gemm/$(dmc)/.
@@ -167,7 +180,8 @@ dgemm: xnegflt xnegmm
 	- cp $(MMTdir)/res/[d,z]guMMRES.sum $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]eMMRES.sum $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]MMKSSE.sum $(adefd)/gemm/$(dmc)/.
-	- ./xnegmm $(adefd)/gemm/$(dmc)/*MM*.sum
+	- ./xnegmm $(adefd)/gemm/$(dmc)/[d,z]*MM*.sum \
+                   $(adefd)/gemm/$(dmc)/[d,z]ARANKK.sum
 	- cp $(MMTdir)/res/[d,z]nreg $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]fpuMM $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]NCNB $(adefd)/gemm/$(dmc)/.

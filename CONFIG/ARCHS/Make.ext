@@ -1,13 +1,13 @@
 
 topd = /home/whaley/git/math-atlas/AtlasBase
-ext  = /home/whaley/git/math-atlas/STAB/xextract
+ext  = /home/whaley/git/math-atlas/./TEST/xextract
 extF = $(ext) -langF -lnlen71 -Remtblank -llwarn2 -LAPACK1 $(incs)
 ext9 = $(ext) -langF -lnlen132 -RemtBlank $(incs)
 extC = $(ext) -langC -lnlen79 -Remtblank -llwarn2 $(incs)
 extM = $(ext) -langM -lnlen79 -llwarn2 $(incs)
 incs = -def topd /home/whaley/git/math-atlas/AtlasBase \
        -def incd /home/whaley/git/math-atlas/AtlasBase/Clint \
-       -def ext  /home/whaley/git/math-atlas/STAB/xextract \
+       -def ext  /home/whaley/git/math-atlas/./TEST/xextract \
        -def BASEdir /home/whaley/git/math-atlas/AtlasBase/Antoine/ \
        -def basd /home/whaley/git/math-atlas/AtlasBase/Clint
 
@@ -22,8 +22,10 @@ incf = /home/whaley/git/math-atlas/AtlasBase/gen.inc
 basdr = $(basdRCW)/misc/ARCHDEF
 
 files = AMD64K10h32SSE3.tar.bz2 AMD64K10h64SSE3.tar.bz2 \
-        AMDDOZER32AVXFMA4.tar.bz2 AMDDOZER64AVXFMA4.tar.bz2 ARMv732.tar.bz2 \
-        ARMv732NEON.tar.bz2 BOZOL1.tar.bz2 Core232SSE3.tar.bz2 \
+        AMDDOZER32AVXFMA4.tar.bz2 AMDDOZER64AVXFMA4.tar.bz2 \
+        AMDDRIVER64AVXMAC.tar.bz2 AMDLLANO64SSE3.tar.bz2 ARM6464.tar.bz2 \
+        ARMv732FPV3D16MAC.tar.bz2 ARMv732FPV3D32MAC.tar.bz2 \
+        Atom64SSE3.tar.bz2 BOZOL1.tar.bz2 Core232SSE3.tar.bz2 \
         Core264SSE3.tar.bz2 CoreDuo32SSE3.tar.bz2 Corei132SSE3.tar.bz2 \
         Corei164SSE3.tar.bz2 Corei232AVX.tar.bz2 Corei264AVX.tar.bz2 \
         Corei264SSE3.tar.bz2 Corei364AVXMAC.tar.bz2 CreateDef.sh \
@@ -35,9 +37,10 @@ files = AMD64K10h32SSE3.tar.bz2 AMD64K10h64SSE3.tar.bz2 \
         POWER464.tar.bz2 POWER564.tar.bz2 POWER764VSX.tar.bz2 \
         PPCG432AltiVec.tar.bz2 PPCG532AltiVec.tar.bz2 PPCG564AltiVec.tar.bz2 \
         PPRO32.tar.bz2 USIII32.tar.bz2 USIII64.tar.bz2 USIV32.tar.bz2 \
-        USIV64.tar.bz2 UST232.tar.bz2 UST264.tar.bz2 atlas_test1.1.3.tar.bz2 \
-        lapack_test.tar.bz2 negflt.c negmmfile.c negmvfile.c negr1file.c \
-        x86SSE132SSE1.tar.bz2 x86SSE232SSE2.tar.bz2 x86x8732.tar.bz2
+        USIV64.tar.bz2 UST232.tar.bz2 UST264.tar.bz2 XeonPHI64AVXZ.tar.bz2 \
+        atlas_test1.1.3.tar.bz2 lapack_test.tar.bz2 negflt.c negmmfile.c \
+        negmvfile.c negr1file.c x86SSE132SSE1.tar.bz2 x86SSE232SSE2.tar.bz2 \
+        x86x8732.tar.bz2
 
 all : $(files) 
 
@@ -128,18 +131,12 @@ Corei264SSE3.tar.bz2 : $(basdr)/Corei264SSE3
            /tmp/Corei264SSE3.tar Corei264SSE3
 	bzip2 /tmp/Corei264SSE3.tar
 	mv /tmp/Corei264SSE3.tar.bz2 ./.
-ARMv732NEON.tar.bz2 : $(basdr)/ARMv732NEON
-	- rm -f /tmp/ARMv732NEON.tar /tmp/ARMv732NEON.tar.bz2
+Corei364AVXMAC.tar.bz2 : $(basdr)/Corei364AVXMAC
+	- rm -f /tmp/Corei364AVXMAC.tar /tmp/Corei364AVXMAC.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
-           /tmp/ARMv732NEON.tar ARMv732NEON
-	bzip2 /tmp/ARMv732NEON.tar
-	mv /tmp/ARMv732NEON.tar.bz2 ./.
-ARMv732.tar.bz2 : $(basdr)/ARMv732
-	- rm -f /tmp/ARMv732.tar /tmp/ARMv732.tar.bz2
-	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
-           /tmp/ARMv732.tar ARMv732
-	bzip2 /tmp/ARMv732.tar
-	mv /tmp/ARMv732.tar.bz2 ./.
+           /tmp/Corei364AVXMAC.tar Corei364AVXMAC
+	bzip2 /tmp/Corei364AVXMAC.tar
+	mv /tmp/Corei364AVXMAC.tar.bz2 ./.
 Corei132SSE3.tar.bz2 : $(basdr)/Corei132SSE3
 	- rm -f /tmp/Corei132SSE3.tar /tmp/Corei132SSE3.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
@@ -152,12 +149,36 @@ Corei232AVX.tar.bz2 : $(basdr)/Corei232AVX
            /tmp/Corei232AVX.tar Corei232AVX
 	bzip2 /tmp/Corei232AVX.tar
 	mv /tmp/Corei232AVX.tar.bz2 ./.
-Corei364AVXMAC.tar.bz2 : $(basdr)/Corei364AVXMAC
-	- rm -f /tmp/Corei364AVXMAC.tar /tmp/Corei364AVXMAC.tar.bz2
+XeonPHI64AVXZ.tar.bz2 : $(basdr)/XeonPHI64AVXZ
+	- rm -f /tmp/XeonPHI64AVXZ.tar /tmp/XeonPHI64AVXZ.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
-           /tmp/Corei364AVXMAC.tar Corei364AVXMAC
-	bzip2 /tmp/Corei364AVXMAC.tar
-	mv /tmp/Corei364AVXMAC.tar.bz2 ./.
+           /tmp/XeonPHI64AVXZ.tar XeonPHI64AVXZ
+	bzip2 /tmp/XeonPHI64AVXZ.tar
+	mv /tmp/XeonPHI64AVXZ.tar.bz2 ./.
+Atom64SSE3.tar.bz2 : $(basdr)/Atom64SSE3
+	- rm -f /tmp/Atom64SSE3.tar /tmp/Atom64SSE3.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/Atom64SSE3.tar Atom64SSE3
+	bzip2 /tmp/Atom64SSE3.tar
+	mv /tmp/Atom64SSE3.tar.bz2 ./.
+ARMv732FPV3D32MAC.tar.bz2 : $(basdr)/ARMv732FPV3D32MAC
+	- rm -f /tmp/ARMv732FPV3D32MAC.tar /tmp/ARMv732FPV3D32MAC.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/ARMv732FPV3D32MAC.tar ARMv732FPV3D32MAC
+	bzip2 /tmp/ARMv732FPV3D32MAC.tar
+	mv /tmp/ARMv732FPV3D32MAC.tar.bz2 ./.
+ARMv732FPV3D16MAC.tar.bz2 : $(basdr)/ARMv732FPV3D16MAC
+	- rm -f /tmp/ARMv732FPV3D16MAC.tar /tmp/ARMv732FPV3D16MAC.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/ARMv732FPV3D16MAC.tar ARMv732FPV3D16MAC
+	bzip2 /tmp/ARMv732FPV3D16MAC.tar
+	mv /tmp/ARMv732FPV3D16MAC.tar.bz2 ./.
+ARM6464.tar.bz2 : $(basdr)/ARM6464
+	- rm -f /tmp/ARM6464.tar /tmp/ARM6464.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/ARM6464.tar ARM6464
+	bzip2 /tmp/ARM6464.tar
+	mv /tmp/ARM6464.tar.bz2 ./.
 HAMMER64SSE3.tar.bz2 : $(basdr)/HAMMER64SSE3
 	- rm -f /tmp/HAMMER64SSE3.tar /tmp/HAMMER64SSE3.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
@@ -188,6 +209,18 @@ AMDDOZER32AVXFMA4.tar.bz2 : $(basdr)/AMDDOZER32AVXFMA4
            /tmp/AMDDOZER32AVXFMA4.tar AMDDOZER32AVXFMA4
 	bzip2 /tmp/AMDDOZER32AVXFMA4.tar
 	mv /tmp/AMDDOZER32AVXFMA4.tar.bz2 ./.
+AMDLLANO64SSE3.tar.bz2 : $(basdr)/AMDLLANO64SSE3
+	- rm -f /tmp/AMDLLANO64SSE3.tar /tmp/AMDLLANO64SSE3.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/AMDLLANO64SSE3.tar AMDLLANO64SSE3
+	bzip2 /tmp/AMDLLANO64SSE3.tar
+	mv /tmp/AMDLLANO64SSE3.tar.bz2 ./.
+AMDDRIVER64AVXMAC.tar.bz2 : $(basdr)/AMDDRIVER64AVXMAC
+	- rm -f /tmp/AMDDRIVER64AVXMAC.tar /tmp/AMDDRIVER64AVXMAC.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/AMDDRIVER64AVXMAC.tar AMDDRIVER64AVXMAC
+	bzip2 /tmp/AMDDRIVER64AVXMAC.tar
+	mv /tmp/AMDDRIVER64AVXMAC.tar.bz2 ./.
 P432SSE2.tar.bz2 : $(basdr)/P432SSE2
 	- rm -f /tmp/P432SSE2.tar /tmp/P432SSE2.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \

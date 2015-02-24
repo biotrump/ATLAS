@@ -1,11 +1,13 @@
 #include "atlas_misc.h"
 #include "atlas_threads.h"
+#define ATL_ESTNCTR 1
 #include "atlas_tlvl3.h"
+#include "atlas_ttypes.h"
+
 int Mjoin(PATL,StructIsInitTRSM)(void *vp)
 {
    return(((ATL_TTRSM_t*)vp)->B != NULL);
 }
-
 
 void Mjoin(PATL,DoWorkTRSM)(ATL_LAUNCHSTRUCT_t *lp, void *vp)
 {
@@ -37,6 +39,18 @@ void Mjoin(PATL,ttrsm)(const enum ATLAS_SIDE side, const enum ATLAS_UPLO uplo,
       Mjoin(PATL,gezero)(M, N, B, ldb);
       return;
    }
+   #if defined(ATL_ARCH_XeonPHI) && defined(TREAL)
+   {
+      int Mjoin(PATL,ttrsm_amm)
+         (const enum ATLAS_SIDE side, const enum ATLAS_UPLO uplo,
+          const enum ATLAS_TRANS TA, const enum ATLAS_DIAG diag,
+          ATL_CINT M, ATL_CINT N, const SCALAR alpha,
+          const TYPE *A, ATL_CINT lda, TYPE *B, ATL_CINT ldb);
+     if (!Mjoin(PATL,ttrsm_amm)(side, uplo, TA, diag, M, N, alpha,
+                                A, lda, B, ldb))
+        return;
+   }
+   #endif
 /*
  * Distribute RHS over the processors
  */

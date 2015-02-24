@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                   (C) Copyright 1999 Antoine P. Petitet
  *
  * Code contributers : Antoine P. Petitet, R. Clint Whaley
@@ -66,6 +66,8 @@ void Mjoin( PATL, f77gemv )
    const F77_INTEGER         F77M    = M,   F77N    = N,
                              F77lda  = LDA, F77incx = INCX, F77incy = INCY;
 #else
+   #define F77M M
+   #define F77N N
    #define F77lda            LDA
    #define F77incx           INCX
    #define F77incy           INCY

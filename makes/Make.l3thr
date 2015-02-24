@@ -33,10 +33,10 @@ ATL_Xtsyrk.o : $(deps) $(mySRCdir)/ATL_Xtsyrk.c
 
 sINCdep = $(deps) $(INCAdir)/smm.h
 
-sobj = ATL_sthreadMM.o ATL_stgemm_rec.o ATL_stgemm_K.o ATL_stgemm_N.o \
-       ATL_stgemm_M.o ATL_stNumGemmThreads.o ATL_stsymm.o ATL_sttrmm.o \
-       ATL_sttrsm.o ATL_stsyrk.o ATL_stsyr2k.o ATL_stgemm.o ATL_stgemm_rkK.o \
-       ATL_stgemm_bigMN_Kp.o
+sobj = ATL_sthreadMM.o ATL_stNumGemmThreads.o ATL_stsymm.o ATL_sttrmm.o \
+       ATL_sttrsm.o ATL_stsyrk.o ATL_stsyr2k.o ATL_stgemm.o ATL_sttrsm_amm.o \
+       ATL_stsyrk_amm.o ATL_stgemm_amm.o ATL_stammm_tNK.o ATL_stammm_tMN.o \
+       ATL_stammm_G.o
 
 slib : slib.grd ilib.grd
 slib.grd : $(sobj)
@@ -46,6 +46,18 @@ slib.grd : $(sobj)
 sclean:
 	rm -f $(sobj) slib.grd
 
+ATL_stammm_tMN.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_tMN.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tammm_tMN.c
+ATL_stammm_tNK.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_tNK.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tammm_tNK.c
+ATL_stammm_G.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_G.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tammm_G.c
+ATL_stgemm_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tgemm_amm.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_amm.c
+ATL_stsyrk_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tsyrk_amm.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tsyrk_amm.c
+ATL_sttrsm_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_ttrsm_amm.c
+	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_ttrsm_amm.c
 ATL_stgemm_p.o : $(deps) $(mySRCdir)/ATL_tgemm_p.c
 	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_p.c
 ATL_sthreadMM.o : $(mySRCdir)/ATL_threadMM.c 
@@ -64,14 +76,6 @@ ATL_stsymm.o : $(deps) $(mySRCdir)/ATL_tsymm.c
 	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tsymm.c
 ATL_stNumGemmThreads.o : $(deps) $(mySRCdir)/ATL_tNumGemmThreads.c
 	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tNumGemmThreads.c
-ATL_stgemm_M.o : $(deps) $(mySRCdir)/ATL_tgemm_M.c
-	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_M.c
-ATL_stgemm_N.o : $(deps) $(mySRCdir)/ATL_tgemm_N.c
-	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_N.c
-ATL_stgemm_K.o : $(deps) $(mySRCdir)/ATL_tgemm_K.c
-	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_K.c
-ATL_stgemm_rec.o : $(deps) $(mySRCdir)/ATL_tgemm_rec.c
-	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_rec.c
 ATL_stgemm_rkK.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK.c
 	$(KC) $(KCFLAGS) -DSREAL -o $@ -c $(mySRCdir)/ATL_tgemm_rkK.c
 ATL_stgemm_rkK_Np.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK_Np.c
@@ -96,10 +100,10 @@ ATL_stgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 dINCdep = $(deps) $(INCAdir)/dmm.h
 
-dobj = ATL_dthreadMM.o ATL_dtgemm_rec.o ATL_dtgemm_K.o ATL_dtgemm_N.o \
-       ATL_dtgemm_M.o ATL_dtNumGemmThreads.o ATL_dtsymm.o ATL_dttrmm.o \
-       ATL_dttrsm.o ATL_dtsyrk.o ATL_dtsyr2k.o ATL_dtgemm.o ATL_dtgemm_rkK.o \
-       ATL_dtgemm_bigMN_Kp.o
+dobj = ATL_dthreadMM.o ATL_dtNumGemmThreads.o ATL_dtsymm.o ATL_dttrmm.o \
+       ATL_dttrsm.o ATL_dtsyrk.o ATL_dtsyr2k.o ATL_dtgemm.o ATL_dttrsm_amm.o \
+       ATL_dtsyrk_amm.o ATL_dtgemm_amm.o ATL_dtammm_tNK.o ATL_dtammm_tMN.o \
+       ATL_dtammm_G.o
 
 dlib : dlib.grd ilib.grd
 dlib.grd : $(dobj)
@@ -109,6 +113,18 @@ dlib.grd : $(dobj)
 dclean:
 	rm -f $(dobj) dlib.grd
 
+ATL_dtammm_tMN.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_tMN.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tammm_tMN.c
+ATL_dtammm_tNK.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_tNK.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tammm_tNK.c
+ATL_dtammm_G.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tammm_G.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tammm_G.c
+ATL_dtgemm_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tgemm_amm.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_amm.c
+ATL_dtsyrk_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_tsyrk_amm.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tsyrk_amm.c
+ATL_dttrsm_amm.o : $(deps) $(INCSdir)/atlas_ttypes.h $(mySRCdir)/ATL_ttrsm_amm.c
+	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_ttrsm_amm.c
 ATL_dtgemm_p.o : $(deps) $(mySRCdir)/ATL_tgemm_p.c
 	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_p.c
 ATL_dthreadMM.o : $(mySRCdir)/ATL_threadMM.c 
@@ -127,14 +143,6 @@ ATL_dtsymm.o : $(deps) $(mySRCdir)/ATL_tsymm.c
 	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tsymm.c
 ATL_dtNumGemmThreads.o : $(deps) $(mySRCdir)/ATL_tNumGemmThreads.c
 	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tNumGemmThreads.c
-ATL_dtgemm_M.o : $(deps) $(mySRCdir)/ATL_tgemm_M.c
-	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_M.c
-ATL_dtgemm_N.o : $(deps) $(mySRCdir)/ATL_tgemm_N.c
-	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_N.c
-ATL_dtgemm_K.o : $(deps) $(mySRCdir)/ATL_tgemm_K.c
-	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_K.c
-ATL_dtgemm_rec.o : $(deps) $(mySRCdir)/ATL_tgemm_rec.c
-	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_rec.c
 ATL_dtgemm_rkK.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK.c
 	$(KC) $(KCFLAGS) -DDREAL -o $@ -c $(mySRCdir)/ATL_tgemm_rkK.c
 ATL_dtgemm_rkK_Np.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK_Np.c
@@ -159,10 +167,9 @@ ATL_dtgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 cINCdep = $(deps) $(INCAdir)/cmm.h
 
-cobj = ATL_cthreadMM.o ATL_ctgemm_rec.o ATL_ctgemm_K.o ATL_ctgemm_N.o \
-       ATL_ctgemm_M.o ATL_ctNumGemmThreads.o ATL_ctsymm.o ATL_cttrmm.o \
+cobj = ATL_cthreadMM.o ATL_ctNumGemmThreads.o ATL_ctsymm.o ATL_cttrmm.o \
        ATL_cttrsm.o ATL_ctsyrk.o ATL_ctsyr2k.o ATL_ctgemm.o ATL_ctherk.o \
-       ATL_cthemm.o ATL_cther2k.o ATL_ctgemm_rkK.o ATL_ctgemm_bigMN_Kp.o
+       ATL_cthemm.o ATL_cther2k.o
 
 clib : clib.grd ilib.grd
 clib.grd : $(cobj)
@@ -196,14 +203,6 @@ ATL_ctsymm.o : $(deps) $(mySRCdir)/ATL_tsymm.c
 	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tsymm.c
 ATL_ctNumGemmThreads.o : $(deps) $(mySRCdir)/ATL_tNumGemmThreads.c
 	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tNumGemmThreads.c
-ATL_ctgemm_M.o : $(deps) $(mySRCdir)/ATL_tgemm_M.c
-	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_M.c
-ATL_ctgemm_N.o : $(deps) $(mySRCdir)/ATL_tgemm_N.c
-	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_N.c
-ATL_ctgemm_K.o : $(deps) $(mySRCdir)/ATL_tgemm_K.c
-	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_K.c
-ATL_ctgemm_rec.o : $(deps) $(mySRCdir)/ATL_tgemm_rec.c
-	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_rec.c
 ATL_ctgemm_rkK.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK.c
 	$(KC) $(KCFLAGS) -DSCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_rkK.c
 ATL_ctgemm_rkK_Np.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK_Np.c
@@ -228,10 +227,9 @@ ATL_ctgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 zINCdep = $(deps) $(INCAdir)/zmm.h
 
-zobj = ATL_zthreadMM.o ATL_ztgemm_rec.o ATL_ztgemm_K.o ATL_ztgemm_N.o \
-       ATL_ztgemm_M.o ATL_ztNumGemmThreads.o ATL_ztsymm.o ATL_zttrmm.o \
+zobj = ATL_zthreadMM.o ATL_ztNumGemmThreads.o ATL_ztsymm.o ATL_zttrmm.o \
        ATL_zttrsm.o ATL_ztsyrk.o ATL_ztsyr2k.o ATL_ztgemm.o ATL_ztherk.o \
-       ATL_zthemm.o ATL_zther2k.o ATL_ztgemm_rkK.o ATL_ztgemm_bigMN_Kp.o
+       ATL_zthemm.o ATL_zther2k.o
 
 zlib : zlib.grd ilib.grd
 zlib.grd : $(zobj)
@@ -265,14 +263,6 @@ ATL_ztsymm.o : $(deps) $(mySRCdir)/ATL_tsymm.c
 	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tsymm.c
 ATL_ztNumGemmThreads.o : $(deps) $(mySRCdir)/ATL_tNumGemmThreads.c
 	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tNumGemmThreads.c
-ATL_ztgemm_M.o : $(deps) $(mySRCdir)/ATL_tgemm_M.c
-	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_M.c
-ATL_ztgemm_N.o : $(deps) $(mySRCdir)/ATL_tgemm_N.c
-	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_N.c
-ATL_ztgemm_K.o : $(deps) $(mySRCdir)/ATL_tgemm_K.c
-	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_K.c
-ATL_ztgemm_rec.o : $(deps) $(mySRCdir)/ATL_tgemm_rec.c
-	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_rec.c
 ATL_ztgemm_rkK.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK.c
 	$(KC) $(KCFLAGS) -DDCPLX -o $@ -c $(mySRCdir)/ATL_tgemm_rkK.c
 ATL_ztgemm_rkK_Np.o : $(deps) $(mySRCdir)/ATL_tgemm_rkK_Np.c

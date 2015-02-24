@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,6 +44,9 @@
 #include "cblas.h"
 #ifdef ATL_USEPTHREADS
    #include "atlas_tlvl3.h"
+#endif
+#ifdef TRUST_REF
+   #include "atlas_reflevel3.h"
 #endif
 #if defined(ATL_RKXOVER) || defined(TEST_RANKK)
    #define TRUST_BIGNORK
@@ -154,10 +157,29 @@ void matnan(int M, int N, TYPE *C, int ldc, int seed)
 }
 #endif
 
+static int IK0=0, IKN=0, incIK=1, IIK=0;
+#if defined(TEST_AMM2)
+   #define TRUST_BLKMAJ 1
+   int Mjoin(PATL,ammm)
+      (enum ATLAS_TRANS TA, enum ATLAS_TRANS TB, ATL_CSZT M, ATL_CSZT N,
+       ATL_CSZT K, const SCALAR alpha, const TYPE *A, ATL_CSZT lda,
+       const TYPE *B, ATL_CSZT ldb, const SCALAR beta, TYPE *C, ATL_CSZT ldc);
+#endif
+
+#if defined(TEST_AMMM)
+   #define TRUST_BLKMAJ 1
+   int Mjoin(PATL,ammmNMK)
+      (int IK, enum ATLAS_TRANS TA, enum ATLAS_TRANS TB, ATL_CSZT M, ATL_CSZT N,
+       ATL_CSZT K, const SCALAR alpha, const TYPE *A, ATL_CSZT lda,
+       const TYPE *B, ATL_CSZT ldb, const SCALAR beta, TYPE *C, ATL_CSZT ldc);
+#endif
 #if defined(TRUST_C)
    #define trusted_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(Mjoin(cblas_,PRE),gemm) \
          (CblasColMajor, TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
+#elif defined(TRUST_REF)
+   #define trusted_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
+      Mjoin(PATL,refgemm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
 #elif defined(ATL_NOAFFINITY) || defined(ATL_AFFINITY)
    #define trusted_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,tgemm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
@@ -176,7 +198,7 @@ void matnan(int M, int N, TYPE *C, int ldc, int seed)
 #elif defined(TRUST_JIT)
    #define trusted_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,mmJITcp)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
-#elif defined(ATL_USEPTHREADS) && !defined(TEST_F77)
+#elif (defined(ATL_USEPTHREADS) && !defined(TEST_F77)) || defined(TRUST_BLKMAJ)
    #define trusted_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,gemm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
 #else
@@ -188,6 +210,12 @@ void matnan(int M, int N, TYPE *C, int ldc, int seed)
    #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,gpmm)(PackGen, TA, PackGen, TB, PackGen, m, n, k, al, \
                        A, 0, 0, lda, B, 0, 0, ldb, be, C, 0, 0, ldc)
+#elif defined(TEST_AMM2)
+   #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
+      Mjoin(PATL,ammm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
+#elif defined(TEST_AMMM)
+   #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
+      Mjoin(PATL,ammmNMK)(IIK,TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
 #elif defined(ATL_NOAFFINITY) || defined(ATL_AFFINITY)
    #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,tgemm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
@@ -251,7 +279,7 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
    #define MBETA *beta, beta[1]
    char *form="%4d   %c   %c %4d %4d %4d  %5.1f %5.1f  %5.1f %5.1f  %6.2f %6.1f %4.2f   %3s\n";
 #endif
-   int ii, jj, i, j=0, PASSED, nerrs, Na, Nb;
+   int ii, jj, i, j=0, PASSED, nerrs, Na, Nb, ibad=(-1), jbad=(-1);
    double t0, t1, t2, t3, mflop;
    TYPE maxval, f1, ferr;
    static TYPE feps=0.0;
@@ -310,14 +338,17 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
      for (i=0; i != nL2; i++) j += L2[i];
      }*/
 
-   /* invalidate L2 cache */
-   #if !ATL_LINEFLUSH
-      l2ret = ATL_flushcache( -1 );
-   #else
-      ATL_flushCacheByAddr(ldc*N, C);
-      ATL_flushCacheByAddr(ldb*Nb, B);
-      ATL_flushCacheByAddr(lda*Na, A);
-   #endif
+   if (CACHESIZE > 0)
+   {
+      /* invalidate L2 cache */
+      #if !ATL_LINEFLUSH
+         l2ret = ATL_flushcache( -1 );
+      #else
+         ATL_flushCacheByAddr(ldc*N, C);
+         ATL_flushCacheByAddr(ldb*Nb, B);
+         ATL_flushCacheByAddr(lda*Na, A);
+      #endif
+   }
 
    t0 = time00();
    trusted_gemm(TAc, TBc, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
@@ -342,14 +373,17 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
       matgen(M, N, D, ldd, M*N);
    #endif
 
-   /* invalidate L2 cache */
-   #if !ATL_LINEFLUSH
-      l2ret = ATL_flushcache( -1 );
-   #else
-      ATL_flushCacheByAddr(ldc*N, D);
-      ATL_flushCacheByAddr(ldb*Nb, B);
-      ATL_flushCacheByAddr(lda*Na, A);
-   #endif
+   if (CACHESIZE > 0)
+   {
+      /* invalidate L2 cache */
+      #if !ATL_LINEFLUSH
+         l2ret = ATL_flushcache( -1 );
+      #else
+         ATL_flushCacheByAddr(ldc*N, D);
+         ATL_flushCacheByAddr(ldb*Nb, B);
+         ATL_flushCacheByAddr(lda*Na, A);
+      #endif
+   }
    t0 = time00();
    test_gemm(TAc, TBc, M, N, K, alpha, A, lda, B, ldb, beta, D, ldd);
 
@@ -418,6 +452,10 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
             if (f1 < 0.0) f1 = -f1;
             if (f1 > ferr)
             {
+               if (ibad == -1)
+                  ibad = i+1;
+               if (jbad == -1)
+                  jbad = j+1;
                nerrs++;
                PASSED = 0;
                pc = "NO!";
@@ -440,7 +478,8 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
          C += ldc SHIFT;
       }
       if (maxval != 0.0)
-         fprintf(stderr, "ERROR: nerr=%d, i=%d, j=%d, maxval=%e\n", nerrs, ii,jj, maxval);
+         fprintf(stderr, "ERROR: nerr=%d, first(%d,%d), maxval(%d,%d)=%e\n",
+                 nerrs, ibad, jbad, ii,jj, maxval);
    }
    else pc = "---";
    if (t1 == t2) t3 = 1.0;
@@ -455,7 +494,12 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
             speedup_rk[K] = (t3 >= 1.0) ? t3*100 : 0;
       }
    #endif
+   #ifdef TEST_AMMM
+   printf(form, IIK, TA, TB, M, N, K, MALPH, MBETA, t2, mflop, t3, pc);
+   itst++;
+   #else
    printf(form, itst++, TA, TB, M, N, K, MALPH, MBETA, t2, mflop, t3, pc);
+   #endif
 #else
    itst++;
    PASSED = 1;
@@ -556,6 +600,9 @@ int mmcase0(int MFLOP, size_t CACHESIZE, char TA, char TB, int M, int N, int K,
       nset = 2;
    vp = malloc(ATL_MulBySize(nset*inc)+ATL_Cachelen);
    ATL_assert(vp);
+   #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+      ATL_NumaTouchSpread(ATL_MulBySize(nset*inc)+ATL_Cachelen, vp);
+   #endif
    C = c = ATL_AlignPtr(vp);
    a = A = C + incC;
    b = B = A + incA;
@@ -627,7 +674,11 @@ int mmcase0(int MFLOP, size_t CACHESIZE, char TA, char TB, int M, int N, int K,
             speedup_rk[K] = (t3 >= 1.0) ? t3*100 : 0;
       }
    #endif
+   #ifdef TEST_AMMM
+   printf(form, IIK, TA, TB, M, N, K, MALPH, MBETA, t2, mflop, t3, pc);
+   #else
    printf(form, itst-4, TA, TB, M, N, K, MALPH, MBETA, t2, mflop, t3, pc);
+   #endif
    itst++;
    free(vp);
    return(1);
@@ -635,7 +686,7 @@ int mmcase0(int MFLOP, size_t CACHESIZE, char TA, char TB, int M, int N, int K,
 
 void PrintUsage(char *nam)
 {
-   fprintf(stderr, "USAGE: %s -Side <nsides> L/R -Uplo <nuplo> L/U -Atrans <ntrans> n/t/c -Btrans <ntrans> n/t/c -Diag <ndiags> N/U -M <m1> <mN> <minc> -N <n1> <nN> <ninc> <k1> <kN> <kinc> -n <n> -m <m> -k <k> -a <nalphas> <alpha1> ... <alphaN> -b <nbetas> <beta1> ... <betaN> -Test <0/1> -F <mflops> -C <cachesize>\n", nam);
+   fprintf(stderr, "USAGE: %s -Side <nsides> L/R -Uplo <nuplo> L/U -Atrans <ntrans> n/t/c -Btrans <ntrans> n/t/c -Diag <ndiags> N/U -M <m1> <mN> <minc> -N <n1> <nN> <ninc> <k1> <kN> <kinc> -n <n> -m <m> -k <k> -a <nalphas> <alpha1> ... <alphaN> -b <nbetas> <beta1> ... <betaN> -Test <0/1> -F <mflops> -i <IKERN> -I <IK1> <IKN> <incIK> -C <cachesize> -W <warmup> \n", nam);
    exit(-1);
 }
 
@@ -646,7 +697,8 @@ void GetFlags(int nargs, char *args[], int *TEST, int *nside,
               enum ATLAS_DIAG **Diag, int *M0, int *MN, int *Minc,
               int *N0, int *NN, int *Ninc, int *K0, int *KN, int *Kinc,
               int *nalphas, TYPE **alphas, int *nbetas, TYPE **betas,
-              int *LDA_IS_M, int *MFLOP, int *CACHESIZE, int *nrep)
+              int *LDA_IS_M, int *MFLOP, int *CACHESIZE, int *nrep,
+              int *WARM)
 
 {
    char ch;
@@ -660,6 +712,7 @@ void GetFlags(int nargs, char *args[], int *TEST, int *nside,
    *M0 = *N0 = *K0 = -1;
    *nuplo = *nta = *ntb = *nside = *ndiag = *nalphas = *nbetas = -1;
    *MFLOP = *LDA_IS_M = 0;
+   *WARM = 1;
 #ifdef L2SIZE
    *CACHESIZE = L2SIZE;               /* Size of largest cache to flush */
 #else
@@ -670,12 +723,25 @@ void GetFlags(int nargs, char *args[], int *TEST, int *nside,
    {
       switch(args[i][1])
       {
+      case 'W':
+         *WARM = atoi(args[++i]);
+         break;
       case '#':
          *nrep = atoi(args[++i]);
          break;
       case 'F':
          *MFLOP = atoi(args[++i]);
          break;
+      #ifdef TEST_AMMM
+      case 'i':
+         IK0 = IKN = atoi(args[++i]);
+         break;
+      case 'I':
+         IK0 = atoi(args[++i]);
+         IKN = atoi(args[++i]);
+         incIK = atoi(args[++i]);
+         break;
+      #endif
       case 'C':
             if( args[i+1] == NULL ) PrintUsage( args[0] );
 	    *CACHESIZE = 1024*atoi(args[++i]);
@@ -925,12 +991,13 @@ int main(int nargs, char *args[])
    enum ATLAS_UPLO *Uplo;
    enum ATLAS_TRANS *TransA, *TransB, TAc, TBc;
    enum ATLAS_DIAG *Diag;
-   int CACHESIZE;
+   int CACHESIZE, WARM;
 
    GetFlags(nargs, args, &TEST, &nside, &Side, &nuplo, &Uplo,
             &nTA, &TransA, &nTB, &TransB, &ndiag, &Diag,
             &M0, &MN, &incM, &N0, &NN, &incN, &K0, &KN, &incK,
-            &nalph, &alph, &nbeta, &beta, &LDA_IS_M, &MFLOP,&CACHESIZE, &nrep);
+            &nalph, &alph, &nbeta, &beta, &LDA_IS_M, &MFLOP,&CACHESIZE, &nrep,
+            &WARM);
 
    if (M0 == -1)
    {
@@ -955,6 +1022,12 @@ int main(int nargs, char *args[])
          fprintf(stderr, "Not enough memory to run tests!!\n");
          exit(-1);
       }
+      #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+         ATL_NumaTouchSpread(MN*KN*ATL_sizeof, A);
+         ATL_NumaTouchSpread(NN*KN*ATL_sizeof, B);
+         ATL_NumaTouchSpread(MN*NN*ATL_sizeof, C);
+         ATL_NumaTouchSpread(MN*NN*ATL_sizeof, D);
+      #endif
    }
 /*
  * Page the code in from disk, so first timing doesn't blow
@@ -966,10 +1039,13 @@ int main(int nargs, char *args[])
       #else
          k = 100;
       #endif
-      mmcase0(10, 1, 'n', 'n', 100, 100, k, alp1, 100, 100, bet1, 100);
-      mmcase0(10, 1, 'n', 't', 100, 100, k, alp1, 100, 100, bet1, 100);
-      mmcase0(10, 1, 't', 'n', 100, 100, k, alp1, 100, 100, bet1, 100);
-      mmcase0(10, 1, 't', 't', 100, 100, k, alp1, 100, 100, bet1, 100);
+      if (WARM)
+      {
+         mmcase0(10, 1, 'n', 'n', 100, 100, k, alp1, 100, 100, bet1, 100);
+         mmcase0(10, 1, 'n', 't', 100, 100, k, alp1, 100, 100, bet1, 100);
+         mmcase0(10, 1, 't', 'n', 100, 100, k, alp1, 100, 100, bet1, 100);
+         mmcase0(10, 1, 't', 't', 100, 100, k, alp1, 100, 100, bet1, 100);
+      }
    }
    else
    {
@@ -981,8 +1057,11 @@ int main(int nargs, char *args[])
       matgen(m, n, C, m, m*n);
       TA = TB = 'N';
       TAc = TBc = AtlasNoTrans;
-      trusted_gemm(TAc, TBc, m, n, k, alp1, A, m, B, k, bet1, C, m);
-      test_gemm(TAc, TBc, m, n, k, alp1, A, m, B, k, bet1, C, m);
+      if (WARM)
+      {
+         trusted_gemm(TAc, TBc, m, n, k, alp1, A, m, B, k, bet1, C, m);
+         test_gemm(TAc, TBc, m, n, k, alp1, A, m, B, k, bet1, C, m);
+      }
    }
 
 #ifdef TREAL
@@ -1017,7 +1096,6 @@ int main(int nargs, char *args[])
                   {
                      for (ib=0; ib != nbeta; ib++)
                      {
-                        itst++;
                         if (LDA_IS_M)
                         {
                            if (TA == 'n' || TA == 'N') lda = m;
@@ -1034,6 +1112,11 @@ int main(int nargs, char *args[])
                            else ldb = NN;
                            ldc = MN;
                         }
+                        #ifdef TEST_AMMM
+                        for (IIK=IK0; IIK <= IKN; IIK += incIK)
+                        {
+                        #endif
+                        itst++;
                         for (r=0; r < nrep; r++)
                         {
                            if (MFLOP)
@@ -1082,6 +1165,9 @@ int main(int nargs, char *args[])
                               }
                               #endif
                         }
+                        #ifdef TEST_AMMM
+                        }
+                        #endif
                      }
                   }
                }

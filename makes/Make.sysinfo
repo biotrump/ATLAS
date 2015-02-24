@@ -4,6 +4,7 @@ mySRCdir = $(SRCdir)/tune/sysinfo
 maxlat=6
 mflop=200
 flags=
+nreg=0
 
 sTestFlags : force_build
 	$(MAKE) srbob `cat res/sBEST` pre='s' type=float
@@ -26,7 +27,7 @@ $(INCAdir)/atlas_ssysinfo.h : xsyssum $(ATLFWAIT)
 	$(ATLFWAIT) -f $(INCAdir)/atlas_ssysinfo.h
 
 res/sMULADD : 
-	$(MAKE) RunMulAdd pre=s
+	$(MAKE) RunMulAdd pre=s nreg=$(nreg)
 
 dRunSysSum : $(INCAdir)/atlas_dsysinfo.h
 
@@ -35,7 +36,7 @@ $(INCAdir)/atlas_dsysinfo.h : xsyssum $(ATLFWAIT)
 	$(ATLFWAIT) -f $(INCAdir)/atlas_dsysinfo.h
 
 res/dMULADD : 
-	$(MAKE) RunMulAdd pre=d
+	$(MAKE) RunMulAdd pre=d nreg=$(nreg)
 
 cRunSysSum : $(INCAdir)/atlas_csysinfo.h
 
@@ -44,7 +45,7 @@ $(INCAdir)/atlas_csysinfo.h : xsyssum $(ATLFWAIT)
 	$(ATLFWAIT) -f $(INCAdir)/atlas_csysinfo.h
 
 res/cMULADD : 
-	$(MAKE) RunMulAdd pre=c
+	$(MAKE) RunMulAdd pre=c nreg=$(nreg)
 
 zRunSysSum : $(INCAdir)/atlas_zsysinfo.h
 
@@ -53,21 +54,21 @@ $(INCAdir)/atlas_zsysinfo.h : xsyssum $(ATLFWAIT)
 	$(ATLFWAIT) -f $(INCAdir)/atlas_zsysinfo.h
 
 res/zMULADD : 
-	$(MAKE) RunMulAdd pre=z
+	$(MAKE) RunMulAdd pre=z nreg=$(nreg)
 
 	
 $(MMTdir)/res/sMULADD : res/sMULADD
 	rm -f $(MMTdir)/res/sMULADD
 	ln -s $(SYSdir)/res/sMULADD $(MMTdir)/res/sMULADD
 res/snreg : $(MMTdir)/res/sMULADD
-	cd $(MMTdir) ; $(MAKE) res/snreg
+	cd $(MMTdir) ; $(MAKE) res/snreg nreg=$(nreg)
 	cd res ; ln -s $(MMTdir)/res/snreg snreg
         
 $(MMTdir)/res/dMULADD : res/dMULADD
 	rm -f $(MMTdir)/res/dMULADD
 	ln -s $(SYSdir)/res/dMULADD $(MMTdir)/res/dMULADD
 res/dnreg : $(MMTdir)/res/dMULADD
-	cd $(MMTdir) ; $(MAKE) res/dnreg
+	cd $(MMTdir) ; $(MAKE) res/dnreg nreg=$(nreg)
 	cd res ; ln -s $(MMTdir)/res/dnreg dnreg
         
 
@@ -78,7 +79,7 @@ RunMADef : xmasrch
 	./xmasrch -p $(pre) -o res/$(pre)MULADD
 
 RunMulAdd: xmasrch
-	./xmasrch -p $(pre) -o res/$(pre)MULADD
+	./xmasrch -p $(pre) -n $(nreg) -o res/$(pre)MULADD
 
 RunLamch : xemit_lamch
 	$(ATLRUN) $(SYSdir) xemit_lamch $(INCAdir)
@@ -98,6 +99,8 @@ xtlb : time.o tlb.o
 
 xL2 : time.o L2CacheSize.o
 	$(CLINKER) $(CLINKFLAGS) -o $@ L2CacheSize.o time.o
+xcachesweep : time.o cacheSweep.o
+	$(CLINKER) $(CLINKFLAGS) -o $@ cacheSweep.o time.o
 
 xemit_lamch : emit_lamch.o
 	$(KC) $(KCFLAGS) -o $@ emit_lamch.o $(LIBS)
@@ -144,6 +147,8 @@ GetSysSum.o : $(INCAdir)/atlas_type.h $(mySRCdir)/GetSysSum.c
 	$(XCC) -c $(XCCFLAGS) $(mySRCdir)/GetSysSum.c
 time.o : $(mySRCdir)/time.c
 	$(KC) -c $(KCFLAGS) -I./ $(mySRCdir)/time.c
+cacheSweep.o : $(mySRCdir)/cacheSweep.c
+	$(KC) -c $(KCFLAGS) $(mySRCdir)/cacheSweep.c
 emit_lamch.o : $(mySRCdir)/emit_lamch.c
 	$(KC) -c $(KCFLAGS) $(mySRCdir)/emit_lamch.c
 emit_typ.o : $(mySRCdir)/emit_typ.c

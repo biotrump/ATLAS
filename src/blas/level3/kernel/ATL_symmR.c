@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -62,10 +62,10 @@ void Mjoin(Mjoin(PATL,symmR),UploNM)
          if ( SCALAR_IS_ONE(alpha) )
             Mjoin(Mjoin(Mjoin(PATL,sycopy),UploNM),_a1)(N, alpha, A, lda, a);
          else Mjoin(Mjoin(Mjoin(PATL,sycopy),UploNM),_aX)(N, alpha, A, lda, a);
-         CgemmNN(M, N, N, one, B, ldb, a, N, beta, C, ldc);
+         ATL_ammm(AtlasNoTrans, AtlasNoTrans, M, N, N, one, B, ldb, a, N, beta, C, ldc);
       #else
          Mjoin(Mjoin(PATL,sycopy),UploNM)(N, A, lda, a);
-         CgemmNN(M, N, N, valpha, B, ldb, a, N, vbeta, C, ldc);
+         ATL_ammm(AtlasNoTrans, AtlasNoTrans, M, N, N, valpha, B, ldb, a, N, vbeta, C, ldc);
       #endif
       free(va);
    }

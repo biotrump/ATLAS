@@ -61,7 +61,9 @@
  *    USE_L1_PTHREADS  : multi-threaded ATLAS implementation.
  */
 
-#define USE_F77_BLAS
+#ifndef USE_L1_REFERENCE
+   #define USE_F77_BLAS
+#endif
 
 #if defined(ATL_USEPTHREADS) && !defined(ATL_MIKE)
    #define USE_L1_PTHREADS

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,12 +37,15 @@
 #if defined(SREAL)
    #include "smm.h"
    #include "sXover.h"
+   #include "atlas_samm_sum.h"
 #elif defined(DREAL)
    #include "dmm.h"
    #include "dXover.h"
+   #include "atlas_damm_sum.h"
 #elif defined(QREAL)
    #include "qmm.h"
    #include "qXover.h"
+   #include "atlas_qamm_sum.h"
 #elif defined(SCPLX)
    #ifdef ATL_NCMM
       #include "atlas_cNCmm.h"
@@ -50,6 +53,7 @@
       #include "cmm.h"
    #endif
    #include "cXover.h"
+   #include "atlas_samm_sum.h"
 #elif defined(DCPLX)
    #ifdef ATL_NCMM
       #include "atlas_zNCmm.h"
@@ -58,6 +62,7 @@
    #endif
    #include "zmm.h"
    #include "zXover.h"
+   #include "atlas_damm_sum.h"
 #endif
 #ifndef ATL_3NB
    #define ATL_3NB 3*NB

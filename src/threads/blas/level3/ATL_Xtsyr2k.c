@@ -11,7 +11,7 @@ static int ATL_tsyr2kK(ATL_SYR2K_t *syp, ATL_CINT N, ATL_CINT K,
  * RETURNS: 0 on success, nonzero if unable to allocate memory
  */
 {
-   void *v, *W;
+   void *v=NULL, *W;
    ATL_INT ldw;
    int i;
    size_t sz;
@@ -24,7 +24,7 @@ static int ATL_tsyr2kK(ATL_SYR2K_t *syp, ATL_CINT N, ATL_CINT K,
    if (!(ldw&(ldw-1)))
       ldw += 4;
    sz = (ldw*N)<<eltsh;
-   if (sz <= ATL_NTHREADS*ATL_PTMAXMALLOC)
+   if ((sz>>20) <= ATL_PTMAXMALLOC_MB)
       v = malloc(sz + ATL_Cachelen);
    if (!v)
       return(1);  /* signal we can't get memory */

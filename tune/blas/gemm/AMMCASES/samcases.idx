@@ -1,0 +1,66 @@
+#
+# In this file, any line beginning with a '#' is ignored, but the # must be in
+# column 0.  All multiple whitespace is reduced to one space (i.e. used only
+# to distinguish where words begin/end).  Lines may be extended by putting '\'
+# as the *last* character of line.
+#
+# The file has the following format:
+# ROUT='routine name' AUTH='author names' COMP='compiler name' CFLAGS='flags'
+# ID=<id> NU=<nu> MU=<mu> KU=<ku> KBMAX=<kbmax> KBMIN=<kbmin>
+# SSE=[0,1,2,3] X87=[0,1] BMABC=<0/1> BMAB=<0/1> JKMAB=<0/1> JKMABC=<0/1>
+# AOUTER=<0/1> BETAN1=<0/1> KRUNTIME=<0/1> LDCTOP=<0/1> X87=<0/1>
+# ASM=[asmlist], eg., asmlist is "GAS_x8664,GAS_x8632" or "GAS_SPARC"
+# ASM defaults to no assembly dialect required.
+# If NU/MU is negative, then the routine can only handle multiples of NU/MU.
+#
+ID=1 MU=16 NU=4 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_samm16x4x1_av.c' \
+     KRUNTIME=1 COMP='gcc' CFLAGS='-Os -maltivec -mabi=altivec -mcpu=970 -mtune=970 -mvrsave -fschedule-insns2 -fno-schedule-insns'
+ID=2 MU=4 NU=6 KU=2 AUTH="R. Clint Whaley" ROUT='ATL_samm4x6x2_arm.S' \
+     ASM=GAS_ARM KRUNTIME=1 KBMIN=4 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -mfpu=vfpv3'
+ID=3 MU=4 NU=6 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_samm4x6x1_arm.S' \
+     ASM=GAS_ARM KRUNTIME=1 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -mfpu=vfpv3'
+ID=7 MU=24 NU=3 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_samm24x3x256_avx.S' \
+     SSE=3 KBMAX=256 ASM=GAS_x8664 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -mavx'
+ID=8 MU=8 NU=4 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_sammm8x4x256_sse2.S' \
+     SSE=2 KBMAX=256 ASM=GAS_x8664 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -msse2'
+ID=16 MU=6 NU=1 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_amm6x1x1_x87.S' \
+     ASM=GAS_x8664,GAS_x8632 KRUNTIME=1 x87=1 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp'
+ID=23 MU=4 NU=2 KU=4 AUTH="R. Clint Whaley" ROUT='ATL_amm4x2x4_kb4.c' \
+     KRUNTIME=0 KBMIN=4 KBMAX=4
+ID=24 MU=24 NU=4 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_sammm24x4x256_fma3.S' \
+     SSE=5 KBMAX=256 ASM=GAS_x8664 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -msse3 -mfma'
+ID=25 MU=24 NU=4 KU=2 AUTH="R. Clint Whaley" ROUT='ATL_samm24x4x2_fma3.S' \
+     SSE=5 ASM=GAS_x8664 KRUNTIME=1 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -mavx -mfma'
+ID=26 MU=12 NU=1 KU=4 AUTH="R. Clint Whaley" ROUT='ATL_skmmm12x1x4_sse3.S' \
+     SSE=3 KMAJ=4 ASM=GAS_x8664 KRUNTIME=1 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -msse2'
+ID=27 MU=12 NU=1 KU=4 AUTH="R. Clint Whaley" ROUT='ATL_skmmm12x1x256_sse3.S' \
+     SSE=3 KMAJ=4 ASM=GAS_x8664 KRUNTIME=0 KBMIN=4 KBMAX=256 \
+     COMP='gcc' CFLAGS='-x assembler-with-cpp -msse2'
+#ID=26 MU=12 NU=3 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_sammm12x3d2x256_sse3.S' \
+#     SSE=3 DUPB=2 KBMAX=256 ASM=GAS_x8664 \
+#     COMP='gcc' CFLAGS='-x assembler-with-cpp -msse2'
+ID=34 MU=48 NU=8 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_damm24x8x1_avxz.S' \
+      ASM=GAS_x8664 KRUNTIME=1 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+ID=35 MU=64 NU=4 KU=2 AUTH="R. Clint Whaley" ROUT='ATL_damm32x4x2rp_avxz.S' \
+      ASM=GAS_x8664 KRUNTIME=1 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+#ID=36 MU=64 NU=4 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_damm32x4x256_avxz.S' \
+#      ASM=GAS_x8664 KBMAX=320 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+ID=37 MU=64 NU=6 KU=1 AUTH="R. Clint Whaley" ROUT='ATL_damm32x6x1_avxz.S' \
+      ASM=GAS_x8664 KRUNTIME=1 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+ID=38 MU=32 NU=8 KU=4 AUTH="R. Clint Whaley" ROUT='ATL_damm16x8x4_avxz.S' \
+      ASM=GAS_x8664 KRUNTIME=1 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+ID=40 MU=48 NU=8 KU=2 AUTH="R. Clint Whaley" ROUT='ATL_damm24x8x2_avxz.S' \
+      ASM=GAS_x8664 KRUNTIME=1 COMP='icc' CFLAGS='-x assembler-with-cpp -mmic'
+ID=42 MU=4 NU=6 KU=2 AUTH="Nuechterlein & Whaley" \
+      ROUT='ATL_samm4x6x2b_aarch64.S' \
+      ASM=GAS_ARM64 KRUNTIME=1 KBMIN=4 \
+      COMP='gcc' CFLAGS='-x assembler-with-cpp'
+

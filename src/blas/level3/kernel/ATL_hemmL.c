@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -45,7 +45,8 @@ void Mjoin(Mjoin(PATL,hemmL),UploNM)
       ATL_assert(va);
       a = ATL_AlignPtr(va);
       Mjoin(Mjoin(PATL,hecopy),UploNM)(M, A, lda, a);
-      CgemmNN(M, N, M, alpha, a, M, B, ldb, beta, C, ldc);
+      ATL_ammm(AtlasNoTrans, AtlasNoTrans, M, N, M, alpha, a, M, B, ldb,
+               beta, C, ldc);
       free(va);
    }
    else Mjoin(PATL,refhemm)(AtlasLeft, Uplo_, M, N, alpha, A, lda, B, ldb,

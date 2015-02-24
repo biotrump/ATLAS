@@ -6,13 +6,13 @@
 #include <assert.h>
 #include <string.h>
 #include <ctype.h>
-#define NASMD 9
+#define NASMD 10
 enum ASMDIA
    {ASM_None=0, gas_x86_32, gas_x86_64, gas_sparc, gas_ppc, gas_parisc,
     gas_mips, gas_arm, gas_s390};
 static char *ASMNAM[NASMD] =
    {"",     "GAS_x8632", "GAS_x8664", "GAS_SPARC", "GAS_PPC", "GAS_PARISC",
-    "GAS_MIPS", "GAS_ARM", "GAS_S390"};
+    "GAS_MIPS", "GAS_ARM", "GAS_ARM64", "GAS_S390"};
 /*
  * Basic data structure for forming queues with some minimal info
  */
@@ -300,6 +300,7 @@ static char *GetGoodGcc()
    return(gcc);
 }
 
+/* procedure 12 */
 static char *GetKCFlags(char pre)
 /*
  * Gets flags being used for <pre>KCFLAGS
@@ -328,5 +329,78 @@ static char *GetKCFlags(char pre)
    ln[i+1] = '\0';
    for (i=0; isspace(ln[i]); i++);
    return(DupString(ln+i));
+}
+
+/* procedure 13 */
+static int *GF_GetIntList1(int ival)
+/*
+ * returns integer array with iarr[0] = 1, iarr[1] = ival
+ */
+{
+   int *iarr;
+   iarr = malloc(2*sizeof(int));
+   assert(iarr);
+   iarr[0] = 1;
+   iarr[1] = ival;
+   return(iarr);
+}
+
+/* procedure 14 */
+static int *GF_GetIntList2(int ival1, int ival2)
+/*
+ * returns integer array with iarr[0] = 1, iarr[1] = ival1, ival[2] = ival2
+ */
+{
+   int *iarr;
+   iarr = malloc(3*sizeof(int));
+   assert(iarr);
+   iarr[0] = 1;
+   iarr[1] = ival1;
+   iarr[2] = ival2;
+   return(iarr);
+}
+
+/* procedure 15 */
+#ifdef ATL_GETFLAGS
+static int *GF_GetIntList(int nargs, char **args, int i, int nmul)
+/*
+ * Gets a list of integers, whose length is given by atoi(args[i])*nmul
+ * list is this length+1, since 0'th location gets atoi(args[i])
+ */
+{
+   int n, *iarr, k;
+   void PrintUsage(char*, int, char*);
+
+   if (++i >= nargs)
+      PrintUsage(args[0], i, NULL);
+   n = atoi(args[i]) * nmul;
+   assert(n > 0);
+   iarr = malloc(sizeof(int)*(n+1));
+   assert(iarr);
+
+   iarr[0] = n / nmul;
+   for (k=0; k < n; k++)
+   {
+      if (++i >= nargs)
+         PrintUsage(args[0], i, NULL);
+      iarr[k+1] = atoi(args[i]);
+   }
+   return(iarr);
+}
+#endif
+
+/* procedure 16 */
+static int *GF_IntRange2IntList(int N0, int NN, int incN)
+{
+   int i, n;
+   int *iarr;
+
+   for (i=N0, n=0; i <= NN; i += incN) n++;
+   iarr = malloc(sizeof(int)*(n+1));
+   assert(iarr);
+   iarr[0] = n;
+   for (i=N0, n=1 ; i <= NN; i += incN, n++)
+      iarr[n] = i;
+   return(iarr);
 }
 #endif /* end atlas_genparse.h guard */

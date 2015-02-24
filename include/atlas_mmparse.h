@@ -23,8 +23,17 @@
 #define MMF_SINGLE     16  /* 1: single precision, else double */
 #define MMF_COMPLEX    17  /* 1: complex type, else real */
 #define MMF_L14NB      18  /* 1: need to fit all 3 matrices+nextA in L1 */
+#define MMF_JKMABC     19  /* 1: Jam-K major all arrays (access major) */
+#define MMF_JKMAB      20  /* 1: Jam-K major A/B, column-major C */
+#define MMF_BMAB       21  /* 1: block major A/B, col-maj C */
+#define MMF_BMABC      22  /* 1: block major A/B/C */
 
-#define MMF_DEFAULT ( (1<<MMF_LDISKB) | (1<<MMF_LDAB) )
+#ifdef ATL_JKMDEF
+   #define MMF_DEFAULT ( (1<<MMF_LDCTOP) | (1<<MMF_JKMABC) | (1<<MMF_AOUTER) | \
+                         (1<<MMF_NRUNTIME) | (1<<MMF_MRUNTIME) )
+#else
+   #define MMF_DEFAULT ( (1<<MMF_LDISKB) | (1<<MMF_LDAB) )
+#endif
 #ifndef  FLAG_IS_SET
    #define FLAG_IS_SET(field_, bit_) ( ((field_) & (1<<(bit_))) != 0 )
 #endif
@@ -37,6 +46,8 @@ struct MMNode
    int kbmin, kbmax;    /* min/max KB this kernel can handle */
    int SSE;             /* 0: no SSE, 1: SSE1 req, 2: SSE2 req, etc */
    int lat, muladd, pref, clean, fftch, iftch, nftch; /* used for gened codes */
+   int vlen;            /* vector length, 0 or 1 if scalar code */
+   int kmaj;            /* k-major access storage? */
    int mbB, nbB, kbB;  /* best blocking dims found by search */
    enum ATLAS_TRANS TA, TB;
    int asmbits;   /* bitfield indicating which assembly(ies) is required */
@@ -48,6 +59,9 @@ struct MMNode
    ATL_mmnode_t *next;
 };
 
+#ifndef ATL_DEF_MMFLAG
+   #define ATL_DEF_MMFLAG @up@(rt)F_DEFAULT
+#endif
 /* procedure 1 */
 static ATL_mmnode_t *GetMMNode(void)
 {
@@ -495,7 +509,7 @@ static ATL_mmnode_t *ATL_SortMMNodesByMflop
  */
 {
    ATL_mmnode_t *p, *prev, *sb=NULL;   /* ptr, prev, sorted base */
-   ATL_mmnode_t *minp;
+   ATL_mmnode_t *minp, *minprev;
    double mf;
 
 /*
@@ -514,7 +528,9 @@ static ATL_mmnode_t *ATL_SortMMNodesByMflop
          {
             minp = p;
             mf = p->mflop[imf];
+            minprev = prev;
          }
+         prev = p;
       }
 /*
  *    Remove it from unsorted queue, and add as new head of sorted
@@ -526,7 +542,7 @@ static ATL_mmnode_t *ATL_SortMMNodesByMflop
       }
       else   /* in the middle of unsorted queue */
       {
-         prev->next = minp->next;
+         minprev->next = minp->next;
          minp->next = sb;
       }
       sb = minp;
@@ -548,6 +564,16 @@ static ATL_mmnode_t *ParseMMLine(char *ln)
 
    p = GetMMNode();
 
+   sp = strstr(ln, "KMAJ=");
+   if (sp)
+      p->kmaj = atoi(sp+4+1);
+   else
+      p->kmaj = 0;
+   sp = strstr(ln, "VLEN=");
+   if (sp)
+      p->vlen = atoi(sp+4+1);
+   else
+      p->vlen = 0;
    sp = strstr(ln, "MULADD=");
    if (sp)
       p->muladd = atoi(sp+6+1);
@@ -631,6 +657,38 @@ static ATL_mmnode_t *ParseMMLine(char *ln)
       p->ID = 0;
 
 
+   sp = strstr(ln, "BMABC=");
+   if (sp)
+   {
+      if (atoi(sp+5+1))
+         p->flag |= (1<<MMF_BMABC);
+      else
+         p->flag &= ~(1<<MMF_BMABC);
+   }
+   sp = strstr(ln, "BMAB=");
+   if (sp)
+   {
+      if (atoi(sp+4+1))
+         p->flag |= (1<<MMF_BMAB);
+      else
+         p->flag &= ~(1<<MMF_BMAB);
+   }
+   sp = strstr(ln, "JKMAB=");
+   if (sp)
+   {
+      if (atoi(sp+5+1))
+         p->flag |= (1<<MMF_JKMAB);
+      else
+         p->flag &= ~(1<<MMF_JKMAB);
+   }
+   sp = strstr(ln, "JKMABC=");
+   if (sp)
+   {
+      if (atoi(sp+6+1))
+         p->flag |= (1<<MMF_JKMABC);
+      else
+         p->flag &= ~(1<<MMF_JKMABC);
+   }
    sp = strstr(ln, "L14NB=");
    if (sp)
    {
@@ -854,6 +912,10 @@ static void PrintMMLine(FILE *fpout, ATL_mmnode_t *np)
    fprintf(fpout, "   ");
    i = 3;
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "KMAJ=%d ", np->kmaj);
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "VLEN=%d ", np->vlen);
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    i += fprintf(fpout, "MULADD=%d ", np->muladd);
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    i += fprintf(fpout, "PREF=%d ", np->pref);
@@ -885,6 +947,14 @@ static void PrintMMLine(FILE *fpout, ATL_mmnode_t *np)
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    if (np->kbB != 0)
       i += fprintf(fpout, "KB=%d ", np->kbB);
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "BMABC=%d ", FLAG_IS_SET(np->flag, MMF_BMABC));
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "BMAB=%d ", FLAG_IS_SET(np->flag, MMF_BMAB));
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "JKMAB=%d ", FLAG_IS_SET(np->flag, MMF_JKMAB));
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "JKMABC=%d ", FLAG_IS_SET(np->flag, MMF_JKMABC));
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    i += fprintf(fpout, "L14NB=%d ", FLAG_IS_SET(np->flag, MMF_L14NB));
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
@@ -1063,6 +1133,9 @@ static ATL_mmnode_t *DelBadArchMMKernels(ATL_mmnode_t *bp)
 {
    int asmb=0, die;
    ATL_mmnode_t *p, *prev;
+   #ifdef ATL_GAS_ARM64
+      asmb |= (1<<8);
+   #endif
    #ifdef ATL_GAS_ARM
       asmb |= (1<<7);
    #endif

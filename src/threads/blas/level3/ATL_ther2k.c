@@ -41,7 +41,7 @@ void Mjoin(PATL,ther2k)
  * sizes).  Other problems will experience cancelation under the serial order,
  * so AFAIK, neither is more correct numerically.
  */
-   if (N < 3*NB && K < 3*NB)
+   if (N < 3*ATL_AMM_LLCMU && K < 3*ATL_AMM_LLCMU)
    {
       Mjoin(PATL,her2k)(Uplo, Trans, N, K, alpha, A, lda, B, ldb,
                         beta0, C, ldc);

@@ -129,6 +129,7 @@ int ProbeArch(char *vendor, unsigned *family, unsigned *model, int *x86_64)
 #define EF_K8        0x02F    /* Hammer */
 #define EF_ITAN      0x020    /* Itanium */
 #define EF_K8b      16        /* 3rd gen opteron */
+#define EF_k1om     11
 #define EF_K15h     21        /* AMD K15 (eg, bulldozer, piledriver, etc.) */
 
 enum FAM {ERR,         /* cannot decipher */
@@ -138,6 +139,7 @@ enum FAM {ERR,         /* cannot decipher */
           P7,          /* Intel P4, AMD hammer, Efficeon */
           P8B,         /* 3rd generation hammer */
           K15h,        /* AMD K15 */
+          k1om,        /* XeonPHI */
           ITAN};       /* Intel Itanium */
 
 enum FAM GetFamily(int efam)  /* efam = (family+ext fam) from cpuid */
@@ -174,6 +176,9 @@ enum FAM GetFamily(int efam)  /* efam = (family+ext fam) from cpuid */
    case EF_ITAN0:             /* Itanium */
       iret = ITAN;
       break;
+   case EF_k1om:
+      iret = k1om;
+      break;
    default:
       iret = ERR;
    }
@@ -202,7 +207,7 @@ enum VEND str2vend(char *vendor)
  * Specific chip (family, but disambiguated using vendor string
  */
 enum CHIP {CERR, Pentium, IntP6, Pentium4, Itanium, K7, Hammer, HammerB,
-           AMDK15h, Crusoe, Efficeon};
+           AMDK15h, Crusoe, Efficeon, K1om};
 
 enum CHIP Family2Chip(char *vendor, enum FAM family)
 /*
@@ -249,6 +254,9 @@ enum CHIP Family2Chip(char *vendor, enum FAM family)
       break;
    case K15h:
       iret = AMDK15h;
+      break;
+   case k1om:
+      iret = K1om;
       break;
    case   ITAN:        /* Intel Itanium */
       iret = Itanium;
@@ -335,6 +343,7 @@ enum MACHTYPE Chip2Mach(enum CHIP chip, int model, int x8664)
       case 0x2D:
       case 0x3A:
       case 0x2A:
+      case 0x3E:
          iret = IntCorei2;
 	 break;
       case 0x45:
@@ -396,6 +405,9 @@ enum MACHTYPE Chip2Mach(enum CHIP chip, int model, int x8664)
       break;
    case Efficeon:
       iret = TMEff;
+      break;
+   case K1om:
+      iret = IntPhi;
       break;
    case Crusoe:  /* unsupported */
    default:

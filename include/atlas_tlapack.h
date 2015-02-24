@@ -17,4 +17,10 @@ typedef struct
    void *works;    /* ptr to array of ptrs */
 } ATL_TGETF2_M_t;
 
+typedef struct
+{
+   ATL_INT nblks, nr, K1, K2, inci, lda;
+   void *A;
+   const int *ipiv;
+} ATL_TLASWP_N_t;
 #endif                  /* end of ifndef ATLAS_TLAPACK_H */

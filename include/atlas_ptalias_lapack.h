@@ -9,6 +9,7 @@
    #define ATL_sgeqlf ATL_stgeqlf
    #define ATL_sgerqf ATL_stgerqf
    #define ATL_sgeqrf ATL_stgeqrf
+   #define ATL_slaswp ATL_stlaswp
    #define ATL_sgetrfC ATL_stgetrfC
    #define ATL_sgetrf ATL_stgetrf
    #define ATL_dgels ATL_dtgels
@@ -20,6 +21,7 @@
    #define ATL_dgeqlf ATL_dtgeqlf
    #define ATL_dgerqf ATL_dtgerqf
    #define ATL_dgeqrf ATL_dtgeqrf
+   #define ATL_dlaswp ATL_dtlaswp
    #define ATL_dgetrfC ATL_dtgetrfC
    #define ATL_dgetrf ATL_dtgetrf
    #define ATL_cgels ATL_ctgels
@@ -31,6 +33,7 @@
    #define ATL_cgeqlf ATL_ctgeqlf
    #define ATL_cgerqf ATL_ctgerqf
    #define ATL_cgeqrf ATL_ctgeqrf
+   #define ATL_claswp ATL_ctlaswp
    #define ATL_cgetrfC ATL_ctgetrfC
    #define ATL_cgetrf ATL_ctgetrf
    #define ATL_zgels ATL_ztgels
@@ -42,6 +45,7 @@
    #define ATL_zgeqlf ATL_ztgeqlf
    #define ATL_zgerqf ATL_ztgerqf
    #define ATL_zgeqrf ATL_ztgeqrf
+   #define ATL_zlaswp ATL_ztlaswp
    #define ATL_zgetrfC ATL_ztgetrfC
    #define ATL_zgetrf ATL_ztgetrf
    #define ATL_ilaenv ATL_itlaenv

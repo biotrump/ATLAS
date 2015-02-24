@@ -23,7 +23,7 @@ int GetFlags(int nargs, char **args, int *CacheLevel, enum OSTYPE *OS,
          if (++i >= nargs)
             PrintUsage(args[0], i);
          *targ = args[i];
-         break;
+          break;
       case 's':
          if (++i >= nargs)
             PrintUsage(args[0], i);

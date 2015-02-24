@@ -44,19 +44,16 @@
  *
  * ---------------------------------------------------------------------
  */
-#define USE_SPRK
 /*
  * Include files
  */
 #include "atlas_rblas3.h"
 #include "atlas_kernel3.h"
 #include "atlas_lvl3.h"
-#ifdef USE_SPRK
-#include "atlas_pkblas.h"
-#endif
+#include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_sum.h))
 
 #ifndef SYRK_NB
-#define SYRK_NB      NB
+   #define SYRK_NB ATL_AMM_66KB
 #endif
 
 void Mjoin( PATL, syrk )
@@ -108,11 +105,6 @@ void Mjoin( PATL, syrk )
  * .. Executable Statements ..
  *
  */
-   #if defined (USE_SPRK)
-      Mjoin(PATL,sprk)(PackGen, TRANS, UPLO, 0, N, K, ALPHA, A, 0, 0, LDA,
-                       BETA, C, 0, 0, LDC);
-      return;
-   #endif
    if( ( N == 0 ) ||
        ( ( SCALAR_IS_ZERO( ALPHA ) || ( K == 0 ) ) && SCALAR_IS_ONE( BETA ) ) )
       return;

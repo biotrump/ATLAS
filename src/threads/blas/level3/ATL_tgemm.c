@@ -28,8 +28,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmCC)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasConjTrans, AtlasConjTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #endif  /* end ifdef TCPLX */
@@ -49,8 +49,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmCN)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasConjTrans, AtlasNoTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #endif  /* end ifdef TCPLX */
@@ -70,8 +70,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmCT)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasConjTrans, AtlasTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #endif  /* end ifdef TCPLX */
@@ -91,8 +91,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmNC)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasConjTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #endif  /* end ifdef TCPLX */
@@ -111,8 +111,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmNN)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasNoTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 void Mjoin(PATL,tsvgemmNT)
@@ -130,8 +130,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmNT)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #ifdef TCPLX
@@ -150,8 +150,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmTC)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasTrans, AtlasConjTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 #endif  /* end ifdef TCPLX */
@@ -170,8 +170,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmTN)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasTrans, AtlasNoTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 void Mjoin(PATL,tsvgemmTT)
@@ -189,8 +189,8 @@ void Mjoin(PATL,FindCE_mm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
                          SVVAL((TYPE*)alpha), A, lda, B, ldb,
                          SVVAL((TYPE*)beta), C, ldc);
 #else
-   Mjoin(PATL,tgemmTT)(M, N, K, SVVAL((TYPE*)alpha), A, lda, B, ldb,
-                       SVVAL((TYPE*)beta), C, ldc);
+   Mjoin(PATL,ammm)(AtlasTrans, AtlasTrans, M, N, K, SVVAL((TYPE*)alpha),
+                    A, lda, B, ldb, SVVAL((TYPE*)beta), C, ldc);
 #endif
 }
 
@@ -253,9 +253,9 @@ void Mjoin(PATL,InitTMMNodes)
    }
    for (i=0; i < ATL_NTHREADS; i++)
    {
-      ptmms[i].mb = MB;
-      ptmms[i].nb = NB;
-      ptmms[i].kb = KB;
+      ptmms[i].mb = Mmin(ATL_AMM_LLCMU, ATL_AMM_MAXMB);
+      ptmms[i].nb = Mmin(ATL_AMM_LLCMU, ATL_AMM_MAXNB);
+      ptmms[i].kb = ATL_AMM_MAXKB;
       ptmms[i].gemmK = gemmK;
       ptmms[i].eltsz = ATL_sizeof;
       ptmms[i].eltsh = Mjoin(PATL,shift);
@@ -562,6 +562,17 @@ void Mjoin(PATL,tgemm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
          Mjoin(PATL,gescal)(M, N, beta, C, ldc);
       return;
    }
+#ifdef TREAL
+   {
+      int Mjoin(PATL,tammm)(enum ATLAS_TRANS TA, enum ATLAS_TRANS TB,
+         ATL_CSZT M, ATL_CSZT N, ATL_CSZT K, const SCALAR alpha,
+         const TYPE *A, ATL_CSZT lda, const TYPE *B, ATL_CSZT ldb,
+         const SCALAR beta, TYPE *C, ATL_CSZT ldc);
+      if (!Mjoin(PATL,tammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb,
+                             beta, C, ldc))
+         return;
+   }
+#endif
 /*
  * See if we are in a case where we've implemented a dynamically scheduled
  * code.  Performance of the dynamically scheduled operations varies:
@@ -573,8 +584,11 @@ void Mjoin(PATL,tgemm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
  * of dynamic scheduling, which always seems to pay for itself.
  * On unloaded AMD machines, the asymptotic loss is roughly 1-2%.
  * Dynamic scheduling seems to always be a performance loss for MAC OSX
+ *
+ * NOTE: these cases commented out for all systems since they use block-major
+ *       code, which is now usually slower than access-major!
  */
-   #ifndef ATL_OS_OSX
+   #if 0
       #ifdef FindingCE
          ATL_assert(!Mjoin(PATL,tgemm_bigMN_Kp)(TA, TB, M, N, K, alpha, A, lda,
                                                 B, ldb, beta, C, ldc));

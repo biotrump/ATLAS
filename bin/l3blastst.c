@@ -85,8 +85,9 @@ static int NSAMP=1;
  * multi-threaded ATLAS routines, define the following macro:
  *    USE_L3_PTHREADS  : multi-threaded ATLAS implementation.
  */
-#define USE_F77_BLAS
-
+#ifndef USE_L3_REFERENCE
+   #define USE_F77_BLAS
+#endif
 #ifdef ATL_USEPTHREADS
 #define USE_L3_PTHREADS
 #endif
@@ -582,6 +583,8 @@ TYPE gemmtst
    TYPE                       * A  = NULL, * B = NULL, * C = NULL, * C0,
                               * a, * b, * c;
    int                        mA, mB, nA, nB, Aseed, Bseed, Cseed;
+   const int DOFLUSH=(ATL_MulBySize((size_t)M*N + (size_t)K*(M+N)) <
+                      ((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( ( M == 0 ) || ( N == 0 ) ) { return( ATL_rzero ); }
@@ -595,14 +598,16 @@ TYPE gemmtst
 /*
  * Allocate L2 cache space, A, X, Y and Y0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A  = (TYPE *)malloc( ATL_MulBySize( LDA ) * nA     );
    B  = (TYPE *)malloc( ATL_MulBySize( LDB ) * nB     );
    C  = (TYPE *)malloc( ATL_MulBySize( LDC ) * N  * 2 );
 
    if( ( A == NULL ) || ( B == NULL ) || ( C == NULL ) )
    {
-      l2ret = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( 0 );
       if( A ) free( A );
       if( B ) free( B );
       if( C ) free( C );
@@ -636,7 +641,8 @@ TYPE gemmtst
  */
    a = A; b = B; c = C0;
 
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    trusted_gemm( TRANSA, TRANSB, M, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttrust = time00() - t0;
@@ -647,7 +653,8 @@ TYPE gemmtst
  */
    a = A; b = B; c = C;
 
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    test_gemm(    TRANSA, TRANSB, M, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttest  = time00() - t0;
@@ -656,7 +663,8 @@ TYPE gemmtst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret  = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( B ); free( C ); return( ATL_rzero ); }
 /*
@@ -720,6 +728,8 @@ TYPE symmtst
    TYPE                       * A  = NULL, * B = NULL, * C = NULL, * C0,
                               * a, * b, * c;
    int                        nA, Aseed, Bseed, Cseed;
+   const size_t szA = (SIDE == AtlasLeft) ? M : N;
+   const int DOFLUSH=(ATL_MulBySize((size_t)M*N*2 + szA)<((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( N == 0 ) { return( ATL_rzero ); }
@@ -729,14 +739,16 @@ TYPE symmtst
 /*
  * Allocate L2 cache space, A, X, Y and Y0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A  = (TYPE *)malloc( ATL_MulBySize( LDA ) * nA     );
    B  = (TYPE *)malloc( ATL_MulBySize( LDB ) * N      );
    C  = (TYPE *)malloc( ATL_MulBySize( LDC ) * N  * 2 );
 
    if( ( A == NULL ) || ( B == NULL ) || ( C == NULL ) )
    {
-      l2ret = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( 0 );
       if( A ) free( A );
       if( B ) free( B );
       if( C ) free( C );
@@ -771,7 +783,8 @@ TYPE symmtst
    a = A; b = B; c = C0;
 
 #ifdef TREAL
-   l2ret = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( -1 );
    t0     = time00();
    trusted_symm( SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttrust = time00() - t0;
@@ -780,7 +793,8 @@ TYPE symmtst
 #else
    if( ROUT == SYMM )
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       trusted_symm( SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttrust = time00() - t0;
@@ -789,7 +803,8 @@ TYPE symmtst
    }
    else /* if( ROUT == HEMM ) */
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       trusted_hemm( SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttrust = time00() - t0;
@@ -803,7 +818,8 @@ TYPE symmtst
    a = A; b = B; c = C;
 
 #ifdef TREAL
-   l2ret = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( -1 );
    t0     = time00();
    test_symm(    SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttest  = time00() - t0;
@@ -812,7 +828,8 @@ TYPE symmtst
 #else
    if( ROUT == SYMM )
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       test_symm( SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttest  = time00() - t0;
@@ -821,7 +838,8 @@ TYPE symmtst
    }
    else /* if( ROUT == HEMM ) */
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       test_hemm( SIDE, UPLO, M, N, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttest  = time00() - t0;
@@ -832,7 +850,8 @@ TYPE symmtst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret  = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( B ); free( C ); return( ATL_rzero ); }
 /*
@@ -901,6 +920,8 @@ TYPE syr2ktst
                               * a, * b, * c;
    int                        mAB, nAB, Aseed, Bseed, Cseed;
    enum ATLAS_TRANS           ta;
+   const int DOFLUSH=(ATL_MulBySize((size_t)N*N + (size_t)N*K*2)
+                      < ((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( N == 0 ) { return( ATL_rzero ); }
@@ -914,14 +935,16 @@ TYPE syr2ktst
 /*
  * Allocate L2 cache space, A, C and C0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A = (TYPE *)malloc( ATL_MulBySize( LDA ) * nAB    );
    B = (TYPE *)malloc( ATL_MulBySize( LDB ) * nAB    );
    C = (TYPE *)malloc( ATL_MulBySize( LDC ) * N  * 2 );
 
    if( ( A == NULL ) || ( B == NULL ) || ( C == NULL ) )
    {
-      l2ret = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( 0 );
       if( A ) free( A );
       if( B ) free( B );
       if( C ) free( C );
@@ -970,21 +993,24 @@ TYPE syr2ktst
  */
    a = A; b = B; c = C0;
 #ifdef TREAL
-   l2ret = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( -1 );
    t0     = time00();
    trusted_syr2k( UPLO, ta, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttrust = time00() - t0;
 #else
    if( ROUT == SYR2K )
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       trusted_syr2k( UPLO, ta, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttrust = time00() - t0;
    }
    else /* if( ROUT == HER2K ) */
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       trusted_her2k( UPLO, ta, N, K, ALPHA, a, LDA, b, LDB, (TYPE)(BETA[0]),
                      c, LDC );
@@ -998,21 +1024,24 @@ TYPE syr2ktst
  */
    a = A; b = B; c = C;
 #ifdef TREAL
-   l2ret = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( -1 );
    t0     = time00();
    test_syr2k(    UPLO, TRANS, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
    ttest  = time00() - t0;
 #else
    if( ROUT == SYR2K )
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       test_syr2k( UPLO, ta, N, K, ALPHA, a, LDA, b, LDB, BETA, c, LDC );
       ttest  = time00() - t0;
    }
    else /* if( ROUT == HERK ) */
    {
-      l2ret = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( -1 );
       t0     = time00();
       test_her2k( UPLO, ta, N, K, ALPHA, a, LDA, b, LDB, (TYPE)(BETA[0]),
                   c, LDC );
@@ -1024,7 +1053,8 @@ TYPE syr2ktst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret  = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( C ); return( ATL_rzero ); }
 /*
@@ -1086,6 +1116,8 @@ TYPE syrktst
    TYPE                       * A = NULL, * C = NULL, * C0, * a, * c;
    int                        mA, nA, Aseed, Cseed;
    enum ATLAS_TRANS           ta;
+   const int DOFLUSH=(ATL_MulBySize((size_t)N*N + (size_t)N*K)
+                      < ((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( N == 0 ) { return( ATL_rzero ); }
@@ -1099,13 +1131,15 @@ TYPE syrktst
 /*
  * Allocate L2 cache space, A, C and C0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A = (TYPE *)malloc( ATL_MulBySize( LDA ) * nA     );
    C = (TYPE *)malloc( ATL_MulBySize( LDC ) * N  * 2 );
 
    if( ( A == NULL ) || ( C == NULL ) )
    {
-      l2ret = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( 0 );
       if( A ) free( A );
       if( C ) free( C );
       return( ATL_rnone );
@@ -1151,21 +1185,24 @@ TYPE syrktst
  */
    a = A; c = C0;
 #ifdef TREAL
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    trusted_syrk( UPLO, ta, N, K, ALPHA, a, LDA, BETA, c, LDC );
    ttrust = time00() - t0;
 #else
    if( ROUT == SYRK )
    {
-      l2ret  = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret  = ATL_flushcache( -1 );
       t0     = time00();
       trusted_syrk( UPLO, ta, N, K, ALPHA, a, LDA, BETA, c, LDC );
       ttrust = time00() - t0;
    }
    else /* if( ROUT == HERK ) */
    {
-      l2ret  = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret  = ATL_flushcache( -1 );
       t0     = time00();
       trusted_herk( UPLO, ta, N, K, (TYPE)(ALPHA[0]), a, LDA, (TYPE)(BETA[0]),
                     c, LDC );
@@ -1179,21 +1216,24 @@ TYPE syrktst
  */
    a = A; c = C;
 #ifdef TREAL
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    test_syrk(    UPLO, TRANS, N, K, ALPHA, a, LDA, BETA, c, LDC );
    ttest  = time00() - t0;
 #else
    if( ROUT == SYRK )
    {
-      l2ret  = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret  = ATL_flushcache( -1 );
       t0     = time00();
       test_syrk( UPLO, ta, N, K, ALPHA, a, LDA, BETA, c, LDC );
       ttest  = time00() - t0;
    }
    else /* if( ROUT == HERK ) */
    {
-      l2ret  = ATL_flushcache( -1 );
+      if (DOFLUSH)
+         l2ret  = ATL_flushcache( -1 );
       t0     = time00();
       test_herk( UPLO, ta, N, K, (TYPE)(ALPHA[0]), a, LDA, (TYPE)(BETA[0]),
                  c, LDC );
@@ -1205,7 +1245,8 @@ TYPE syrktst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret  = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( C ); return( ATL_rzero ); }
 /*
@@ -1270,6 +1311,9 @@ TYPE trmmtst
    TYPE                       normA, normB, normD, resid;
    TYPE                       * A = NULL, * B = NULL, * B0, * a, * b;
    int                        nA, Aseed, Bseed;
+   const size_t szA = (SIDE == AtlasLeft) ? M : N;
+   const int DOFLUSH=(ATL_MulBySize((size_t)M*N + (size_t)szA*szA)
+                      < ((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( ( M == 0 ) || ( N == 0 ) ) { return( ATL_rzero ); }
@@ -1279,13 +1323,15 @@ TYPE trmmtst
 /*
  * Allocate L2 cache space, A, X and X0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A = (TYPE *)malloc( ATL_MulBySize( LDA ) * nA    );
    B = (TYPE *)malloc( ATL_MulBySize( LDB ) * N * 2 );
 
    if( ( A == NULL ) || ( B == NULL ) )
    {
-      l2ret  = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret  = ATL_flushcache( 0 );
       if( A ) free( A );
       if( B ) free( B );
       return( ATL_rnone );
@@ -1316,7 +1362,8 @@ TYPE trmmtst
  */
    a = A; b = B0;
 
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    trusted_trmm( SIDE, UPLO, TRANS, DIAG, M, N, ALPHA, a, LDA, b, LDB );
    ttrust = time00() - t0;
@@ -1327,7 +1374,8 @@ TYPE trmmtst
  */
    a = A; b = B;
 
-   l2ret = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( -1 );
    t0    = time00();
    test_trmm(    SIDE, UPLO, TRANS, DIAG, M, N, ALPHA, a, LDA, b, LDB );
    ttest  = time00() - t0;
@@ -1336,7 +1384,8 @@ TYPE trmmtst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret  = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( B ); return( ATL_rzero ); }
 /*
@@ -1393,6 +1442,9 @@ TYPE trsmtst
    TYPE                       normA, normB, normD, resid;
    TYPE                       * A = NULL, * B = NULL, * B0, * a, * b;
    int                        nA, Aseed, Bseed;
+   const size_t szA = (SIDE == AtlasLeft) ? M : N;
+   const int DOFLUSH=(ATL_MulBySize((size_t)M*N + (size_t)szA*szA)
+                      < ((size_t)CACHESIZE)*4);
 
    *TTRUST0 = *TTEST0 = *MFTEST0 = *MFTRUST0 = 0.0;
    if( ( M == 0 ) || ( N == 0 ) ) { return( ATL_rzero ); }
@@ -1402,13 +1454,15 @@ TYPE trsmtst
 /*
  * Allocate L2 cache space, A, X and X0
  */
-   l2ret = ATL_flushcache( CACHESIZE );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( CACHESIZE );
    A  = (TYPE *)malloc( ATL_MulBySize( LDA ) * nA    );
    B  = (TYPE *)malloc( ATL_MulBySize( LDB ) * N * 2 );
 
    if( ( A == NULL ) || ( B == NULL ) )
    {
-      l2ret = ATL_flushcache( 0 );
+      if (DOFLUSH)
+         l2ret = ATL_flushcache( 0 );
       if( A ) free( A );
       if( B ) free( B );
       return( ATL_rnone );
@@ -1439,7 +1493,8 @@ TYPE trsmtst
  */
    a = A; b = B0;
 
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    trusted_trsm( SIDE, UPLO, TRANS, DIAG, M, N, ALPHA, a, LDA, b, LDB );
    ttrust = time00() - t0;
@@ -1450,7 +1505,8 @@ TYPE trsmtst
  */
    a = A; b = B;
 
-   l2ret  = ATL_flushcache( -1 );
+   if (DOFLUSH)
+      l2ret  = ATL_flushcache( -1 );
    t0     = time00();
    test_trsm(    SIDE, UPLO, TRANS, DIAG, M, N, ALPHA, a, LDA, b, LDB );
    ttest  = time00() - t0;
@@ -1459,7 +1515,8 @@ TYPE trsmtst
 /*
  * if timing only, I am done ... so leave.
  */
-   l2ret = ATL_flushcache( 0 );
+   if (DOFLUSH)
+      l2ret = ATL_flushcache( 0 );
 
    if( !( TEST ) ) { free( A ); free( B ); return( ATL_rzero ); }
 /*

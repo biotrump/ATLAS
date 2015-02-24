@@ -7,7 +7,7 @@
  */
 .globl ATL_asmdecor(asm_probe)
 ATL_asmdecor(asm_probe):
-        lr r3,r2
-        ar r2,r3
-        ar r2,r3
-        br r14
+       lr      r3,r2
+       ar      r2,r3
+       ar      r2,r3
+       br      r14

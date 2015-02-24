@@ -6,13 +6,16 @@ mySRCdir = $(SRCdir)/src/threads
 dep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_pthreads.h \
       $(INCSdir)/atlas_threads.h
 
-obj = ATL_lin0tlaunch.o ATL_log2tlaunch.o ATL_dyntlaunch.o $(aobj) \
-      ATL_GetAtomicCount.o ATL_FreeGlobalAtomicCount.o \
+obj = $(aobj) ATL_GetAtomicCount.o ATL_setmyaffinity.o \
+      ATL_FreeGlobalAtomicCountDown.o ATL_DecGlobalAtomicCountDown.o \
+      ATL_SetGlobalAtomicCountDown.o ATL_FreeGlobalAtomicCount.o \
       ATL_GetGlobalAtomicCount.o ATL_DecGlobalAtomicCount.o \
       ATL_ResetGlobalAtomicCount.o ATL_SetGlobalAtomicCount.o \
+      ATL_threadpool_misc.o ATL_threadpool.o ATL_IsFirstThreadedCall.o \
       ATL_thread_yield.o ATL_mutex_free.o ATL_mutex_trylock.o \
-      ATL_mutex_unlock.o ATL_mutex_lock.o ATL_mutex_init.o ATL_goparallel.o \
-      ATL_thread_start.o ATL_thread_exit.o ATL_thread_join.o
+      ATL_mutex_unlock.o ATL_mutex_lock.o ATL_mutex_init.o ATL_cond_signal.o \
+      ATL_cond_free.o ATL_cond_wait.o ATL_cond_init.o ATL_cond_bcast.o \
+      ATL_goparallel.o ATL_thread_start.o ATL_thread_exit.o ATL_thread_join.o
 
 all : lib
 lib : lib.grd l3thr l2thr
@@ -20,26 +23,21 @@ slib2 : lib.grd $(sextthr)
 	cd blas/level2 ; $(MAKE) slib
 slib3 : lib.grd $(sextthr)
 	cd blas/level3 ; $(MAKE) slib
-	cd $(GMMdir) ; $(MAKE) stlib
-@skipsomp:
 clib2 : lib.grd $(cextthr)
 	cd blas/level2 ; $(MAKE) clib
 clib3 : lib.grd $(cextthr)
 	cd blas/level3 ; $(MAKE) clib
-	cd $(GMMdir) ; $(MAKE) ctlib
-@skipcomp:
 dlib2 : lib.grd $(dextthr)
 	cd blas/level2 ; $(MAKE) dlib
 dlib3 : lib.grd $(dextthr)
 	cd blas/level3 ; $(MAKE) dlib
-	cd $(GMMdir) ; $(MAKE) dtlib
-@skipdomp:
 zlib2 : lib.grd $(zextthr)
 	cd blas/level2 ; $(MAKE) zlib
 zlib3 : lib.grd $(zextthr)
 	cd blas/level3 ; $(MAKE) zlib
-	cd $(GMMdir) ; $(MAKE) ztlib
-@skipzomp:
+killaobj:
+	- rm -f $(aobj)
+	- ar d $(ATLASlib) $(aobj)
 
 lib.grd : $(obj)
 	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(obj)
@@ -101,6 +99,16 @@ ATL_thread_start.o : $(dep) $(mySRCdir)/ATL_thread_start.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_thread_start.c
 ATL_goparallel.o : $(dep) $(mySRCdir)/ATL_goparallel.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_goparallel.c
+ATL_cond_bcast.o : $(dep) $(mySRCdir)/ATL_cond_bcast.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cond_bcast.c
+ATL_cond_init.o : $(dep) $(mySRCdir)/ATL_cond_init.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cond_init.c
+ATL_cond_wait.o : $(dep) $(mySRCdir)/ATL_cond_wait.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cond_wait.c
+ATL_cond_free.o : $(dep) $(mySRCdir)/ATL_cond_free.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cond_free.c
+ATL_cond_signal.o : $(dep) $(mySRCdir)/ATL_cond_signal.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cond_signal.c
 ATL_mutex_init.o : $(dep) $(mySRCdir)/ATL_mutex_init.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_mutex_init.c
 ATL_mutex_lock.o : $(dep) $(mySRCdir)/ATL_mutex_lock.c
@@ -113,6 +121,12 @@ ATL_mutex_free.o : $(dep) $(mySRCdir)/ATL_mutex_free.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_mutex_free.c
 ATL_thread_yield.o : $(dep) $(mySRCdir)/ATL_thread_yield.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_thread_yield.c
+ATL_IsFirstThreadedCall.o : $(dep) $(mySRCdir)/ATL_IsFirstThreadedCall.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_IsFirstThreadedCall.c
+ATL_threadpool.o : $(dep) $(mySRCdir)/ATL_threadpool.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_threadpool.c
+ATL_threadpool_misc.o : $(dep) $(mySRCdir)/ATL_threadpool_misc.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_threadpool_misc.c
 ATL_SetGlobalAtomicCount.o : $(dep) $(mySRCdir)/ATL_SetGlobalAtomicCount.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_SetGlobalAtomicCount.c
 ATL_ResetGlobalAtomicCount.o : $(dep) $(mySRCdir)/ATL_ResetGlobalAtomicCount.c
@@ -123,6 +137,14 @@ ATL_GetGlobalAtomicCount.o : $(dep) $(mySRCdir)/ATL_GetGlobalAtomicCount.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_GetGlobalAtomicCount.c
 ATL_FreeGlobalAtomicCount.o : $(dep) $(mySRCdir)/ATL_FreeGlobalAtomicCount.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_FreeGlobalAtomicCount.c
+ATL_SetGlobalAtomicCountDown.o : $(dep) $(mySRCdir)/ATL_SetGlobalAtomicCountDown.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_SetGlobalAtomicCountDown.c
+ATL_DecGlobalAtomicCountDown.o : $(dep) $(mySRCdir)/ATL_DecGlobalAtomicCountDown.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_DecGlobalAtomicCountDown.c
+ATL_FreeGlobalAtomicCountDown.o : $(dep) $(mySRCdir)/ATL_FreeGlobalAtomicCountDown.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_FreeGlobalAtomicCountDown.c
+ATL_setmyaffinity.o : $(dep) $(mySRCdir)/ATL_setmyaffinity.c
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_setmyaffinity.c
 ATL_FreeAtomicCount_mut_mut.o : $(dep) $(mySRCdir)/ATL_FreeAtomicCount_mut.c
 	$(KC) $(KCFLAGS) -o $@ -DATL_FreeAtomicCount=ATL_FreeAtomicCount_mut \
                -c $(mySRCdir)/ATL_FreeAtomicCount_mut.c

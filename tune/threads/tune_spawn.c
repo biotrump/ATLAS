@@ -1,24 +1,20 @@
 #include "atlas_threads.h"
 #include "atlas_misc.h"
 
-typedef struct
-{
-   volatile int *donearr;   /* starts all zero */
-   int rank, nthr;
-} ATL_TUNE_T;
 
 void TuneDoWork(ATL_LAUNCHSTRUCT_t *lp, void *vp)
 /*
  * Use volatile array to check in, and then quit (cache-speed barrier)
  */
 {
-   ATL_TUNE_T *tp = vp;
-   const int nthr = tp->nthr;
+   ATL_thread_t *tp = vp;
+   const int nthr = tp->P, rank=tp->rank;
    int i;
+   volatile int *donearr=lp->opstruct;
 
-   tp->donearr[tp->rank] = 1;
+   donearr[rank] = 1;
    for (i=0; i < nthr; i++)
-      while(!tp->donearr[i]);
+      while(!donearr[i]);
 }
 
 void PrintUsage(char *exe)
@@ -58,21 +54,13 @@ int GetFlags(int nargs, char **args, int *which)
 }
 int main(int nargs, char **args)
 {
-   int i, k, nreps = 200, opstride, which;
+   int i, k, nreps = 200, which;
    double t0, tlin, tlg2, tdyn, trnk;
-   ATL_TUNE_T ta[ATL_NTHREADS];
    volatile int done[ATL_NTHREADS];
 
    tlg2 = tdyn = tlin = 0.0;
    nreps = GetFlags(nargs, args, &which);
 
-   for (i=0; i < ATL_NTHREADS; i++)
-   {
-      ta[i].rank = i;
-      ta[i].nthr = ATL_NTHREADS;
-      ta[i].donearr = done;
-   }
-   opstride = (int) ( ((char*)(ta+1)) - (char*)(ta) );
 
    printf("FINDING SPEED OF CREATE/BARRIER/JOIN USING %d REPITITIONS:\n",
           nreps);
@@ -82,7 +70,7 @@ int main(int nargs, char **args)
       for (k=0; k < nreps; k++)
       {
          for (i=0; i < ATL_NTHREADS; i++) done[i] = 0;
-         ATL_goparallel_dyn(ATL_NTHREADS, TuneDoWork, ta, NULL);
+         ATL_goparallel_dyn(ATL_NTHREADS, TuneDoWork, done, NULL);
       }
       tdyn = ATL_walltime() - t0;
       printf("   dyn time = %e\n", (float)tdyn);
@@ -94,7 +82,7 @@ int main(int nargs, char **args)
       for (k=0; k < nreps; k++)
       {
          for (i=0; i < ATL_NTHREADS; i++) done[i] = 0;
-         ATL_goparallel_log2(ATL_NTHREADS, TuneDoWork, ta, NULL);
+         ATL_goparallel_log2(ATL_NTHREADS, TuneDoWork, done, NULL);
       }
       tlg2 = ATL_walltime() - t0;
       printf("   lg2 time = %e\n", (float)tlg2);
@@ -106,11 +94,12 @@ int main(int nargs, char **args)
       for (k=0; k < nreps; k++)
       {
          for (i=0; i < ATL_NTHREADS; i++) done[i] = 0;
-         ATL_goparallel_lin(ATL_NTHREADS, TuneDoWork, ta, NULL);
+         ATL_goparallel_lin(ATL_NTHREADS, TuneDoWork, done, NULL);
       }
       tlin = ATL_walltime() - t0;
       printf("   lin time = %e\n", (float)tlin);
    }
+   #if 0
    if (which & 8)
    {
       t0 = ATL_walltime();
@@ -122,6 +111,7 @@ int main(int nargs, char **args)
       trnk = ATL_walltime() - t0;
       printf("   rnk time = %e\n", (float)trnk);
    }
+   #endif
    if ((which | 7) == which)
       printf("DYNAMIC is %.2f%% of LINEAR and %.2f%% of LOG2 SPEED.\n",
              (tdyn/tlin)*100.0, (tdyn/tlg2)*100.0);

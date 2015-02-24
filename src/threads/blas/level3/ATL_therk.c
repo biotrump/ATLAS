@@ -1,6 +1,7 @@
 #include "atlas_misc.h"
 #include "atlas_threads.h"
 #include "atlas_tlvl3.h"
+#include Mstr(Mjoin(PRE,mm.h))
 
 /*
  * Prototype functions in ATL_Xtsyrk
@@ -255,7 +256,7 @@ static int ATL_therk_M
    ATL_TSYRK_M_t syp[ATL_NTHREADS];
    int i, p;
    p = ATL_tsyrkdecomp_M(syp, Uplo, TA, N, K, alpha, A, lda, beta, C, ldc,
-                         MB, ATL_mmMU, Mjoin(PATL,shift),
+                         ATL_AMM_LLCMU, ATL_AMM_LMU, Mjoin(PATL,shift),
                          (TA == AtlasNoTrans) ? AtlasConjTrans : AtlasNoTrans,
                          ATL_TGEMM_PERTHR_MF, (TA == AtlasNoTrans) ?
                          Mjoin(PATL,tsvgemmNC):Mjoin(PATL,tsvgemmCN),
@@ -298,7 +299,7 @@ void Mjoin(PATL,therk)
       return;
    }
 
-   nb = MB;
+   nb = ATL_AMM_LLCMU;
    if (K > (N<<ATL_NTHRPOW2) && (((size_t)N)*N*sizeof(TYPE) <= ATL_PTMAXMALLOC))
    {
       Mjoin(PATL,therk_K_rec)(Uplo, Trans, N, K, alpha, A, lda, beta,

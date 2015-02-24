@@ -1,13 +1,3 @@
-SHELL=/bin/sh
-SRCdir = $(TOPdir)/CONFIG/src
-INCdir = $(TOPdir)/CONFIG/include
-mydir = $(BLDdir)
-atlrun = atlas_run
-INCFLAGS = -I$(INCdir)
-MYFLAGS =
-CCFLAGS = $(INCFLAGS) $(MYFLAGS) $(CFLAGS)
-XCC = $(CC)
-XCFLAGS = $(CCFLAGS)
 LIBS =
 args =
 rdir = /tmp
@@ -66,6 +56,8 @@ xprint_enums : $(SRCdir)/print_enums.c
 	$(XCC) $(XCFLAGS) -o xprint_enums $(SRCdir)/print_enums.c
 xatlbench : atlbench.o atlconf_misc.o
 	$(XCC) $(XCFLAGS) -o xatlbench atlbench.o atlconf_misc.o
+probe_aff_self.o : $(SRCdir)/probe_aff_self.c
+	$(XCC) $(XCFLAGS) -c $(SRCdir)/probe_aff_self.c
 probe_aff.o : $(SRCdir)/probe_aff.c
 	$(XCC) $(XCFLAGS) -c $(SRCdir)/probe_aff.c
 atlbench.o : $(SRCdir)/atlbench.c
@@ -92,8 +84,11 @@ atlconf_misc_BE.o : $(SRCdir)/atlconf_misc.c
 atlas_run :
 	cd $(atldir) ; ./$(exe) $(args) > $(redir)
 atlas_runX :
-	scp $(atldir)/$(exe) $(targ):$(rdir)/$(exe)
-	ssh $(targ) 'cd $(rdir) ; ./$(exe) $(args)' > $(redir)
+	./ATLrun.sh $(BLDdir) $(exe) $(args)
+#	scp $(atldir)/$(exe) $(targ):$(rdir)/$(exe)
+#	ssh $(targ) 'cd $(rdir) ; ./$(exe) $(args)' > $(redir)
+atlas_run_TI :
+	./ATLrun.sh $BLDdir $(exe) $(args)
 force_build:
 
 #
@@ -151,6 +146,26 @@ IRun_NEON :
 	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_neon args="$(args)" \
                 redir=config0.out
 	- cat config0.out
+IRun_FPV3D16MAC :
+	$(CC) $(CCFLAGS) -mfpu=vfpv3-d16 -o xprobe_fpv3d16mac $(SRCdir)/backend/probe_dmac.c $(SRCdir)/backend/probe_FPV3D16MAC.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_fpv3d16mac args="$(args)" \
+                redir=config0.out
+	- cat config0.out
+IRun_FPV3D32MAC :
+	$(CC) $(CCFLAGS) -mfpu=vfpv3 -o xprobe_fpv3d32mac $(SRCdir)/backend/probe_dmac.c $(SRCdir)/backend/probe_FPV3D32MAC.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_fpv3d32mac args="$(args)" \
+                redir=config0.out
+	- cat config0.out
+IRun_FPV3D16MACNEON :
+	$(CC) $(CCFLAGS) -mfpu=neon-fp16 -o xprobe_fpv3d16macneon $(SRCdir)/backend/probe_svec.c $(SRCdir)/backend/probe_FPV3D16MACNEON.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_fpv3d16macneon args="$(args)" \
+                redir=config0.out
+	- cat config0.out
+IRun_FPV3D32MACNEON :
+	$(CC) $(CCFLAGS) -mfpu=neon -o xprobe_fpv3d32macneon $(SRCdir)/backend/probe_svec.c $(SRCdir)/backend/probe_FPV3D32MACNEON.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_fpv3d32macneon args="$(args)" \
+                redir=config0.out
+	- cat config0.out
 IRun_3DNow :
 	$(CC) $(CCFLAGS) -o xprobe_3dnow $(SRCdir)/backend/probe_svec.c $(SRCdir)/backend/probe_3DNow.S
 	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_3dnow args="$(args)" \
@@ -179,6 +194,12 @@ IRun_SSE1 :
 IRun_SSE3 :
 	$(CC) $(CCFLAGS) -o xprobe_sse3 $(SRCdir)/backend/probe_dSSE3.c $(SRCdir)/backend/probe_SSE3.S
 	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_sse3 args="$(args)" \
+                redir=config0.out
+	- cat config0.out
+IRun_AVXZ :
+	$(CC) $(CCFLAGS) -o xprobe_avxz $(SRCdir)/backend/probe_dAVXZ.c \
+              $(SRCdir)/backend/probe_AVXZ.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_avxz args="$(args)" \
                 redir=config0.out
 	- cat config0.out
 IRun_AVXFMA4 :
@@ -263,6 +284,11 @@ IRun_BINDP :
 IRun_GAS_S390 :
 	$(CC) $(CCFLAGS) -o xprobe_gas_s390 $(SRCdir)/backend/probe_this_asm.c $(SRCdir)/backend/probe_gas_s390.S
 	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_gas_s390 args="$(args)" \
+                redir=config0.out
+	- cat config0.out
+IRun_GAS_ARM64 :
+	$(CC) $(CCFLAGS) -o xprobe_gas_arm64 $(SRCdir)/backend/probe_this_asm.c $(SRCdir)/backend/probe_gas_arm64.S
+	$(MAKE) $(atlrun) atldir=$(mydir) exe=xprobe_gas_arm64 args="$(args)" \
                 redir=config0.out
 	- cat config0.out
 IRun_GAS_ARM :
@@ -350,6 +376,12 @@ IRunCComp :
 	$(MAKE) $(atlrun) atldir=$(mydir) exe=xctest args="$(args)" \
                 redir=config0.out
 	- cat config0.out
+IRunXCComp :
+	- rm -f xctest comptestC.o config0.out
+	$(CC) $(CCFLAGS) -o xctest $(SRCdir)/backend/comptestC.c
+	$(MAKE) atlas_run atldir=$(mydir) exe=xctest args="$(args)" \
+                redir=config0.out
+	- cat config0.out
 
 IRunArchInfo_win: xarchinfo_win
 	- rm -f config0.out
@@ -434,10 +466,10 @@ xprobe_x8684 : $(SRCdir)/backend/probe_this_asm.c $(SRCdir)/backend/probe_gas_x8
 DoNothing:
 
 make_subdirs:
-	mkdir src bin tune interfaces
+	mkdir src bin tune interfaces timing
 	cd src ; mkdir testing auxil blas lapack pthreads threads
 	cd src/blas ; \
-           mkdir f77reference reference gemv ger gemm kbmm \
+           mkdir f77reference reference gemv ger gemm ammm kbmm \
                  level1 level2 level3 pklevel3
 	cd src/blas/reference ; mkdir level1 level2 level3
 	cd src/blas/level2 ; mkdir kernel

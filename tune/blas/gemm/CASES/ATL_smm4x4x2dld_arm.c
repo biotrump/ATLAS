@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  * Copyright (C) 2012 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,9 @@
    #error "NB must be a multiple of 4"
 #endif
 
+#ifndef ATL_ARM_SOFTFP
+   #define ATL_ARM_HARDFP 1
+#endif
 /*
  * This routine is a simple 4x4 register blocked routine, with two iterations
  * of software pipelining on the load/use of A and B for the ARM.

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2000 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,6 +29,9 @@
  */
 #include "atlas_misc.h"
 #include "atlas_lapack.h"
+#ifdef ATL_USEPTHREADS
+   #include "atlas_ptalias_lapack.h"
+#endif
 #include "cblas.h"
 #include "atlas_cblastypealias.h"
 #include "atlas_tst.h"
@@ -199,7 +202,13 @@ TYPE *GetGE(int M, int N, int lda)
 {
    TYPE *A;
    A = malloc(ATL_MulBySize(lda)*N);
-   if (A) Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   if (A)
+   {
+      #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+         ATL_NumaTouchSpread(ATL_MulBySize(lda)*N, A);
+      #endif
+      Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
+   }
    return(A);
 }
 
@@ -249,6 +258,9 @@ static TYPE *DupMat(enum ATLAS_ORDER Order, int M, int N, TYPE *A, int lda,
    ATL_assert(ldc >= M);
    C = malloc(ATL_MulBySize(ldc)*N);
    ATL_assert(C);
+   #if defined(ATL_USEPTHREADS) && !defined(ATL_NONUMATOUCH)
+      ATL_NumaTouchSpread(ATL_MulBySize(ldc)*N, C);
+   #endif
    for (j=0; j != N; j++)
    {
       for (i=0; i != M2; i++) C[i] = A[i];
@@ -337,7 +349,6 @@ static void MakeHEDiagDom
    int j;
    const int lda2=(lda SHIFT), ldap1=((lda+1)SHIFT);
 
-   Mjoin(PATL,gegen)(N, N, A, lda, N*N+lda);
    if (Order == CblasRowMajor)
    {
       if (Uplo == CblasLower) Uplo = CblasUpper;

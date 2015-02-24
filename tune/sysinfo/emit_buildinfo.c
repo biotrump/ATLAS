@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -181,6 +181,8 @@ void GetInstInfo()
 
 void PrintInstInfo(FILE *fpout)
 {
+   char *vstr="3.11.31", *sp, *vs;
+   int i, maj=0, min=0, pat=0;
    fprintf(fpout, "#define ATL_ARCH \"%s\"\n", ARCH);
    fprintf(fpout, "#define ATL_INSTFLAGS \"%s\"\n", INSTFLAGS);
    fprintf(fpout, "#define ATL_F2CDEFS \"%s\"\n", F2CDEFS);
@@ -206,7 +208,34 @@ void PrintInstInfo(FILE *fpout)
    fprintf(fpout, "#define ATL_SYSINFO \"%s\"\n", SYS);
    fprintf(fpout, "#define ATL_DATE    \"%s\"\n", DATE);
    fprintf(fpout, "#define ATL_UNAM    \"%s\"\n", UNAM);
-   fprintf(fpout, "#define ATL_VERS    \"3.10.2\"\n");
+   fprintf(fpout, "#define ATL_VERS    \"3.11.31\"\n");
+/*
+ * Find major release number by parsing version string, which is of form
+ *  XX.YY.ZZ, XX=Major release number, YY=Minor release number, ZZ=patch
+ */
+   vs = sp = malloc((strlen(vstr)+1)*sizeof(char));
+   strcpy(vs, vstr);
+   assert(vs);
+   for (i=0; sp[i] && sp[i] != '.'; i++);
+   assert(sp[i] == '.');   /* major must end wt . */
+   sp[i] = '\0';
+   assert(sscanf(sp, "%d", &maj) == 1);
+   sp += i+1;
+
+   for (i=0; sp[i] && sp[i] != '.'; i++);
+   assert(sp[i] == '.');   /* minor must end wt . */
+   sp[i] = '\0';
+   assert(sscanf(sp, "%d", &min) == 1);
+   sp += i+1;
+
+   for (i=0; sp[i]; i++);
+   assert(sp[i] == '\0');
+   assert(sscanf(sp, "%d", &pat) == 1);
+   free(vs);
+   assert(maj >= 3 && min >= 0 && pat >= 0);
+   fprintf(fpout, "#define ATL_VERS_MAJOR %d\n", maj);
+   fprintf(fpout, "#define ATL_VERS_MINOR %d\n", min);
+   fprintf(fpout, "#define ATL_VERS_PATCH %d\n", pat);
 }
 
 void CreateFile(char *file)

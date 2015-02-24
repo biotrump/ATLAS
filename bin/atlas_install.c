@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1998 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -242,20 +242,6 @@ int GetFirstInt(char *ln)
    return(iret);
 }
 
-int GetFirstHex(char *ln)
-{
-   int i, iret=0;
-   for (i=0; ln[i]; i++)
-   {
-      if (isxdigit(ln[i]))
-      {
-         sscanf(ln+i, "%x", &iret);
-         break;
-      }
-   }
-   return(iret);
-}
-
 long long GetFirstLong(char *ln)
 {
    int i;
@@ -265,20 +251,6 @@ long long GetFirstLong(char *ln)
       if (isdigit(ln[i]))
       {
          sscanf(ln+i, "%Ld", &iret);
-         break;
-      }
-   }
-   return(iret);
-}
-long long GetFirstLongHex(char *ln)
-{
-   int i;
-   long long iret=0;
-   for (i=0; ln[i]; i++)
-   {
-      if (isxdigit(ln[i]))
-      {
-         sscanf(ln+i, "%lx", &iret);
          break;
       }
    }
@@ -317,19 +289,6 @@ int GetLastInt(char *ln)
    }
    return(iret);
 }
-int GetLastHex(char *ln)
-{
-   int i, iret=0;
-   for (i=0; ln[i]; i++);
-   if (i > 0) for (i--; i > 0 && !isxdigit(ln[i]); i--);
-   if (i > 0 || (i == 0 && isxdigit(ln[0])))
-   {
-      while(isxdigit(ln[i]) && i > 0) i--;
-      if (!isxdigit(ln[i])) i++;
-      sscanf(ln+i, "%x", &iret);
-   }
-   return(iret);
-}
 
 long long GetLastLong(char *ln)
 {
@@ -342,20 +301,6 @@ long long GetLastLong(char *ln)
       while(isdigit(ln[i]) && i > 0) i--;
       if (!isdigit(ln[i])) i++;
       sscanf(ln+i, "%ld", &iret);
-   }
-   return(iret);
-}
-long long GetLastLongHex(char *ln)
-{
-   int i;
-   long iret=0;
-   for (i=0; ln[i]; i++);
-   if (i > 0) for (i--; i > 0 && !isxdigit(ln[i]); i--);
-   if (i > 0 || (i == 0 && isxdigit(ln[0])))
-   {
-      while(isxdigit(ln[i]) && i > 0) i--;
-      if (!isxdigit(ln[i])) i++;
-      sscanf(ln+i, "%lx", &iret);
    }
    return(iret);
 }
@@ -408,8 +353,11 @@ static void ATL_Cassert0(size_t cond, char *exp, char *logfile, int line)
          "directory.  Be sure to include this file in any help request.\n");
    }
    if (fperr) fclose(fperr);
-   system("cat ../../CONFIG/error.txt >> INSTALL_LOG/ERROR.LOG");
-   system("cat ../../CONFIG/error.txt");
+/*
+ * Ignore ifs: fucking gcc/glibc forces me to make code less maintainable
+ */
+   if(system("cat ../../CONFIG/error.txt >> INSTALL_LOG/ERROR.LOG"));
+   if(system("cat ../../CONFIG/error.txt"));
    exit(-1);
 }
 #define ATL_Cassert(cond_, exp_, logfile_) \
@@ -425,9 +373,10 @@ void GetInstLogFile(char *nam, int pre, int *muladd, int *pf, int *lat,
    fp = fopen(nam, "r");
    if (fp == NULL) fprintf(stderr, "file %s not found!!\n\n", nam);
    assert(fp);
-   fgets(ln, 128, fp);
-   fscanf(fp, " %d %d %d %d %d %d %d %d %d %d %lf\n",
-          muladd, lat, pf, nb, mu, nu, ku, ForceFetch, ifetch, nfetch, mflop);
+   assert(fgets(ln, 128, fp));
+   assert(fscanf(fp, " %d %d %d %d %d %d %d %d %d %d %lf\n",
+          muladd, lat, pf, nb, mu, nu, ku, ForceFetch, ifetch, nfetch, mflop)
+          == 11);
    fclose(fp);
 }
 
@@ -444,10 +393,10 @@ void PrintBanner(char *fnam, int START, int sec, int subsec, int subsubsec)
    GetDate(&month, &day, &year, &hour, &min);
    fprintf(fp, "\n%s%s%s", sep, sep, sep);
    if (START)
-      fprintf(fp, "*       BEGAN ATLAS3.10.2 INSTALL OF SECTION %1d-%1d-%1d ON %02d/%02d/%04d AT %02d:%02d     *\n",
+      fprintf(fp, "*       BEGAN ATLAS3.11.3 INSTALL OF SECTION %1d-%1d-%1d ON %02d/%02d/%04d AT %02d:%02d     *\n",
               sec, subsec, subsubsec, month, day, year, hour, min);
    else
-      fprintf(fp, "*      FINISHED ATLAS3.10.2 INSTALL OF SECTION %1d-%1d-%1d ON %02d/%02d/%04d AT %02d:%02d   *\n",
+      fprintf(fp, "*      FINISHED ATLAS3.11.3 INSTALL OF SECTION %1d-%1d-%1d ON %02d/%02d/%04d AT %02d:%02d   *\n",
                       sec, subsec, subsubsec, month, day, year, hour, min);
    fprintf(fp, "%s%s%s\n\n\n", sep, sep, sep);
    fclose(fp);
@@ -483,9 +432,9 @@ void PrintStartStop(FILE *fp0, FILE *fp1, int nspc, int START, int sec,
          fprintf(fp1, "\n\n");
    }
    if (fp0)
-      fprintf(fp0, ln);
+      fprintf(fp0, "%s", ln);
    if (fp1)
-      fprintf(fp1, ln);
+      fprintf(fp1, "%s", ln);
 }
 
 int LnIsCont(char *ln)
@@ -514,8 +463,8 @@ void GetuMMRES(char pre, int ID, int *muladd, int *lat,
    sprintf(ln, "../tune/blas/gemm/%ccases.dsc", pre);
    fp = fopen(ln, "r");
    assert(fp);
-   fgets(ln, 1024, fp);  /* skip comment line */
-   fgets(ln, 1024, fp);  /* get number of user cases line */
+   assert(fgets(ln, 1024, fp));  /* skip comment line */
+   assert(fgets(ln, 1024, fp));  /* get number of user cases line */
    assert(sscanf(ln, " %d", &n) == 1);
 /*
  * Now search file for ID
@@ -548,11 +497,11 @@ void GetMMRES(char pre, int *muladd, int *lat, int *nb, int *pref,
    sprintf(ln, "INSTALL_LOG/%cMMRES", pre);
    fp = fopen(ln, "r");
    assert(fp);
-   fgets(ln, 256, fp);
-   fgets(ln, 256, fp);
+   assert(fgets(ln, 256, fp));
+   assert(fgets(ln, 256, fp));
    assert(sscanf(ln, " %d %d %d %d %d %d %d %d %d %d %lf", muladd, lat, pref,
                  nb, mu, nu, ku, ff, iff, nf, mf) == 11);
-   fgets(ln, 256, fp);
+   assert(fgets(ln, 256, fp));
    if ( fgets(ln, 256, fp) )  /* user-supplied GEMM was best */
    {
       assert(fscanf(fp, " %d %d %lf \"%[^\"]\" \"%[^\"]",
@@ -568,7 +517,7 @@ void GetMMRES(char pre, int *muladd, int *lat, int *nb, int *pref,
 }
 
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Code contributers : R. Clint Whaley, Antoine P. Petitet
@@ -658,7 +607,7 @@ MinIsOdd:
    else return(M);
 }
 
-void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
+void GoToTown(int ARCHDEF, int L1DEF, int TuneLA, int NREG)
 {
    const char TR[2] = {'N','T'};
    char prec[4] = {'d', 's', 'z', 'c'}, pre, upre, *typ;
@@ -675,7 +624,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    int idU, maU, latU, muU, nuU, kuU, il1mul, pfA;
    double mfU, mf4x1, mf4x4, mf, mfp, mmmf, mfpeak[2], l1mul;
    FILE *fp, *fpsum, *fpabr;
-   ATL_mmnode_t *mmp;
+   ATL_mmnode_t *mmp, *mmb;
 
    PrintBanner("INSTALL_LOG/SUMMARY.LOG", 1, 0, 0, 0);
    fpsum = fopen("INSTALL_LOG/SUMMARY.LOG", "a");
@@ -696,7 +645,8 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
 
    sprintf(ln2, "INSTALL_LOG/Stage1.log");
    PrintBanner("INSTALL_LOG/Stage1.log", 1, 1, 0, 0);
-   sprintf(ln, "%s IStage1 %s INSTALL_LOG/Stage1.log\n", fmake, redir);
+   sprintf(ln, "%s IStage1 nreg=%d %s INSTALL_LOG/Stage1.log\n",
+           fmake, NREG, redir);
    ATL_Cassert(system(ln)==0, "Stage 1 install", ln2);
    fp = fopen("INSTALL_LOG/L1CacheSize", "r");
 
@@ -775,12 +725,13 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          PrintBanner(ln2, 1, 2, ip+1, 1);
          if (DefInstall)
          {
-            sprintf(ln, "%s IRunMMDef pre=%c %s %s\n", fmake, pre, redir, ln2);
-            fprintf(stdout, ln);
+            sprintf(ln, "%s IRunMMDef pre=%c nreg=%d %s %s\n",
+                    fmake, pre, NREG, redir, ln2);
+            fprintf(stdout, "%s", ln);
             ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
          }
          sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 1);
       }
@@ -820,8 +771,8 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          mmmf = mmp->mflop[0];
          ATL_mprintf(2, fpsum, stdout,
 "      %cL1MATMUL: lat=%d, nb=%d, pf=%d, mu=%d, nu=%d, ku=%d, if=%d, nf=%d;\n",
-                     pre, mmp->lat, nb, mmp->pref, mmp->mu, mmp->nu, mmp->ku,
-                     mmp->iftch, mmp->nftch);
+                 pre, mmp->lat, nb, mmp->pref, mmp->mu, mmp->nu, mmp->ku,
+                 mmp->iftch, mmp->nftch);
          ATL_mprintf(2, fpsum, stdout,
             "                 Performance: %.2f (%5.2f percent of %s)\n",
                      mmmf, (mmmf/mfp)*100.0, peakstr);
@@ -836,7 +787,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
       if (!FileExists(fnam))
       {
          sprintf(ln, "%s %s pre=%c %s %s", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
       }
       fp = fopen(fnam, "r");
@@ -854,7 +805,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
             {
                sprintf(ln, "%s %s pre=%c nb=%d %s %s",
                        fmake, fnam, pre, ncnb, redir, ln2);
-               fprintf(stdout, ln);
+               fprintf(stdout, "%s", ln);
                ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
             }
             GetInstLogFile(fnam, pre, &muladd, &pf, &lat, &nb, &mu, &nu, &ku,
@@ -881,8 +832,49 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
       }
 
       sprintf(ln, "%s MMinstall pre=%c %s %s\n", fmake, pre, redir, ln2);
-      fprintf(stdout, ln);
+      fprintf(stdout, "%s", ln);
       ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
+
+      if (pre == 'd' || pre == 's')
+      {
+
+         sprintf(ln, "%s AMMinstall pre=%c %s %s\n", fmake, pre, redir, ln2);
+         fprintf(stdout, "%s", ln);
+         ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+         mmb = ReadMMFileWithPath(pre, "INSTALL_LOG", "eAMMRES.sum");
+         ATL_Cassert(mmb, "ACCESS-MAJOR MATMUL TUNE", ln2);
+         if (mmb)
+         {
+            for (mmp=mmb; mmp->next; mmp = mmp->next);
+            ATL_mprintf(2, fpsum, stdout,
+    "\n      The best access-major matmul kernel was %s, MB=%d, NB=%d, KB=%d\n",
+                        mmp->rout, mmp->mbB, mmp->nbB, mmp->kbB);
+            ATL_mprintf(2, fpsum, stdout, "      written %s\n",
+                        mmp->auth ? mmp->auth : "R. Clint Whaley");
+            mf = mmp->mflop[0];
+            ATL_mprintf(2, fpsum, stdout,
+               "      Performance: %.2fMFLOPS (%.2f of block-major MM)\n",
+                        mf, (mf/mmmf)*100.0);
+            if (mf > mmmf)
+            {
+               sprintf(ln, "%s AMM_use pre=%c", fmake, pre);
+               ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+            }
+            else
+            {
+               sprintf(ln, "%s AMM_disable pre=%c", fmake, pre);
+               ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+            }
+            KillAllMMNodes(mmb);
+         }
+         else
+         {
+            ATL_mprintf(2, fpsum, stdout,
+                        "\n      Access-major matmul install FAILED!\n\n");
+            sprintf(ln, "%s AMM_disable pre=%c", fmake, pre);
+            ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+         }
+      }
 
       fprintf(fpsum, "\n");
       PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 1, NULL);
@@ -896,7 +888,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          PrintBanner(ln2, 1, 2, ip+1, 2);
          sprintf(ln, "%s INSTALL_LOG/atlas_cacheedge.h pre=%c %s %s\n",
                  fmake, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "CACHEEDGE DETECTION", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 2);
       }
@@ -922,7 +914,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          {
             sprintf(ln, "%s %s pre=%c %s %s\n",
                     fmake, ln3, pre, redir, ln2);
-            fprintf(stdout, ln);
+            fprintf(stdout, "%s", ln);
             ATL_Cassert(system(ln)==0, "CACHEEDGE DETECTION", ln2);
          }
          fp = fopen(ln3, "r");
@@ -955,7 +947,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
               "\n\n   STAGE 2-%d-3: COPY/NO-COPY CROSSOVER DETECTION\n", ip+1);
 
          sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "COPY/NO-COPY CROSSOVER DETECTION", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 3);
          fprintf(stdout, "      done.\n");
@@ -970,17 +962,17 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
       {
          sprintf(ln, "%s INSTALL_LOG/atlas_%ctrsmXover.h pre=%c %s %s\n",
                  fmake, pre, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "L3BLAS TUNING", ln2);
       }
       else
       {
          sprintf(ln, "%s Il3lib pre=%c %s %s\n", fmake, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "L3BLAS TUNING", ln2);
       }
       sprintf(ln, "%s %ccblaslib %s %s\n", fmake, pre, redir, ln2); /* cblas */
-      fprintf(stdout, ln);
+      fprintf(stdout, "%s", ln);
       ATL_Cassert(system(ln)==0, "L3BLAS TUNING", ln2);
       PrintBanner(ln2, 0, 2, ip+1, 5);
       PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 4, "L3BLAS TUNE");
@@ -993,7 +985,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          sprintf(ln2, "INSTALL_LOG/%cMVNTUNE.LOG", pre);
          PrintBanner(ln2, 1, 2, ip+1, 7);
          sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "MVNTUNE", ln2);
          ATL_Cassert(FileIsThere(fnam), "MVNTUNE", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 7);
@@ -1026,7 +1018,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          sprintf(ln2, "INSTALL_LOG/%cMVTTUNE.LOG", pre);
          PrintBanner(ln2, 1, 2, ip+1, 7);
          sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "MVTTUNE", ln2);
          ATL_Cassert(FileIsThere(fnam), "MVTTUNE", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 7);
@@ -1061,7 +1053,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          sprintf(ln2, "INSTALL_LOG/%cR1TUNE.LOG", pre);
          PrintBanner(ln2, 1, 2, ip+1, 7);
          sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          ATL_Cassert(system(ln)==0, "R1TUNE", ln2);
          ATL_Cassert(FileIsThere(fnam), "R1TUNE", ln2);
          PrintBanner(ln2, 0, 2, ip+1, 7);
@@ -1099,18 +1091,34 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    sprintf(ln2, "INSTALL_LOG/LIBBUILD.LOG");
    PrintBanner(ln2, 1, 3, 1, 1);
    sprintf(ln, "%s IBuildLibs %s %s\n", fmake, redir, ln2);
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "LIBRARY BUILD", ln2);
    ATL_Cassert(FileIsThere(fnam), "LIBRARY BUILD", ln2);
    PrintBanner(ln2, 0, 3, 1, 1);
    PrintStartStop(stdout, fpsum, 0, 0, 3, 0, 0, "GENERAL LIBRARY BUILD");
 
+   for (ip=2; ip < 4; ip++)
+   {
+      char pre=prec[ip];
+      PrintStartStop(stdout, fpsum, 3, 1, 3, ip-1, 2,
+                     "COMPLEX AMM NB REFINEMENT");
+      sprintf(ln2, "INSTALL_LOG/atlas_%camm_sum.h", pre);
+      if (!FileExists(ln2))
+      {
+         sprintf(ln2, "INSTALL_LOG/%cAMMNBTUNE.LOG", pre);
+         PrintBanner(ln2, 1, 3, ip-1, 2);
+         sprintf(ln, "%s cAMMinstall pre=%c %s %s\n", fmake, pre, redir, ln2);
+         fprintf(stdout, "%s", ln);
+         ATL_Cassert(system(ln)==0, "COMPLEX AMM NB REFINEMENT", ln2);
+         PrintBanner(ln2, 0, 3, ip-1, 2);
+      }
+   }
    PrintStartStop(stdout, fpsum, 0, 1, 4, 0, 0, "POST-BUILD TUNING");
    sprintf(ln2, "INSTALL_LOG/POSTTUNE.LOG");
    PrintBanner(ln2, 1, 4, 1, 1);
    PrintStartStop(stdout, fpsum, 3, 1, 4, 1, 1, "TRSM TUNE");
    sprintf(ln, "%s IPostTune %s %s\n", fmake, redir, ln2);
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "POST-BUILD TUNE", ln2);
    PrintStartStop(stdout, fpsum, 3, 0, 4, 1, 0, NULL);
    ATL_Cassert(FileIsThere(fnam), "POST-BUILD TUNE", ln2);
@@ -1121,7 +1129,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    sprintf(ln2, "INSTALL_LOG/PTTUNE.LOG");
    PrintBanner(ln2, 1, 4, 2, 0);
    sprintf(ln, "%s IPTtune %s %s\n", fmake, redir, ln2);
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "THREADING TUNE", ln2);
    PrintStartStop(stdout, fpsum, 3, 0, 4, 2, 0, "THREADING TUNE");
 
@@ -1129,7 +1137,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    sprintf(ln2, "INSTALL_LOG/LIBPTBUILD.LOG");
    PrintBanner(ln2, 1, 4, 2, 1);
    sprintf(ln, "%s IBuildPtlibs %s %s\n", fmake, redir, ln2);
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "PTLIBRARY BUILD", ln2);
    PrintBanner(ln2, 0, 4, 2, 1);
    PrintStartStop(stdout, fpsum, 3, 0, 4, 2, 1, "THREADING BUILD");
@@ -1144,7 +1152,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
          PrintStartStop(stdout, fpsum, 6, 1, 4, 3, ip+1, ln2);
          sprintf(ln2, "INSTALL_LOG/%cLATUNE.LOG", pre);
          PrintBanner(ln2, 1, 4, 3, ip+1);
-         fprintf(stdout, ln);
+         fprintf(stdout, "%s", ln);
          sprintf(ln, "%s ILATune pre=%c %s %s\n", fmake, pre, redir, ln2);
          ATL_Cassert(system(ln)==0, "LAPACK TUNE", ln2);
          PrintStartStop(stdout, fpsum, 6, 0, 4, 3, ip+1, NULL);
@@ -1162,7 +1170,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    #else
       sprintf(ln, "%s IBuildLibs %s %s\n", fmake, redir, ln2);
    #endif
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "STATIC LIBRARY UPDATE", ln2);
    PrintBanner(ln2, 0, 5, 1, 1);
    PrintStartStop(stdout, fpsum, 3, 0, 5, 1, 0, "FINAL STATIC LIBRARY UPDATE");
@@ -1172,7 +1180,7 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA)
    sprintf(ln2, "INSTALL_LOG/LIBDYBUILD.LOG");
    PrintBanner(ln2, 1, 5, 2, 1);
    sprintf(ln, "%s IBuildDyLibs %s %s\n", fmake, redir, ln2);
-   fprintf(stdout, ln);
+   fprintf(stdout, "%s", ln);
    ATL_Cassert(system(ln)==0, "DYLIBRARY BUILD", ln2);
    PrintBanner(ln2, 0, 5, 2, 1);
    PrintStartStop(stdout, fpsum, 3, 0, 5, 2, 0, NULL);
@@ -1192,11 +1200,12 @@ void PrintUsage(char *nam)
    exit(-1);
 }
 
-void GetFlags(int nargs, char *args[], int *ARCHDEF, int *L1DEF, int *TuneLA)
+void GetFlags(int nargs, char *args[], int *ARCHDEF, int *L1DEF, int *TuneLA,
+              int *NREG)
 {
    int i;
 
-   *TuneLA = *L1DEF = 0;
+   *NREG = *TuneLA = *L1DEF = 0;
    *ARCHDEF = 1;
    for (i=1; i < nargs; i++)
    {
@@ -1207,6 +1216,11 @@ void GetFlags(int nargs, char *args[], int *ARCHDEF, int *L1DEF, int *TuneLA)
          if (++i > nargs)
             PrintUsage(args[0]);
          *ARCHDEF = atoi(args[i]);
+         break;
+      case 'r':
+         if (++i > nargs)
+            PrintUsage(args[0]);
+         *NREG = atoi(args[i]);
          break;
       case 'l':
          if (++i > nargs)
@@ -1226,8 +1240,8 @@ void GetFlags(int nargs, char *args[], int *ARCHDEF, int *L1DEF, int *TuneLA)
 
 int main(int nargs, char *args[])
 {
-   int L1DEF, ARCHDEF, TuneLA;
-   GetFlags(nargs, args, &ARCHDEF, &L1DEF, &TuneLA);
-   GoToTown(ARCHDEF, L1DEF, TuneLA);
+   int L1DEF, ARCHDEF, TuneLA, NREG;
+   GetFlags(nargs, args, &ARCHDEF, &L1DEF, &TuneLA, &NREG);
+   GoToTown(ARCHDEF, L1DEF, TuneLA, NREG);
    return(0);
 }

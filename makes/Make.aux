@@ -1,31 +1,31 @@
 include Make.inc
 mySRCdir = $(SRCdir)/src/auxil
 
-ptobj = ATL_ptflushcache.o
+ptobj = ATL_ptflushcache.o ATL_NumaTouchSpread.o
 obj = ATL_flushcache.o ATL_flushCacheByAddr.o ATL_cputime.o ATL_walltime.o \
-      ATL_xerbla.o ATL_lcm.o ATL_buildinfo.o ATL_ssyreflect.o ATL_sgemoveT.o \
-      ATL_sgemove.o ATL_sgecopy.o ATL_sgezero.o ATL_sgeadd.o ATL_sgescal.o \
-      ATL_strscal.o ATL_stradd.o ATL_sgecollapse.o ATL_strcollapse.o \
-      ATL_saxpby.o ATL_sgeswapT.o ATL_ssqtrans.o ATL_sgeApBt_NB.o \
-      ATL_ssyApAt_NB.o ATL_ssyApAt.o ATL_sgemaxnrm.o ATL_sgeset.o \
-      ATL_strsetL.o ATL_strsetU.o ATL_dsyreflect.o ATL_dgemoveT.o \
-      ATL_dgemove.o ATL_dgecopy.o ATL_dgezero.o ATL_dgeadd.o ATL_dgescal.o \
-      ATL_dtrscal.o ATL_dtradd.o ATL_dgecollapse.o ATL_dtrcollapse.o \
-      ATL_daxpby.o ATL_dgeswapT.o ATL_dsqtrans.o ATL_dgeApBt_NB.o \
-      ATL_dsyApAt_NB.o ATL_dsyApAt.o ATL_dgemaxnrm.o ATL_dgeset.o \
-      ATL_dtrsetL.o ATL_dtrsetU.o ATL_csyreflect.o ATL_cgemoveT.o \
-      ATL_cgemove.o ATL_cgecopy.o ATL_cgezero.o ATL_cgeadd.o ATL_cgescal.o \
-      ATL_ctrscal.o ATL_ctradd.o ATL_cgecollapse.o ATL_ctrcollapse.o \
-      ATL_caxpby.o ATL_cgeswapT.o ATL_csqtrans.o ATL_cgeApBt_NB.o \
-      ATL_csyApAt_NB.o ATL_csyApAt.o ATL_cgemaxnrm.o ATL_cgeset.o \
-      ATL_ctrsetL.o ATL_ctrsetU.o ATL_zsyreflect.o ATL_zgemoveT.o \
-      ATL_zgemove.o ATL_zgecopy.o ATL_zgezero.o ATL_zgeadd.o ATL_zgescal.o \
-      ATL_ztrscal.o ATL_ztradd.o ATL_zgecollapse.o ATL_ztrcollapse.o \
-      ATL_zaxpby.o ATL_zgeswapT.o ATL_zsqtrans.o ATL_zgeApBt_NB.o \
-      ATL_zsyApAt_NB.o ATL_zsyApAt.o ATL_zgemaxnrm.o ATL_zgeset.o \
-      ATL_ztrsetL.o ATL_ztrsetU.o ATL_cgemoveC.o ATL_caxpbyConj.o \
-      ATL_caxpyConj.o ATL_cmoveConj.o ATL_ccopyConj.o ATL_cscalConj.o \
-      ATL_chereflect.o ATL_ccplxdivide.o ATL_ccplxinvert.o \
+      ATL_xerbla.o ATL_lcm.o ATL_buildinfo.o ATL_bitvec.o ATL_ssyreflect.o \
+      ATL_sgemoveT.o ATL_sgemove.o ATL_sgecopy.o ATL_sgezero.o ATL_sgeadd.o \
+      ATL_sgescal.o ATL_strscal.o ATL_stradd.o ATL_sgecollapse.o \
+      ATL_strcollapse.o ATL_saxpby.o ATL_sgeswapT.o ATL_ssqtrans.o \
+      ATL_sgeApBt_NB.o ATL_ssyApAt_NB.o ATL_ssyApAt.o ATL_sgemaxnrm.o \
+      ATL_sgeset.o ATL_strsetL.o ATL_strsetU.o ATL_dsyreflect.o \
+      ATL_dgemoveT.o ATL_dgemove.o ATL_dgecopy.o ATL_dgezero.o ATL_dgeadd.o \
+      ATL_dgescal.o ATL_dtrscal.o ATL_dtradd.o ATL_dgecollapse.o \
+      ATL_dtrcollapse.o ATL_daxpby.o ATL_dgeswapT.o ATL_dsqtrans.o \
+      ATL_dgeApBt_NB.o ATL_dsyApAt_NB.o ATL_dsyApAt.o ATL_dgemaxnrm.o \
+      ATL_dgeset.o ATL_dtrsetL.o ATL_dtrsetU.o ATL_csyreflect.o \
+      ATL_cgemoveT.o ATL_cgemove.o ATL_cgecopy.o ATL_cgezero.o ATL_cgeadd.o \
+      ATL_cgescal.o ATL_ctrscal.o ATL_ctradd.o ATL_cgecollapse.o \
+      ATL_ctrcollapse.o ATL_caxpby.o ATL_cgeswapT.o ATL_csqtrans.o \
+      ATL_cgeApBt_NB.o ATL_csyApAt_NB.o ATL_csyApAt.o ATL_cgemaxnrm.o \
+      ATL_cgeset.o ATL_ctrsetL.o ATL_ctrsetU.o ATL_zsyreflect.o \
+      ATL_zgemoveT.o ATL_zgemove.o ATL_zgecopy.o ATL_zgezero.o ATL_zgeadd.o \
+      ATL_zgescal.o ATL_ztrscal.o ATL_ztradd.o ATL_zgecollapse.o \
+      ATL_ztrcollapse.o ATL_zaxpby.o ATL_zgeswapT.o ATL_zsqtrans.o \
+      ATL_zgeApBt_NB.o ATL_zsyApAt_NB.o ATL_zsyApAt.o ATL_zgemaxnrm.o \
+      ATL_zgeset.o ATL_ztrsetL.o ATL_ztrsetU.o ATL_cgemoveC.o \
+      ATL_caxpbyConj.o ATL_caxpyConj.o ATL_cmoveConj.o ATL_ccopyConj.o \
+      ATL_cscalConj.o ATL_chereflect.o ATL_ccplxdivide.o ATL_ccplxinvert.o \
       ATL_caxpyConj_x1_y1.o ATL_chescal.o ATL_cgeApBc_NB.o ATL_cheApAc_NB.o \
       ATL_cheApAc.o ATL_cgemove_aXi0.o ATL_cgemove_aX.o ATL_cgemove_a1.o \
       ATL_cgemove_a0.o ATL_caxpbyConj_aXi0_bXi0.o ATL_caxpby_aXi0_bXi0.o \
@@ -146,9 +146,15 @@ $(SYSdir)/ATL_walltime.o: $(SYSdir)/ATL_walltime.c
 $(SYSdir)/ATL_walltime.c:
 	cd $(SYSdir) ; $(MAKE) ATL_walltime.o
 
+ATL_bitvec.o : $(INCSdir)/atlas_bitvec.h $(mySRCdir)/ATL_bitvec.c
+	$(KC) $(NM) $@ $(OJ) $(KCFLAGS) $(mySRCdir)/ATL_bitvec.c
+
 $(INCAdir)/atlas_pthreads.h :
 	cd $(BLDdir)/tune/threads ; $(MAKE) IRun_nthr
 	$(ATLFWAIT) -f $(INCAdir)/atlas_pthreads.h
+ATL_NumaTouchSpread.o : $(INCAdir)/atlas_type.h $(INCAdir)/atlas_pthreads.h \
+                $(mySRCdir)/ATL_NumaTouchSpread.c
+	$(KC) $(NM) $@ $(OJ) $(KCFLAGS) $(mySRCdir)/ATL_NumaTouchSpread.c
 ATL_ptflushcache.o : $(INCAdir)/atlas_type.h $(INCAdir)/atlas_pthreads.h \
                 $(mySRCdir)/ATL_ptflushcache.c
 	$(KC) $(NM) $@ $(OJ) $(KCFLAGS) $(mySRCdir)/ATL_ptflushcache.c

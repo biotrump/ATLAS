@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -121,6 +121,19 @@
    #define EPS 1.0e-16
 #endif
 
+#if !defined(ATL_NEWTIME) || DUPB == 0
+   #ifdef DUPB
+      #undef DUPB
+   #endif
+   #define DUPB 1
+#elif !defined(DUPB)
+   #ifndef DUPB
+      #define DUPB 1
+   #elif DUPB == 0
+      #undef DUPB
+      #define DUPB 1
+   #endif
+#endif
 #ifdef TCPLX
    #define bn1 bX  /* don't use bn1 case anymore */
 #endif
@@ -260,11 +273,13 @@
 #ifdef TREAL
    #define NBmm Mjoin(Mjoin(Mjoin(Mjoin(Mjoin(ppre,MNKnam), TRnam),ldnam), ALPHAnam), BETAnam)
 
-#ifdef NEWMM
-   #ifndef ATL_CINT
-      #define ATL_CINT const int
+#ifdef ATL_NEWTIME
+   #ifndef ATL_CSZT
+      #define ATL_CSZT const size_t
    #endif
-   void NBmm(ATL_CINT M, ATL_CINT N, ATL_CINT K, TYPE *A, TYPE *B, TYPE *C);
+   void NBmm(ATL_CSZT mblks, ATL_CSZT nblks, ATL_CSZT K, const TYPE *A,
+             const TYPE *B, TYPE *C, const TYPE *pAn, const TYPE *pBn,
+             const TYPE *pCn);
 #else
    void NBmm(const int, const int, const int, const SCALAR, const TYPE*,
              const int, const TYPE*, const int, const SCALAR, TYPE*, const int);
@@ -363,6 +378,11 @@ void SortDoubles(int N, double *X)
 #endif
 void time_mm(char *fnam0)
 {
+   #ifdef ATL_Cachelen
+      #define ATL_AS (ATL_Cachelen/ATL_sizeof)
+   #else
+      #define ATL_AS (32/ATL_sizeof)
+   #endif
    char fnam[80];
 #if defined(LDA) && LDA != 0
       const int lda=LDA;
@@ -421,6 +441,9 @@ void time_mm(char *fnam0)
    const TYPE rone=1.0, rnone=(-1.0);
    FILE *fpout;
    double time00();
+   #ifdef ATL_NEWTIME
+      const size_t nmu=(MB/MU), nnu=(NB/NU);
+   #endif
 
    #ifdef NoTransA
       nA = KB;
@@ -453,28 +476,43 @@ void time_mm(char *fnam0)
    incA = incB = incC = nmov = 0;
    #ifdef MoveA
       incA = lda*nA;
+      incA = ((incA+ATL_AS-1)/ATL_AS)*ATL_AS;
       nmov++;
    #else
-      va = malloc(128+ATL_sizeof*lda*nA);
+      #ifdef ATL_NEWTIME
+         va = malloc(128+ATL_sizeof*(lda*nA+MB*KB));
+      #else
+         va = malloc(128+ATL_sizeof*lda*nA);
+      #endif
       assert(va);
       a = A = (void*) ( 128 + ((((size_t)va)>>7)<<7) );
       stA = A + (lda*nA SHIFT);
    #endif
    #ifdef MoveB
-      incB = ldb*nB;
+      incB = DUPB*ldb*nB;
+      incB = ((incB+ATL_AS-1)/ATL_AS)*ATL_AS;
       nmov++;
    #else
-      vb = malloc(128+ATL_sizeof*ldb*nB);
+      #ifdef ATL_NEWTIME
+         vb = malloc(128+DUPB*ATL_sizeof*(ldb*nB+NB*KB));
+      #else
+         vb = malloc(128+ATL_sizeof*ldb*nB);
+      #endif
       assert(vb);
       b = B = (void*) ( 128 + ((((size_t)vb)>>7)<<7) );
-      stB = B + (ldb*nB SHIFT);
+      stB = B + DUPB*(ldb*nB SHIFT);
    #endif
    #ifdef MoveC
       assert(ldc == MB);
       incC = ldc*NB;
+      incC = ((incC+ATL_AS-1)/ATL_AS)*ATL_AS;
       nmov++;
    #else
-      vc = malloc(128+ATL_sizeof*ldc*NB);
+      #ifdef ATL_NEWTIME
+         vc = malloc(128+ATL_sizeof*(ldc*NB+MB*NB));
+      #else
+         vc = malloc(128+ATL_sizeof*ldc*NB);
+      #endif
       assert(vc);
       c = C = (void*) ( 128 + ((((size_t)vc)>>7)<<7) );
       stC = C + (ldc * NB SHIFT);
@@ -504,7 +542,21 @@ void time_mm(char *fnam0)
       i = Mmin(incA, MB*KB) + Mmin(incB, NB*KB) + Mmin(incC, MB*NB);
       j = (len+i-1) / i;       /* number of reps to cause flush */
       len = (incA+incB+incC) * j;
-      vp = malloc(128+len*ATL_sizeof);
+      #ifdef ATL_NEWTIME
+      {
+         #if MB >= NB && MB >= NB
+            #define EXTRA MB*MB
+         #elif NB >= MB && NB >= KB
+            #define EXTRA NB*NB
+         #else
+            #define EXTRA KB*KB
+         #endif
+         vp = malloc(128+(len+EXTRA)*ATL_sizeof);
+         #undef EXTRA
+      }
+      #else
+         vp = malloc(128+len*ATL_sizeof);
+      #endif
       assert(vp);
       #ifdef TCPLX
          inca = incA;
@@ -558,8 +610,8 @@ void time_mm(char *fnam0)
       t0 = time00();
       for (k=reps; k; k--)
       {
-         #ifdef NEWMM
-            NBmm(MB, NB, KB, a, b, c);
+         #ifdef ATL_NEWTIME
+            NBmm(nmu, nnu, KB, a, b, c, a+incA, b+incB, c+incC);
          #else
             NBmm(MB, NB, KB, alpha, a, lda, b, ldb, beta, c, ldc);
          #endif
@@ -599,7 +651,11 @@ void time_mm(char *fnam0)
  *    Workaround for mystery prob Windows/icc, where first return val is
  *    always 0
  */
+#if defined(ATL_ARCH_TI_C66_BM) && (!defined(ATL_USING_XCC))
+      if (t1 != 0.0)
+#else
       if (t1 >= 0.005)
+#endif
       {
          mflop = ( (((2.0*MB)*NB)*KB)*reps ) / (t1 * 1000000.0);
          #ifdef TCPLX

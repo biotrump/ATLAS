@@ -1,7 +1,25 @@
 #ifndef ATL_NOAFFINITY
-   #include "atlas_taffinity.h"  /* include this file first! */
-#elif defined(ATL_TUNING)
-   #define ATL_thread_start ATL_thread_start_noaff
+#include "atlas_taffinity.h"
+#endif
+#ifdef ATL_WINTHREADS
+   #include <windows.h>
+#endif
+#if defined(ATL_NOAFFINITY)
+   #ifndef ATL_WINTHREADS
+      #include <pthread.h>
+   #endif
+   #ifdef ATL_TUNING
+      #define ATL_thread_start ATL_thread_start_noaff
+   #endif
+#elif defined(ATL_PAFF_SETAFFNP)
+   #define _GNU_SOURCE 1 /* what manpage says you need to get CPU_SET */
+   #define __USE_GNU   1 /* what actually works on linuxes I've seen */
+   #include <sched.h>    /* must be inced wt above defs before pthread.h */
+   #include <pthread.h>
+#elif defined(ATL_PAFF_SETPROCNP)
+   #include <pthread.h>
+#else
+   #define ATL_PAFF_SELF
 #endif
 #include "atlas_misc.h"
 #include "atlas_threads.h"
@@ -37,10 +55,12 @@ int ATL_thread_start(ATL_thread_t *thr, int proc, int JOINABLE,
       #endif
       ATL_assert(thr->thrH);
       #ifdef ATL_RANK_IS_PROCESSORID
-         ATL_assert(SetThreadAffinityMask(thr->thrH, (1<<proc)));
+         ATL_assert(SetThreadAffinityMask(thr->thrH, ((long long)1)<<proc)));
+         thr->affID = proc;
       #else
+         thr->affID = ATL_affinityIDs[proc%ATL_AFF_NUMID];
          ATL_assert(SetThreadAffinityMask(thr->thrH,
-                    (1<<ATL_affinityIDs[proc%ATL_AFF_NUMID])));
+                    (((long long)1)<<(thr->affID))));
       #endif
       ATL_assert(ResumeThread(thr->thrH) == 1);
    #endif
@@ -82,7 +102,7 @@ int ATL_thread_start(ATL_thread_t *thr, int proc, int JOINABLE,
          const int affID = ATL_affinityIDs[proc%ATL_AFF_NUMID];
       #endif
       #ifdef ATL_PAFF_SELF
-         thr->paff_set = 0;  /* affinity must be set by created thread */
+         thr->affID = -affID-1; /* affinity must be set by created thread */
       #endif
    #endif
    thr->rank = proc;
@@ -109,19 +129,6 @@ int ATL_thread_start(ATL_thread_t *thr, int proc, int JOINABLE,
                                                PTHREAD_BIND_FORCED_NP));
    #endif
    ATL_assert(!pthread_create(&thr->thrH, &attr, rout, arg));
-   #if defined(ATL_PAFF_PBIND)
-      ATL_assert(!processor_bind(P_LWPID, thr->thrH, affID, NULL));
-      thr->paff_set = 0;  /* affinity set by spawner */
-   #elif defined(ATL_PAFF_BINDP)
-      ATL_assert(!bindprocessor(BINDTHREAD, thr->thrH, bindID));
-      thr->paff_set = 0;  /* affinity set by spawner */
-   #elif defined(ATL_PAFF_CPUSET)  /* untried FreeBSD code */
-      CPU_ZERO(&mycpuset);         /* no manpage, so guess works like linux */
-      CPU_SET(bindID, &mycpuset);
-      if (!cpuset_setaffinity(CPU_LEVEL_WHICH, CPU_WHICH_TID, thr->thrH,
-                              sizeof(mycpuset), &mycpuset));
-         thr->paff_set = 0;  /* affinity set by spawner */
-   #endif
    ATL_assert(!pthread_attr_destroy(&attr));
 #endif
    return(0);

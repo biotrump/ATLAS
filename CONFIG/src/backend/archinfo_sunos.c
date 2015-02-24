@@ -65,12 +65,10 @@ enum MACHTYPE ProbeArch()
       res = atlsys_1L(NULL, "/usr/sbin/psrinfo -pv | fgrep UltraSPARC", 0, 0);
       if (res)
       {
-         if (strstr(res, "UltraSPARC-T2"))
-            mach = SunUST2;
-         else if (strstr(res, "UltraSPARC-T1"))
-            mach = SunUST1;
-         else if (strstr(res, "UltraSPARC-IV"))
+         if (strstr(res, "UltraSPARC-IV"))
             mach = SunUSIV;
+         else if (strstr(res, "UltraSPARC-T2"))
+            mach = SunUST2;
          else if (strstr(res, "UltraSPARC-III"))
             mach = SunUSIII;
          else if (strstr(res, "UltraSPARC-II"))

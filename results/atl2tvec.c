@@ -1032,6 +1032,8 @@ WORDQ *GetMassagedQ(FILE *fpin, int start, int stride, int verb)
    WORDQ *wqb, *wq;    /* base and general ptr, resp. */
 
    wqb = ReadTimerFile(fpin);
+   if (!wqb)
+      return(NULL);
    UpCaseWords(wqb->wlist);        /* upcase labels for ease of strcmp */
    wqb = KillBadLines(wqb, verb);
    if (start == 1 && stride == 1)
@@ -1148,13 +1150,13 @@ void PrintOutVectors
 /*
  * Prints all vectors to fpout.  The output looks like:
  * #<cmnt>
- * <nvec> <nrep>      # # of vectors, and repititions
+ * <nvec>      # number of vectors
  * <vec1>
  * <vec2>
  *
  * Each vector consists of:
  * <name>
- * <len> [i,d,s,c]      # char gives data type (int, double, string, char)
+ * <len> <nrep> [i,d,s,c]    # char gives data type (int, double, string, char)
  * <elt1>
  * <elt2>
  */
@@ -1164,7 +1166,7 @@ void PrintOutVectors
    WORDQ *wq=wqb;
 
    fprintf(fpout, "#%s\n", cmnt);
-   fprintf(fpout, "%d %d\n", N, nrep);
+   fprintf(fpout, "%d\n", N);
    for (j=0; j < N; j++)
    {
       WORDS *wp = wq->wlist;
@@ -1174,7 +1176,8 @@ void PrintOutVectors
          pre = 'i';
       else
          pre = GetStringType(wp->next);
-      fprintf(fpout, "%s\n%d %c\n", wp->word, CountWords(wp->next), pre);
+      fprintf(fpout, "%s\n%d %d %c\n", wp->word, CountWords(wp->next),
+              nrep, pre);
       for (wp=wp->next; wp; wp = wp->next)
           fprintf(fpout, "%s\n", wp->word);
       wq = wq->next;

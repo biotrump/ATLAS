@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  * Copyright (C) 2011 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -503,14 +503,14 @@ void PrintUsage(char *name, int ierr, char *flag)
 
 
 /* procedure 1 */
-int *GetIntList1(int ival)
+static int *GetIntList1(int ival)
 /*
  * returns integer array with iarr[0] = 1, iarr[1] = ival
  */
 {
    int *iarr;
    iarr = malloc(2*sizeof(int));
-   ATL_assert(iarr);
+   assert(iarr);
    iarr[0] = 1;
    iarr[1] = ival;
    return(iarr);
@@ -518,14 +518,14 @@ int *GetIntList1(int ival)
 
 #ifdef TYPE
 /* procedure 2 */
-TYPE *GetTypeList1(const SCALAR val)
+static TYPE *GetTypeList1(const SCALAR val)
 /*
  * Returns a TYPE array with arr[0] = 1.0, arr[1] = val
  */
 {
    TYPE *arr;
    arr = malloc(ATL_MulBySize(2));
-   ATL_assert(arr);
+   assert(arr);
    arr[0] = 1;
    #ifdef TCPLX
       arr[2] = *val;
@@ -538,14 +538,14 @@ TYPE *GetTypeList1(const SCALAR val)
 #endif
 
 /* procedure 3 */
-int *GetIntList2(int ival1, int ival2)
+static int *GetIntList2(int ival1, int ival2)
 /*
  * returns integer array with iarr[0] = 1, iarr[1] = ival1, ival[2] = ival2
  */
 {
    int *iarr;
    iarr = malloc(3*sizeof(int));
-   ATL_assert(iarr);
+   assert(iarr);
    iarr[0] = 1;
    iarr[1] = ival1;
    iarr[2] = ival2;
@@ -553,7 +553,7 @@ int *GetIntList2(int ival1, int ival2)
 }
 
 /* procedure 4 */
-int *DupIntList(int *list)
+static int *DupIntList(int *list)
 /*
  * Duplicates list of integers, list[0] holds the length, not including 0
  */
@@ -570,7 +570,7 @@ int *DupIntList(int *list)
 }
 
 /* procedure 5 */
-int *GetIntList(int nargs, char **args, int i, int nmul)
+static int *GetIntList(int nargs, char **args, int i, int nmul)
 /*
  * Gets a list of integers, whose length is given by atoi(args[i])*nmul
  * list is this length+1, since 0'th location gets atoi(args[i])
@@ -581,9 +581,9 @@ int *GetIntList(int nargs, char **args, int i, int nmul)
    if (++i >= nargs)
       PrintUsage(args[0], i, NULL);
    n = atoi(args[i]) * nmul;
-   ATL_assert(n > 0);
+   assert(n > 0);
    iarr = malloc(sizeof(int)*(n+1));
-   ATL_assert(iarr);
+   assert(iarr);
 
    iarr[0] = n / nmul;
    for (k=0; k < n; k++)
@@ -597,7 +597,7 @@ int *GetIntList(int nargs, char **args, int i, int nmul)
 
 #ifdef TYPE
 /* procedure 6 */
-TYPE *GetTypeList(int nargs, char **args, int i, int nmul)
+static TYPE *GetTypeList(int nargs, char **args, int i, int nmul)
 /*
  * Gets a list of TYPEs, whose length is given by atoi(args[i])*nmul
  * list is this length+1, since 0'th location gets atof(args[i])
@@ -609,9 +609,9 @@ TYPE *GetTypeList(int nargs, char **args, int i, int nmul)
    if (++i >= nargs)
       PrintUsage(args[0], i, NULL);
    n = atoi(args[i]) * nmul;
-   ATL_assert(n > 0);
+   assert(n > 0);
    arr = malloc(ATL_MulBySize(n+1));
-   ATL_assert(arr);
+   assert(arr);
 
    arr[0] = n / nmul;
    for (k=0; k < n; k++)
@@ -625,14 +625,14 @@ TYPE *GetTypeList(int nargs, char **args, int i, int nmul)
 #endif
 
 /* procedure 7 */
-int *IntRange2IntList(int N0, int NN, int incN)
+static int *IntRange2IntList(int N0, int NN, int incN)
 {
    int i, n;
    int *iarr;
 
    for (i=N0, n=0; i <= NN; i += incN) n++;
    iarr = malloc(sizeof(int)*(n+1));
-   ATL_assert(iarr);
+   assert(iarr);
    iarr[0] = n;
    for (i=N0, n=1 ; i <= NN; i += incN, n++)
       iarr[n] = i;

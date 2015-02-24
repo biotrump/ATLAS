@@ -5,6 +5,7 @@ scalf = $(mflop_l1)
 
 pre=j
 nb = 88
+nreg=0
 NBs = 31 1 4 8 12 16 24 28 32 36 40 44 48 52 56 60 64 68 72 76 80 84 88 96 \
       112 128 144 160 176 192 224 256
 
@@ -17,6 +18,29 @@ cmmobj = $(GMMdir)/ATL_cbig_mm.o $(GMMdir)/ATL_csmall_mm.o \
 zmmobj = $(GMMdir)/ATL_zbig_mm.o $(GMMdir)/ATL_zsmall_mm.o \
          $(GMMdir)/ATL_zsmallK_mm.o
 
+tvexe = tveccat tvecget tvecjoin tvecprint tvecratio tvecreduce tvecrename \
+        tvecscale tvecselect tvecunify
+tvec_all : $(tvexe)
+tvecget : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecget.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecget.c -lm
+tveccat : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tveccat.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tveccat.c
+tvecjoin : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecjoin.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecjoin.c
+tvecprint : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecprint.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecprint.c
+tvecreduce : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecreduce.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecreduce.c
+tvecrename : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecrename.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecrename.c
+tvecscale : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecscale.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecscale.c
+tvecunify : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecunify.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecunify.c
+tvecselect : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecselect.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecselect.c
+tvecratio : $(INCSdir)/atlas_tvec.h $(mySRCdir)/tvecratio.c
+	$(XCC) $(XCCFLAGS) -o $@ $(mySRCdir)/tvecratio.c
 $(SYSdir)/ATL_Xwalltime.o :
 	cd $(SYSdir) ; $(MAKE) ATL_Xwalltime.o
 xextract : $(mySRCdir)/extract.c
@@ -85,12 +109,12 @@ IBuildPtlibs:
 IBuildLibs:
 	cd $(BLDdir)/src/auxil ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/gemm ; $(MAKE) lib
+	cd $(BLDdir)/src/blas/ammm ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/gemv ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/ger ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/level1 ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/level2 ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/level3 ; $(MAKE) lib
-	cd $(BLDdir)/src/blas/pklevel3 ; $(MAKE) lib
 	- cd $(BLDdir)/src/blas/f77reference ; $(MAKE) lib
 	cd $(BLDdir)/src/blas/reference/level3 ; $(MAKE) lib
 	cd $(BLDdir)/src/lapack ; $(MAKE) lib
@@ -155,15 +179,15 @@ IStage1:
 	cd $(AUXdir) ; $(MAKE) lib
 	cd $(TSTdir) ; $(MAKE) lib
 	$(MAKE) INSTALL_LOG/L1CacheSize
-	$(MAKE) INSTALL_LOG/sMULADD pre=s
-	$(MAKE) INSTALL_LOG/dMULADD pre=d
+	$(MAKE) INSTALL_LOG/sMULADD pre=s nreg=$(nreg)
+	$(MAKE) INSTALL_LOG/dMULADD pre=d nreg=$(nreg)
 	cd $(SYSdir) ; $(MAKE) RunLamch
 
 IRunMADef :
-	cd $(SYSdir) ; $(MAKE) RunMADef pre=$(pre)
+	cd $(SYSdir) ; $(MAKE) RunMADef pre=$(pre) nreg=$(nreg)
 
 IRunMMDef :
-	cd $(MMTdir) ; $(MAKE) RunMMDef pre=$(pre)
+	cd $(MMTdir) ; $(MAKE) RunMMDef pre=$(pre) nreg=$(nreg)
 	cd $(MMTdir) ; ./xemit_mm  -p $(pre) -R -2
 	cd $(MMTdir) ; $(MAKE) install pre=$(pre)
 IKillL1 : force_build
@@ -335,6 +359,23 @@ $(MMTdir)/res/$(pre)MMRES.sum :
 	cd $(MMTdir) ; $(MAKE) res/$(pre)MMRES.sum pre=$(pre) nb=$(nb)
 INSTALL_LOG/$(pre)MMRES.sum : $(MMTdir)/res/$(pre)MMRES.sum
 	cp $(MMTdir)/res/$(pre)MMRES.sum INSTALL_LOG/.
+ammuse = $(INCAdir)/atlas_$(pre)amm_use.h
+AMM_use:
+	- rm -f $(ammuse)
+	echo "#ifndef ATLAS_$(pre)AMM_USE_H" > $(ammuse)
+	echo "   #define ATL_USE_AMM 1" >> $(ammuse)
+	echo "#endif" >> $(ammuse)
+AMM_disable:
+	- rm -f $(ammuse)
+	touch $(ammuse)
+cAMMinstall:
+	cd $(MMTdir) ; $(MAKE) $(pre)install_amm
+	cp $(MMTdir)/res/atlas_$(pre)amm_$(pre)amm_sum.h INSTALL_LOG/.
+	cd $(AMMdir) ; make $(pre)lib
+AMMinstall:
+	cd $(MMTdir) ; $(MAKE) $(pre)install_amm
+	cp $(MMTdir)/res/$(pre)eAMMRES.sum INSTALL_LOG/.
+	cd $(AMMdir) ; make $(pre)lib
 MMinstall :
 	cd $(MMTdir) ; $(MAKE) $(pre)install
 $(MMTdir)/res/atlas_cachedge.h :
@@ -787,6 +828,24 @@ ssfblas : sfblas
 stfblas : sfblas_pt
 sscblas : scblas
 stcblas : scblas_pt
+
+xssl3time_ab : sl3time.o sststlib \
+      ssl3lib ssl2lib ssl1lib ssfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ sl3time.o \
+                   $(TESTlib) $(F77BLASlib) $(ATLASlib) $(LIBS)
+xstl3time_ab : stl3time.o sttstlib \
+      stl3lib stl2lib stl1lib stfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ stl3time.o \
+                   $(TESTlib) $(PTF77BLASlib) $(ATLASlib) $(LIBS)
+
+xssl3time_sb : sl3time.o sststlib \
+      ssl3lib ssl2lib ssl1lib ssfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ sl3time.o \
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
+xstl3time_sb : stl3time.o sttstlib \
+      stl3lib stl2lib stl1lib stfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ stl3time.o \
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 #
 # Default lanbtime, calls ATLAS's internal iface
 #
@@ -858,6 +917,13 @@ xstlatime_fl_sb : stlatimeF.o stlapack sttstlib \
                    $(TESTlib) $(FLAPACKlib) $(BLASlib) $(CBLASlib) \
                    $(ATLASlib) $(LIBS)
 
+sl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DSREAL $(mySRCdir)/l3time.c
+stl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DSREAL -DATL_USEPTHREADS=1 \
+                 $(mySRCdir)/l3time.c
 slatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeF77  -DSREAL $(mySRCdir)/latime.c
@@ -867,11 +933,10 @@ slatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
 slatime.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DSREAL $(mySRCdir)/latime.c
-scblas_sb : scblas
 stlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DATL_USEPTHREADS=1 -DTimeF77 \
-                 -DSREAL $(mySRCdir)/latime.c
+              -DSREAL $(mySRCdir)/latime.c
 stlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeC  -DATL_USEPTHREADS=1 -DSREAL \
@@ -1081,7 +1146,7 @@ xsl1blastst_pt : sl1blastst_pt.o sl1lib_pt ststlib_pt
                    $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xsl2blastst_pt : sl2blastst_pt.o sl2lib_pt ststlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sl2blastst_pt.o \
-                   $(TESTlib) $(BLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xsl3blastst_pt : $(INCAdir)/atlas_type.h sl3blastst_pt.o \
                    ststlib_pt sl3lib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sl3blastst_pt.o \
@@ -1683,7 +1748,7 @@ xsl1blastst : sl1blastst.o sl1lib ststlib
                    $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xsl2blastst : sl2blastst.o sl2lib ststlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sl2blastst.o \
-                   $(TESTlib) $(SBLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xsl3blastst : $(INCAdir)/atlas_type.h sl3blastst.o \
                    ststlib sl3lib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sl3blastst.o \
@@ -2362,9 +2427,20 @@ xsmmtst_aff : $(INCAdir)/atlas_type.h sgemmtst_aff.o smmlib_pt \
               ststlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sgemmtst_aff.o \
                    $(TESTlib) $(BLASlib) $(smmobj) $(ATLASlib) $(LIBS)
+IRun_sbigmm : xsmmtst_big
+	- rm -f ../big.out
+	$(ATLRUN) $(BINdir) xsmmtst_big -Test 0 -n $(nb) > ../big.out
 xsmmtst_big : $(INCAdir)/atlas_type.h sgemmtst_big.o smmlib \
               ststlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ sgemmtst_big.o \
+                   $(TESTlib) $(BLASlib) $(smmobj) $(ATLASlib) $(LIBS)
+xsmmtst_amm2 : $(INCAdir)/atlas_type.h sgemmtst_amm2.o smmlib \
+              ststlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ sgemmtst_amm2.o \
+                   $(TESTlib) $(BLASlib) $(smmobj) $(ATLASlib) $(LIBS)
+xsmmtst_amm : $(INCAdir)/atlas_type.h sgemmtst_amm.o smmlib \
+              ststlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ sgemmtst_amm.o \
                    $(TESTlib) $(BLASlib) $(smmobj) $(ATLASlib) $(LIBS)
 $(MMTdir)/res/svMMRES :
 	cd $(MMTdir) ; make res/svMMRES
@@ -2394,13 +2470,14 @@ scblaslib :
 	cd $(CBLdir) ; $(MAKE) slib
 
 smmlib_pt : auxlib_pt
+	cd $(AMMdir) ; $(MAKE) slib
 	cd $(GMMdir) ; $(MAKE) slib
 	cd $(BLDdir)/src/threads ; $(MAKE) lib
 	cd $(BLDdir)/src/threads/blas/level3 ; $(MAKE) slib
 smmlib : auxlib
+	cd $(AMMdir) ; $(MAKE) slib
 	cd $(GMMdir) ; $(MAKE) slib
 spklib : auxlib
-	cd $(BLDdir)/src/blas/pklevel3 ; $(MAKE) slib
 
 sl2lib_pt : sl2lib
 	cd $(BLDdir)/src/threads/blas/level2 ; $(MAKE) slib
@@ -2868,6 +2945,16 @@ sgemmtst_big.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
                  $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h  
 	$(KC) -o $@ -c $(KCFLAGS) -DSREAL -DTRUST_BIG   \
                $(mySRCdir)/gemmtst.c
+sgemmtst_amm.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h sammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DSREAL -DTRUST_BIG -DTEST_AMMM=1 \
+               $(mySRCdir)/gemmtst.c
+sgemmtst_amm2.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h sammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DSREAL -DTRUST_BIG -DTEST_AMM2 \
+               $(mySRCdir)/gemmtst.c
+sammmlib:
+	cd $(AMMdir) ; $(PMAKE) slib
 xdgelstest : $(mySRCdir)/dgelstest.f90 $(FLAPACKlib) $(ATLASlib)
 	$(F77) $(F77FLAGS) -o $@ $(mySRCdir)/dgelstest.f90 \
                $(FLAPACKlib) $(LAPACKlib) $(F77BLASlib) $(CBLASlib) $(ATLASlib)
@@ -3261,6 +3348,24 @@ dsfblas : dfblas
 dtfblas : dfblas_pt
 dscblas : dcblas
 dtcblas : dcblas_pt
+
+xdsl3time_ab : dl3time.o dststlib \
+      dsl3lib dsl2lib dsl1lib dsfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dl3time.o \
+                   $(TESTlib) $(F77BLASlib) $(ATLASlib) $(LIBS)
+xdtl3time_ab : dtl3time.o dttstlib \
+      dtl3lib dtl2lib dtl1lib dtfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dtl3time.o \
+                   $(TESTlib) $(PTF77BLASlib) $(ATLASlib) $(LIBS)
+
+xdsl3time_sb : dl3time.o dststlib \
+      dsl3lib dsl2lib dsl1lib dsfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dl3time.o \
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
+xdtl3time_sb : dtl3time.o dttstlib \
+      dtl3lib dtl2lib dtl1lib dtfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dtl3time.o \
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 #
 # Default lanbtime, calls ATLAS's internal iface
 #
@@ -3332,6 +3437,13 @@ xdtlatime_fl_sb : dtlatimeF.o dtlapack dttstlib \
                    $(TESTlib) $(FLAPACKlib) $(BLASlib) $(CBLASlib) \
                    $(ATLASlib) $(LIBS)
 
+dl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DDREAL $(mySRCdir)/l3time.c
+dtl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DDREAL -DATL_USEPTHREADS=1 \
+                 $(mySRCdir)/l3time.c
 dlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeF77  -DDREAL $(mySRCdir)/latime.c
@@ -3341,11 +3453,10 @@ dlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
 dlatime.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DDREAL $(mySRCdir)/latime.c
-dcblas_sb : dcblas
 dtlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DATL_USEPTHREADS=1 -DTimeF77 \
-                 -DDREAL $(mySRCdir)/latime.c
+              -DDREAL $(mySRCdir)/latime.c
 dtlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeC  -DATL_USEPTHREADS=1 -DDREAL \
@@ -3555,7 +3666,7 @@ xdl1blastst_pt : dl1blastst_pt.o dl1lib_pt dtstlib_pt
                    $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xdl2blastst_pt : dl2blastst_pt.o dl2lib_pt dtstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dl2blastst_pt.o \
-                   $(TESTlib) $(BLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xdl3blastst_pt : $(INCAdir)/atlas_type.h dl3blastst_pt.o \
                    dtstlib_pt dl3lib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dl3blastst_pt.o \
@@ -4157,7 +4268,7 @@ xdl1blastst : dl1blastst.o dl1lib dtstlib
                    $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xdl2blastst : dl2blastst.o dl2lib dtstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dl2blastst.o \
-                   $(TESTlib) $(SBLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xdl3blastst : $(INCAdir)/atlas_type.h dl3blastst.o \
                    dtstlib dl3lib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dl3blastst.o \
@@ -4836,9 +4947,20 @@ xdmmtst_aff : $(INCAdir)/atlas_type.h dgemmtst_aff.o dmmlib_pt \
               dtstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dgemmtst_aff.o \
                    $(TESTlib) $(BLASlib) $(dmmobj) $(ATLASlib) $(LIBS)
+IRun_dbigmm : xdmmtst_big
+	- rm -f ../big.out
+	$(ATLRUN) $(BINdir) xdmmtst_big -Test 0 -n $(nb) > ../big.out
 xdmmtst_big : $(INCAdir)/atlas_type.h dgemmtst_big.o dmmlib \
               dtstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ dgemmtst_big.o \
+                   $(TESTlib) $(BLASlib) $(dmmobj) $(ATLASlib) $(LIBS)
+xdmmtst_amm2 : $(INCAdir)/atlas_type.h dgemmtst_amm2.o dmmlib \
+              dtstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dgemmtst_amm2.o \
+                   $(TESTlib) $(BLASlib) $(dmmobj) $(ATLASlib) $(LIBS)
+xdmmtst_amm : $(INCAdir)/atlas_type.h dgemmtst_amm.o dmmlib \
+              dtstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ dgemmtst_amm.o \
                    $(TESTlib) $(BLASlib) $(dmmobj) $(ATLASlib) $(LIBS)
 $(MMTdir)/res/dvMMRES :
 	cd $(MMTdir) ; make res/dvMMRES
@@ -4868,13 +4990,14 @@ dcblaslib :
 	cd $(CBLdir) ; $(MAKE) dlib
 
 dmmlib_pt : auxlib_pt
+	cd $(AMMdir) ; $(MAKE) dlib
 	cd $(GMMdir) ; $(MAKE) dlib
 	cd $(BLDdir)/src/threads ; $(MAKE) lib
 	cd $(BLDdir)/src/threads/blas/level3 ; $(MAKE) dlib
 dmmlib : auxlib
+	cd $(AMMdir) ; $(MAKE) dlib
 	cd $(GMMdir) ; $(MAKE) dlib
 dpklib : auxlib
-	cd $(BLDdir)/src/blas/pklevel3 ; $(MAKE) dlib
 
 dl2lib_pt : dl2lib
 	cd $(BLDdir)/src/threads/blas/level2 ; $(MAKE) dlib
@@ -5342,6 +5465,16 @@ dgemmtst_big.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
                  $(INCAdir)/dmm.h $(INCSdir)/atlas_lvl3.h  
 	$(KC) -o $@ -c $(KCFLAGS) -DDREAL -DTRUST_BIG   \
                $(mySRCdir)/gemmtst.c
+dgemmtst_amm.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/dmm.h $(INCSdir)/atlas_lvl3.h dammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DDREAL -DTRUST_BIG -DTEST_AMMM=1 \
+               $(mySRCdir)/gemmtst.c
+dgemmtst_amm2.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/dmm.h $(INCSdir)/atlas_lvl3.h dammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DDREAL -DTRUST_BIG -DTEST_AMM2 \
+               $(mySRCdir)/gemmtst.c
+dammmlib:
+	cd $(AMMdir) ; $(PMAKE) dlib
 xcgelstest : $(mySRCdir)/cgelstest.f90 $(FLAPACKlib) $(ATLASlib)
 	$(F77) $(F77FLAGS) -o $@ $(mySRCdir)/cgelstest.f90 \
                $(FLAPACKlib) $(LAPACKlib) $(F77BLASlib) $(CBLASlib) $(ATLASlib)
@@ -5735,6 +5868,24 @@ csfblas : cfblas
 ctfblas : cfblas_pt
 cscblas : ccblas
 ctcblas : ccblas_pt
+
+xcsl3time_ab : cl3time.o cststlib \
+      csl3lib csl2lib csl1lib csfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ cl3time.o \
+                   $(TESTlib) $(F77BLASlib) $(ATLASlib) $(LIBS)
+xctl3time_ab : ctl3time.o cttstlib \
+      ctl3lib ctl2lib ctl1lib ctfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ ctl3time.o \
+                   $(TESTlib) $(PTF77BLASlib) $(ATLASlib) $(LIBS)
+
+xcsl3time_sb : cl3time.o cststlib \
+      csl3lib csl2lib csl1lib csfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ cl3time.o \
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
+xctl3time_sb : ctl3time.o cttstlib \
+      ctl3lib ctl2lib ctl1lib ctfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ ctl3time.o \
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 #
 # Default lanbtime, calls ATLAS's internal iface
 #
@@ -5806,6 +5957,13 @@ xctlatime_fl_sb : ctlatimeF.o ctlapack cttstlib \
                    $(TESTlib) $(FLAPACKlib) $(BLASlib) $(CBLASlib) \
                    $(ATLASlib) $(LIBS)
 
+cl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX $(mySRCdir)/l3time.c
+ctl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX -DATL_USEPTHREADS=1 \
+                 $(mySRCdir)/l3time.c
 clatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeF77  -DSCPLX $(mySRCdir)/latime.c
@@ -5815,11 +5973,10 @@ clatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
 clatime.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX $(mySRCdir)/latime.c
-ccblas_sb : ccblas
 ctlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DATL_USEPTHREADS=1 -DTimeF77 \
-                 -DSCPLX $(mySRCdir)/latime.c
+              -DSCPLX $(mySRCdir)/latime.c
 ctlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeC  -DATL_USEPTHREADS=1 -DSCPLX \
@@ -6029,7 +6186,7 @@ xcl1blastst_pt : cl1blastst_pt.o cl1lib_pt ctstlib_pt
                    $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xcl2blastst_pt : cl2blastst_pt.o cl2lib_pt ctstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cl2blastst_pt.o \
-                   $(TESTlib) $(BLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xcl3blastst_pt : $(INCAdir)/atlas_type.h cl3blastst_pt.o \
                    ctstlib_pt cl3lib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cl3blastst_pt.o \
@@ -6631,7 +6788,7 @@ xcl1blastst : cl1blastst.o cl1lib ctstlib
                    $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xcl2blastst : cl2blastst.o cl2lib ctstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cl2blastst.o \
-                   $(TESTlib) $(SBLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xcl3blastst : $(INCAdir)/atlas_type.h cl3blastst.o \
                    ctstlib cl3lib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cl3blastst.o \
@@ -7310,9 +7467,20 @@ xcmmtst_aff : $(INCAdir)/atlas_type.h cgemmtst_aff.o cmmlib_pt \
               ctstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cgemmtst_aff.o \
                    $(TESTlib) $(BLASlib) $(cmmobj) $(ATLASlib) $(LIBS)
+IRun_cbigmm : xcmmtst_big
+	- rm -f ../big.out
+	$(ATLRUN) $(BINdir) xcmmtst_big -Test 0 -n $(nb) > ../big.out
 xcmmtst_big : $(INCAdir)/atlas_type.h cgemmtst_big.o cmmlib \
               ctstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ cgemmtst_big.o \
+                   $(TESTlib) $(BLASlib) $(cmmobj) $(ATLASlib) $(LIBS)
+xcmmtst_amm2 : $(INCAdir)/atlas_type.h cgemmtst_amm2.o cmmlib \
+              ctstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ cgemmtst_amm2.o \
+                   $(TESTlib) $(BLASlib) $(cmmobj) $(ATLASlib) $(LIBS)
+xcmmtst_amm : $(INCAdir)/atlas_type.h cgemmtst_amm.o cmmlib \
+              ctstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ cgemmtst_amm.o \
                    $(TESTlib) $(BLASlib) $(cmmobj) $(ATLASlib) $(LIBS)
 $(MMTdir)/res/cvMMRES :
 	cd $(MMTdir) ; make res/cvMMRES
@@ -7342,13 +7510,14 @@ ccblaslib :
 	cd $(CBLdir) ; $(MAKE) clib
 
 cmmlib_pt : auxlib_pt
+	cd $(AMMdir) ; $(MAKE) clib
 	cd $(GMMdir) ; $(MAKE) clib
 	cd $(BLDdir)/src/threads ; $(MAKE) lib
 	cd $(BLDdir)/src/threads/blas/level3 ; $(MAKE) clib
 cmmlib : auxlib
+	cd $(AMMdir) ; $(MAKE) clib
 	cd $(GMMdir) ; $(MAKE) clib
 cpklib : auxlib
-	cd $(BLDdir)/src/blas/pklevel3 ; $(MAKE) clib
 
 cl2lib_pt : cl2lib
 	cd $(BLDdir)/src/threads/blas/level2 ; $(MAKE) clib
@@ -7816,6 +7985,16 @@ cgemmtst_big.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
                  $(INCAdir)/cmm.h $(INCSdir)/atlas_lvl3.h  
 	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX -DTRUST_BIG   \
                $(mySRCdir)/gemmtst.c
+cgemmtst_amm.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/cmm.h $(INCSdir)/atlas_lvl3.h cammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX -DTRUST_BIG -DTEST_AMMM=1 \
+               $(mySRCdir)/gemmtst.c
+cgemmtst_amm2.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/cmm.h $(INCSdir)/atlas_lvl3.h cammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DSCPLX -DTRUST_BIG -DTEST_AMM2 \
+               $(mySRCdir)/gemmtst.c
+cammmlib:
+	cd $(AMMdir) ; $(PMAKE) clib
 xzgelstest : $(mySRCdir)/zgelstest.f90 $(FLAPACKlib) $(ATLASlib)
 	$(F77) $(F77FLAGS) -o $@ $(mySRCdir)/zgelstest.f90 \
                $(FLAPACKlib) $(LAPACKlib) $(F77BLASlib) $(CBLASlib) $(ATLASlib)
@@ -8209,6 +8388,24 @@ zsfblas : zfblas
 ztfblas : zfblas_pt
 zscblas : zcblas
 ztcblas : zcblas_pt
+
+xzsl3time_ab : zl3time.o zststlib \
+      zsl3lib zsl2lib zsl1lib zsfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ zl3time.o \
+                   $(TESTlib) $(F77BLASlib) $(ATLASlib) $(LIBS)
+xztl3time_ab : ztl3time.o zttstlib \
+      ztl3lib ztl2lib ztl1lib ztfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ ztl3time.o \
+                   $(TESTlib) $(PTF77BLASlib) $(ATLASlib) $(LIBS)
+
+xzsl3time_sb : zl3time.o zststlib \
+      zsl3lib zsl2lib zsl1lib zsfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ zl3time.o \
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
+xztl3time_sb : ztl3time.o zttstlib \
+      ztl3lib ztl2lib ztl1lib ztfblas
+	$(FLINKER) $(FCLINKFLAGS) -o $@ ztl3time.o \
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 #
 # Default lanbtime, calls ATLAS's internal iface
 #
@@ -8280,6 +8477,13 @@ xztlatime_fl_sb : ztlatimeF.o ztlapack zttstlib \
                    $(TESTlib) $(FLAPACKlib) $(BLASlib) $(CBLASlib) \
                    $(ATLASlib) $(LIBS)
 
+zl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX $(mySRCdir)/l3time.c
+ztl3time.o : $(mySRCdir)/l3time.c $(INCSdir)/atlas_misc.h \
+                  $(INCSdir)/atlas_lvl3.h 
+	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX -DATL_USEPTHREADS=1 \
+                 $(mySRCdir)/l3time.c
 zlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeF77  -DDCPLX $(mySRCdir)/latime.c
@@ -8289,11 +8493,10 @@ zlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
 zlatime.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX $(mySRCdir)/latime.c
-zcblas_sb : zcblas
 ztlatimeF.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DATL_USEPTHREADS=1 -DTimeF77 \
-                 -DDCPLX $(mySRCdir)/latime.c
+              -DDCPLX $(mySRCdir)/latime.c
 ztlatimeC.o : $(mySRCdir)/latime.c $(INCSdir)/atlas_misc.h \
                    $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h 
 	$(KC) -o $@ -c $(KCFLAGS) -DTimeC  -DATL_USEPTHREADS=1 -DDCPLX \
@@ -8503,7 +8706,7 @@ xzl1blastst_pt : zl1blastst_pt.o zl1lib_pt ztstlib_pt
                    $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xzl2blastst_pt : zl2blastst_pt.o zl2lib_pt ztstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zl2blastst_pt.o \
-                   $(TESTlib) $(BLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(BLASlib) $(ATLASlib) $(LIBS)
 xzl3blastst_pt : $(INCAdir)/atlas_type.h zl3blastst_pt.o \
                    ztstlib_pt zl3lib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zl3blastst_pt.o \
@@ -9105,7 +9308,7 @@ xzl1blastst : zl1blastst.o zl1lib ztstlib
                    $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xzl2blastst : zl2blastst.o zl2lib ztstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zl2blastst.o \
-                   $(TESTlib) $(SBLASlib)  $(ATLASlib) $(LIBS)
+                   $(TESTlib) $(SBLASlib) $(ATLASlib) $(LIBS)
 xzl3blastst : $(INCAdir)/atlas_type.h zl3blastst.o \
                    ztstlib zl3lib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zl3blastst.o \
@@ -9784,9 +9987,20 @@ xzmmtst_aff : $(INCAdir)/atlas_type.h zgemmtst_aff.o zmmlib_pt \
               ztstlib_pt
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zgemmtst_aff.o \
                    $(TESTlib) $(BLASlib) $(zmmobj) $(ATLASlib) $(LIBS)
+IRun_zbigmm : xzmmtst_big
+	- rm -f ../big.out
+	$(ATLRUN) $(BINdir) xzmmtst_big -Test 0 -n $(nb) > ../big.out
 xzmmtst_big : $(INCAdir)/atlas_type.h zgemmtst_big.o zmmlib \
               ztstlib
 	$(FLINKER) $(FCLINKFLAGS) -o $@ zgemmtst_big.o \
+                   $(TESTlib) $(BLASlib) $(zmmobj) $(ATLASlib) $(LIBS)
+xzmmtst_amm2 : $(INCAdir)/atlas_type.h zgemmtst_amm2.o zmmlib \
+              ztstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ zgemmtst_amm2.o \
+                   $(TESTlib) $(BLASlib) $(zmmobj) $(ATLASlib) $(LIBS)
+xzmmtst_amm : $(INCAdir)/atlas_type.h zgemmtst_amm.o zmmlib \
+              ztstlib
+	$(FLINKER) $(FCLINKFLAGS) -o $@ zgemmtst_amm.o \
                    $(TESTlib) $(BLASlib) $(zmmobj) $(ATLASlib) $(LIBS)
 $(MMTdir)/res/zvMMRES :
 	cd $(MMTdir) ; make res/zvMMRES
@@ -9816,13 +10030,14 @@ zcblaslib :
 	cd $(CBLdir) ; $(MAKE) zlib
 
 zmmlib_pt : auxlib_pt
+	cd $(AMMdir) ; $(MAKE) zlib
 	cd $(GMMdir) ; $(MAKE) zlib
 	cd $(BLDdir)/src/threads ; $(MAKE) lib
 	cd $(BLDdir)/src/threads/blas/level3 ; $(MAKE) zlib
 zmmlib : auxlib
+	cd $(AMMdir) ; $(MAKE) zlib
 	cd $(GMMdir) ; $(MAKE) zlib
 zpklib : auxlib
-	cd $(BLDdir)/src/blas/pklevel3 ; $(MAKE) zlib
 
 zl2lib_pt : zl2lib
 	cd $(BLDdir)/src/threads/blas/level2 ; $(MAKE) zlib
@@ -10290,6 +10505,16 @@ zgemmtst_big.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
                  $(INCAdir)/zmm.h $(INCSdir)/atlas_lvl3.h  
 	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX -DTRUST_BIG   \
                $(mySRCdir)/gemmtst.c
+zgemmtst_amm.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/zmm.h $(INCSdir)/atlas_lvl3.h zammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX -DTRUST_BIG -DTEST_AMMM=1 \
+               $(mySRCdir)/gemmtst.c
+zgemmtst_amm2.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
+                 $(INCAdir)/zmm.h $(INCSdir)/atlas_lvl3.h zammmlib
+	$(KC) -o $@ -c $(KCFLAGS) -DDCPLX -DTRUST_BIG -DTEST_AMM2 \
+               $(mySRCdir)/gemmtst.c
+zammmlib:
+	cd $(AMMdir) ; $(PMAKE) zlib
 noaff_pt : 
 	cd $(BLDdir)/tune/threads ; $(MAKE) $(noaffobj)
 c_sblas3.o : $(mySRCdir)/c_rblas3.c $(INCSdir)/cblas.h $(INCSdir)/cblas_test.h

@@ -363,7 +363,8 @@ char *ParseCompFlags(int nargs, char **args, int *BITS, ATL_arg_t **files,
  *          -m64/32 args get passed to comp, asm & linker
  */
             else if (at->len == 4 &&
-                     (!strcmp(at->arg, "-m64") || !strcmp(at->arg, "-m32")))
+                     (!strcmp(at->arg, "-m64") || !strcmp(at->arg, "-mx32") ||
+                      !strcmp(at->arg, "-m32")))
             {
                if (at->arg[2] == '6')
                   *BITS = 64;

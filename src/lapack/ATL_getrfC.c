@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.10.2
+ *             Automatically Tuned Linear Algebra Software v3.11.31
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,8 +37,16 @@
 #ifdef ATL_USEPTHREADS
    #include "atlas_pthreads.h"
    #include "atlas_tcacheedge.h"
+   #include "atlas_pca.h"
+   #ifdef ATL_laswp
+      #undef ATL_laswp
+   #endif
+   #define ATL_laswp Mjoin(PATL,tlaswp)
 #else
    #include "atlas_cacheedge.h"
+#endif
+#ifndef CacheEdge
+   #define CacheEdge 262144
 #endif
 
 
@@ -58,7 +66,7 @@
    #define ATL_CplxInv(in, out) Mjoin(PATL,cplxinvert)(1, in, 1, out, 1);
 #endif
 
-#ifdef TREAL
+#if defined(TREAL)
 
 static int LU2(const int M, TYPE *A, const int lda, int *ipiv)
 /*
@@ -281,8 +289,8 @@ int ATL_getrfC(const int M, const int N, TYPE *A, const int lda, int *ipiv)
    if (((size_t)M)*N <= ATL_L1elts)
       return(Mjoin(PATL,getf2)(M, N, A, lda, ipiv));
    #if defined(ATL_USEPTHREADS) && defined(ATL_USEPCA)
-      if (N <= (NB<<2) && N >= 16 && M-N >= ATL_PCAMin &&
-          ((size_t)ATL_MulBySize(M)*N) <= CacheEdge*ATL_NTHREADS)
+      if (M-N > ATL_PCAMin && ((N > 1 && N < 12) &&
+          ((size_t)ATL_MulBySize(M)*N) <= CacheEdge*ATL_NTHREADS))
       {
          if (N >= 16)
             ierr = Mjoin(PATL,tgetf2)(M, N, A, lda, ipiv);
@@ -315,7 +323,12 @@ int ATL_getrfC(const int M, const int N, TYPE *A, const int lda, int *ipiv)
       for (i=Nleft; i != MN; i++) ipiv[i] += Nleft;
       ATL_laswp(Nleft, A, lda, Nleft, MN, ipiv, 1);
    }
-#ifdef TREAL
+/*
+ * Don't use LU2 for threaded code: it is serial, and will become costly
+ * due to Amdahl's law for large-scale problems.  Recur to 1 and use BLAS
+ * for parallelism
+ */
+#if defined(TREAL) && !defined(ATL_USEPTHREADS)
    else if (MN == 2)
    {
       Nleft = 2;

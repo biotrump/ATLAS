@@ -1190,6 +1190,9 @@ ATL_r1node_t *TunePF
  * This routine tunes the prefetch parameters for kb
  */
 {
+   #ifdef ATL_NOPREFETCH
+      return(kb);
+   #endif
 /*
  * First tune the instruction types, then the prefetch distances
  */

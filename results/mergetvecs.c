@@ -107,7 +107,7 @@ int main(int nargs, char **args)
  * Grab only the vectors to be combined, in order user has specified from
  * both lists, and free all unused vectors
  */
-   t1 = ATL_ReadTvecFile(fp1, &cmnt, &N, &nrep);
+   t1 = ATL_ReadTvecFile(fp1, &cmnt, &N);
    if (fp1 != stdin)
       fclose(fp1);
    tp = ATL_PullNamedVecsFromList(Nc, combarr, &t1);
@@ -115,7 +115,7 @@ int main(int nargs, char **args)
       ATL_KillAllTvecs(t1);
    t1 = tp;
 
-   t2 = ATL_ReadTvecFile(fp2, &cmnt, &i, &j);
+   t2 = ATL_ReadTvecFile(fp2, &cmnt, &j);
    if (fp2 != stdin)
       fclose(fp2);
    tp = ATL_PullNamedVecsFromList(Nc, combarr, &t2);
@@ -146,7 +146,7 @@ int main(int nargs, char **args)
    }
    ATL_KillAllTvecs(t1);
    ATL_KillAllTvecs(t2);
-   ATL_WriteTvecFile(fpout, cmnt, Nc, nrep, cb);
+   ATL_WriteTvecFile(fpout, cmnt, Nc, cb);
    ATL_KillAllTvecs(cb);
    free(cmnt);
 #if 0

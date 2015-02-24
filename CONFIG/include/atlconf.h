@@ -18,7 +18,12 @@ enum OSTYPE {OSOther=0, OSLinux, OSSunOS, OSSunOS4, OSOSF1, OSIRIX, OSAIX,
 enum ARCHFAM {AFOther=0, AFPPC, AFSPARC, AFALPHA, AFX86, AFIA64, AFMIPS,
               AFARM, AFS390};
 
-#define NMACH 52
+/*
+ * Corei1: Nahalem / Westmere
+ * Corei2: ivy bridge, sandy bridge: AVX
+ * Corei3: haswell: AVXMAC
+ */
+#define NMACH 54
 static char *machnam[NMACH] =
    {"UNKNOWN", "POWER3", "POWER4", "POWER5", "PPCG4", "PPCG5",
     "POWER6", "POWER7", "POWERe6500", "IBMz9", "IBMz10", "IBMz196",
@@ -28,8 +33,8 @@ static char *machnam[NMACH] =
     "Atom", "P4", "P4E",
     "Efficeon", "K7", "HAMMER", "AMD64K10h", "AMDLLANO", "AMDDOZER","AMDDRIVER",
     "UNKNOWNx86", "IA64Itan", "IA64Itan2",
-    "USI", "USII", "USIII", "USIV", "UST1", "UST2", "UnknownUS",
-    "MIPSR1xK", "MIPSICE9", "ARMv7"};
+    "USI", "USII", "USIII", "USIV", "UST2", "UnknownUS",
+    "MIPSR1xK", "MIPSICE9", "ARMv7", "ARM64", "TI_C66_BM", "XeonPHI"};
 enum MACHTYPE {MACHOther, IbmPwr3, IbmPwr4, IbmPwr5, PPCG4, PPCG5,
                IbmPwr6, IbmPwr7, Pwre6500,
                IbmZ9, IbmZ10, IbmZ196,  /* s390(x) in Linux */
@@ -39,10 +44,13 @@ enum MACHTYPE {MACHOther, IbmPwr3, IbmPwr4, IbmPwr5, PPCG4, PPCG5,
                IntCorei3, IntAtom, IntP4, IntP4E, TMEff,
                AmdAthlon, AmdHammer, Amd64K10h, AmdLlano, AmdDozer, AmdDriver,
                x86X, IA64Itan, IA64Itan2,
-               SunUSI, SunUSII, SunUSIII, SunUSIV, SunUST1, SunUST2, SunUSX,
+               SunUSI, SunUSII, SunUSIII, SunUSIV, SunUST2, SunUSX,
                MIPSR1xK, /* includes R10K, R12K, R14K, R16K */
                MIPSICE9,  /* SiCortex ICE9 -- like MIPS5K */
-               ARMv7      /* includes Cortex A8, A9 */
+               ARMv7,     /* includes Cortex A8, A9 */
+               ARM64,     /* includes ARMv8 */
+               TI_C66_BM, /* TI accelerator */
+               IntPhi     /* build for XEON Phi */
                };
 #define MachIsX86(mach_) \
    ( (mach_) >= x86x87 && (mach_) <= x86X )
@@ -61,6 +69,8 @@ enum MACHTYPE {MACHOther, IbmPwr3, IbmPwr4, IbmPwr5, PPCG4, PPCG5,
    ( (mach_) >= PPCG4 && (mach_) <= PPCG5 )
 #define MachIsARM(mach_) \
    ( (mach_) == ARMv7 )
+#define MachIsARM64(mach_) \
+   ( (mach_) == ARM64 )
 #define MachIsS390(mach_) \
    ( (mach_) >= IbmZ9 && (mach_) <= IbmZ196 )
 
@@ -76,21 +86,23 @@ enum F2CNAME {f2c_NamErr=0, f2c_Add_, f2c_Add__, f2c_NoChange, f2c_UpCase};
 enum F2CINT {f2c_IntErr=0, FintCint, FintClong, FintClonglong, FintCshort};
 enum F2CSTRING {f2c_StrErr=0, fstrSun, fstrCray, fstrStructVal, fstrStructPtr};
 
-#define NISA 11
+#define NISA 15
 static char *ISAXNAM[NISA] =
-   {"", "VSX", "AltiVec", "AVXMAC", "AVXFMA4", "AVX", "SSE3", "SSE2", "SSE1",
-    "3DNow", "NEON"};
+   {"", "VSX", "AltiVec", "AVXZ",
+    "AVXMAC", "AVXFMA4", "AVX", "SSE3", "SSE2", "SSE1", "3DNow",
+    "FPV3D2MACNEON", "FPV3D16MACNEON", "FPV3D32MAC", "FPV3D16MAC"};
 enum ISAEXT
-   {ISA_None=0, ISA_VSX, ISA_AV, ISA_AVXMAC, ISA_AVXFMA4, ISA_AVX,
-    ISA_SSE3, ISA_SSE2, ISA_SSE1, ISA_3DNow, ISA_NEON};
+   {ISA_None=0, ISA_VSX, ISA_AV, ISA_AVXZ,
+    ISA_AVXMAC, ISA_AVXFMA4, ISA_AVX, ISA_SSE3, ISA_SSE2, ISA_SSE1, ISA_3DNow,
+    ISA_NEON, ISA_NEON16, ISA_VFP3D32MAC, ISA_VFP3D16MAC};
 
-#define NASMD 9
+#define NASMD 10
 enum ASMDIA
    {ASM_None=0, gas_x86_32, gas_x86_64, gas_sparc, gas_ppc, gas_parisc,
     gas_mips, gas_arm, gas_s390};
 static char *ASMNAM[NASMD] =
    {"",     "GAS_x8632", "GAS_x8664", "GAS_SPARC", "GAS_PPC", "GAS_PARISC",
-    "GAS_MIPS", "GAS_ARM", "GAS_S390"};
+    "GAS_MIPS", "GAS_ARM", "GAS_ARM64", "GAS_S390"};
 
 /*
  * Used for archinfo probes (can pack in bitfield)

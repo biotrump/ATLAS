@@ -1,5 +1,9 @@
 #ifndef ATLAS_TLEVEL3_H
    #define  ATLAS_TLEVEL3_H
+   #define DMM_H 1
+   #define SMM_H 1
+   #define CMM_H 1
+   #define ZMM_H 1
 /*
  * ========================================
  * Threaded routines in all four precisions
