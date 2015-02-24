@@ -1,0 +1,2 @@
+gcc testblasc.c -o testblasc -I ../include/ -L ../build/lib -lcblas -latlas
+
