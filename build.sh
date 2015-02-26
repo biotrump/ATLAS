@@ -1,17 +1,47 @@
 #!/bin/bash
+if [ ! -d ${BIOTRUMP_OUT} ]; then
+  echo "${BIOTRUMP_OUT} does not exist. mkdir"
+  mkdir ${BIOTRUMP_OUT}
+fi
+if [ ! -d ${ATLAS_OUT} ]; then
+  echo "${ATLAS_OUT} does not exist. mkdir"
+  mkdir ${ATLAS_OUT}
+fi
+if [ ! -d ${ATLAS_OUT} ]; then
+  echo "${ATLAS_OUT} does not exis. mkdir"
+  mkdir ${ATLAS_OUT}
+fi
+pushd ${ATLAS_OUT}
+
+case `uname` in
+"Darwin")
+	# Should also work on other BSDs
+	CORE_COUNT=`sysctl -n hw.ncpu`
+	;;
+"Linux")
+	CORE_COUNT=`grep processor /proc/cpuinfo | wc -l`
+	if [[ `uname -m` =~ "x86" ]]; then
+	#convert KHz to MHz
+		MAX_FREQ=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq | awk '{printf "%d\n", $1/1000}'`
+		DMAX_SPEED="-D c -DPentiumCPS=${MAX_FREQ}"
+	fi
+	#disabling cpu freq to top speed
+	for((i=0;i<CORE_COUNT;i=i+1))
+	do
+		sudo cpufreq-set -c $i -g performance
+	done
+
+	;;
+CYGWIN*)
+	CORE_COUNT=`grep processor /proc/cpuinfo | wc -l`
+	;;
+*)
+	echo Unsupported platform: `uname`
+	exit -1
+esac
+
 #x86 corei3,i5,i7 with Intel AVX2 and FMA
 # GCC 4.7, GFortran 4.7 and above!
-#disabling cpu throttling
-#sudo cpufreq-set
-#sudo cpufreq-set -c 0 -g performance
-#sudo cpufreq-info
-#sudo cpufreq-set -c 1 -g performance
-#sudo cpufreq-set -c 2 -g performance
-#sudo cpufreq-set -c 3 -g performance
-#sudo cpufreq-set -c 4 -g performance
-#sudo cpufreq-set -c 5 -g performance
-#sudo cpufreq-set -c 6 -g performance
-#sudo cpufreq-set -c 7 -g performance
 
 #specify new gcc-4.9 and gfortran-4.9 to override 4.7
 #http://math-atlas.sourceforge.net/atlas_install/node18.html
@@ -23,7 +53,8 @@
 # PentiumCPS=3600 => 3.6Ghz CPU
 #../configure -D c -DPentiumCPS=3600 -C acg /usr/bin/gcc-4.9 -C if /usr/bin/gfortran-4.9
 #gcc 4.7 seems better performance than the other version.
-../configure -D c -DPentiumCPS=3600
+#--with-netlib-lapack=/home/thomas/build/biotrump-cv/out/lapack/lib
+${ATLAS_SRC}/configure ${DMAX_SPEED}
 #   make              ! tune and compile library
 #   make check        ! perform sanity tests
 #   make ptcheck      ! checks of threaded code for multiprocessor systems
@@ -48,3 +79,24 @@
 #   kMV_N      235.6   210.3    484.5   470.5    112.4   116.0    216.2   207.0
 #   kMV_T      234.3   217.0    488.0   477.9    120.0   113.0    239.5   234.3
 #    kGER      166.9   155.7    320.9   300.2     78.5    75.3    160.5   151.8
+make -j ${CORE_COUNT}
+make check
+make time
+
+#
+case `uname` in
+"Darwin")
+	# Should also work on other BSDs
+	;;
+"Linux")
+	for((i=0;i<CORE_COUNT;i=i+1))
+	do
+		sudo cpufreq-set -c $i -g ondemand
+	done
+	;;
+CYGWIN*)
+	;;
+*)
+	echo Unsupported platform: `uname`
+	exit -1
+esac
