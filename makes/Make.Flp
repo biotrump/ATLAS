@@ -762,7 +762,7 @@ $(FLAdir)/lapack_$(ARCH).a : $(FLAdir)/make.inc
 
 $(FLAdir)/lapacke_$(ARCH).a : $(FLAdir)/make.inc
 	cd $(FLAdir) ; $(PMAKE) lib
-	cp $(LIBdir)/librefblas.a .
+	cp $(FBLASlib) .
 	if [ -f $(FLAdir)/liblapacke.a ]; then \
            ln -s $(FLAdir)/liblapacke.a $(FLAdir)/lapacke_$(ARCH).a ; \
         fi
