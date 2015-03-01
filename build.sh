@@ -1,16 +1,23 @@
 #!/bin/bash
-if [ ! -d ${BIOTRUMP_OUT} ]; then
-  echo "${BIOTRUMP_OUT} does not exist. mkdir"
-  mkdir ${BIOTRUMP_OUT}
-fi
+ATLAS_OUT=${ATLAS_OUT:-`pwd`/build}
+ATLAS_SRC=${ATLAS_SRC:-`pwd`}
+export ATLAS_OUT
+export ATLAS_SRC
+echo $ATLAS_OUT
+echo $ATLAS_SRC
+#exit
+#if [ ! -d ${BIOTRUMP_OUT} ]; then
+#  echo "${BIOTRUMP_OUT} does not exist. mkdir"
+#  mkdir ${BIOTRUMP_OUT}
+#fi
 if [ ! -d ${ATLAS_OUT} ]; then
   echo "${ATLAS_OUT} does not exist. mkdir"
   mkdir ${ATLAS_OUT}
 fi
-if [ ! -d ${ATLAS_OUT} ]; then
-  echo "${ATLAS_OUT} does not exis. mkdir"
-  mkdir ${ATLAS_OUT}
-fi
+#if [ ! -d ${ATLAS_OUT} ]; then
+#  echo "${ATLAS_OUT} does not exis. mkdir"
+#  mkdir ${ATLAS_OUT}
+#fi
 pushd ${ATLAS_OUT}
 
 case `uname` in
@@ -54,7 +61,25 @@ esac
 #../configure -D c -DPentiumCPS=3600 -C acg /usr/bin/gcc-4.9 -C if /usr/bin/gfortran-4.9
 #gcc 4.7 seems better performance than the other version.
 #--with-netlib-lapack=/home/thomas/build/biotrump-cv/out/lapack/lib
-${ATLAS_SRC}/configure ${DMAX_SPEED}
+#--with-netlib-lapack-tarfile=/home/thomas/build/lapack.tar
+#${ATLAS_SRC}/configure --with-netlib-lapack=/home/thomas/build/lapack/liblapack.a \
+#--nof77 ${DMAX_SPEED}
+#-fpie -fPIE for  position independent code can be only linked into executables
+#-fpic -fPIc for  position independent code
+#-Fa alg: If you use non-gnu compilers, you'll need to use -Fa
+#pass the correct flag(s) to append to force position independent code for
+#each compiler (don't forget the gcc compiler used in the index files).
+#-b 64 : which says to perform a 64 bit compile
+#echo $ATLAS_SRC
+
+${ATLAS_SRC}/configure -Fa alg -fPIC --nof77 ${DMAX_SPEED} -b 64 \
+--with-netlib-lapack-git=https://github.com/biotrump/lapack.git,Rev1531:remotes/origin/Rev1531 \
+
+#${ATLAS_SRC}/configure --with-netlib-lapack-tarfile=/home/thomas/build/lapack.tar \
+#-Fa alg -fPIC --nof77 ${DMAX_SPEED} -b 64
+
+#${ATLAS_SRC}/configure ${DMAX_SPEED}
+exit 1
 #   make              ! tune and compile library
 #   make check        ! perform sanity tests
 #   make ptcheck      ! checks of threaded code for multiprocessor systems
