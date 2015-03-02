@@ -760,13 +760,6 @@ $(FLAdir)/lapack_$(ARCH).a : $(FLAdir)/make.inc
            ln -s $(FLAdir)/liblapack.a $(FLAdir)/lapack_$(ARCH).a ; \
         fi
 
-$(FLAdir)/lapacke_$(ARCH).a : $(FLAdir)/make.inc
-	cd $(FLAdir) ; $(PMAKE) lib
-	cp $(FBLASlib) .
-	if [ -f $(FLAdir)/liblapacke.a ]; then \
-           ln -s $(FLAdir)/liblapacke.a $(FLAdir)/lapacke_$(ARCH).a ; \
-        fi
-
 slamch.o : $(mySRCdir)/lamch.c
 	$(KC) $(KCFLAGS) -o $@ -c -DSREAL $(mySRCdir)/lamch.c
 slamc3.o : $(mySRCdir)/slamc3.f
