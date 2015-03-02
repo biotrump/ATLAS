@@ -497,7 +497,7 @@ echo flatar=$flatar
     fi
 fi
 #
-ls reference
+#ls reference
 #exit 1
 
 #

@@ -27,6 +27,9 @@ all : lib
 lib : zlib clib dlib slib lsame.o xerbla.o
 	$(ARCHIVER) $(ARFLAGS) $(FBLASlib) lsame.o xerbla.o
 	$(RANLIB) $(FBLASlib)
+	echo FBLASlib=$(FBLASlib)
+	echo FLAdir=$(FLAdir)
+	-ln -s $(FBLASlib) $(FLAdir)
 slib : $(sobj)
 	$(ARCHIVER) $(ARFLAGS) $(FBLASlib) $(sobj)
 	$(RANLIB) $(FBLASlib)
