@@ -134,6 +134,9 @@ case $1 in
 
 	"build" )
 	pushd ${ATLAS_OUT}
+	pushd ${ATLAS_OUT}/src/lapack/reference
+	git pull
+	popd
 	#   make              ! tune and compile library
 	#   make check        ! perform sanity tests
 	#   make ptcheck      ! checks of threaded code for multiprocessor systems
