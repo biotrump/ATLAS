@@ -514,7 +514,8 @@ echo flapackgit=$flapackgit
 	  ls $blddir/src
 	  cd  $blddir/src/lapack
 	  rm -rf reference
-	  git clone --depth=1 $flapackgit reference
+#	  git clone --depth=1 $flapackgit reference
+	  git clone $flapackgit reference
 	  cd reference
 	  git checkout -b $flapackbranch $flapackrbranch
 	  git branch -a
