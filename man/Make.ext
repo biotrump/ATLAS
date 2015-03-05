@@ -1,0 +1,88 @@
+
+topd = /home/whaley/git/math-atlas/AtlasBase
+ext  = /home/whaley/git/math-atlas/./TEST/xextract
+extF = $(ext) -langF -lnlen71 -Remtblank -llwarn2 -LAPACK1 $(incs)
+ext9 = $(ext) -langF -lnlen132 -RemtBlank $(incs)
+extC = $(ext) -langC -lnlen79 -Remtblank -llwarn2 $(incs)
+extM = $(ext) -langM -lnlen79 -llwarn2 $(incs)
+incs = -def topd /home/whaley/git/math-atlas/AtlasBase \
+       -def incd /home/whaley/git/math-atlas/AtlasBase/Clint \
+       -def ext  /home/whaley/git/math-atlas/./TEST/xextract \
+       -def BASEdir /home/whaley/git/math-atlas/AtlasBase/Antoine/ \
+       -def basd /home/whaley/git/math-atlas/AtlasBase/Clint
+
+default: all
+force_build:
+basd = /home/whaley/git/math-atlas/AtlasBase/Clint
+basdRCW = /home/whaley/git/math-atlas/AtlasBase/Clint
+basdAPP = /home/whaley/git/math-atlas/AtlasBase/Antoine
+basdSTU = /home/whaley/git/math-atlas/AtlasBase/Students
+incf = /home/whaley/git/math-atlas/AtlasBase/gen.inc
+
+basfn = $(basdRCW)/atlas-doc.base
+files = tvec/atltvecs.7.gz tvec/tveccat.1.gz tvec/tvecget.1.gz \
+        tvec/tvecjoin.1.gz tvec/tvecprint.1.gz tvec/tvecratio.1.gz \
+        tvec/tvecreduce.1.gz tvec/tvecrename.1.gz tvec/tvecscale.1.gz \
+        tvec/tvecselect.1.gz tvec/tvecunify.1.gz
+
+all : $(files)
+tvec:
+	mkdir tvec
+tvec/atltvecs.7.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=atltvecs | \
+	txt2man -t "atltvecs" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "7" > tvec/atltvecs.7
+	cd tvec ; gzip --best atltvecs.7
+tvec/tvecget.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecget | \
+	txt2man -t "tvecget" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecget.1
+	cd tvec ; gzip --best tvecget.1
+tvec/tveccat.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tveccat | \
+	txt2man -t "tveccat" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tveccat.1
+	cd tvec ; gzip --best tveccat.1
+tvec/tvecselect.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecselect | \
+	txt2man -t "tvecselect" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecselect.1
+	cd tvec ; gzip --best tvecselect.1
+tvec/tvecjoin.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecjoin | \
+	txt2man -t "tvecjoin" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecjoin.1
+	cd tvec ; gzip --best tvecjoin.1
+tvec/tvecscale.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecscale | \
+	txt2man -t "tvecscale" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecscale.1
+	cd tvec ; gzip --best tvecscale.1
+tvec/tvecreduce.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecreduce | \
+	txt2man -t "tvecreduce" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecreduce.1
+	cd tvec ; gzip --best tvecreduce.1
+tvec/tvecrename.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecrename | \
+	txt2man -t "tvecrename" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecrename.1
+	cd tvec ; gzip --best tvecrename.1
+tvec/tvecprint.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecprint | \
+	txt2man -t "tvecprint" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecprint.1
+	cd tvec ; gzip --best tvecprint.1
+tvec/tvecunify.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecunify | \
+	txt2man -t "tvecunify" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecunify.1
+	cd tvec ; gzip --best tvecunify.1
+tvec/tvecratio.1.gz : tvec $(basfn)
+	$(extM) -b $(basfn) rout=tvecratio | \
+	txt2man -t "tvecratio" -d " " -v "ATLAS Tvec Commands" -r "3.11.32" \
+                -s "1" > tvec/tvecratio.1
+	cd tvec ; gzip --best tvecratio.1
+
+Make.ext : $(topd)/make.base
+	$(extM) -b $(topd)/make.base -o Make.ext rout=atlas/man

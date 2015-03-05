@@ -1,0 +1,478 @@
+#!/bin/sh
+@ifdef ! chksum
+   @define chksum @cksum@
+@endifdef
+@ifdef ! @type
+   @addkeys type=list
+@endifdef
+# This script should be run in BLDdir/timing, where it was generated
+# It assumes: shell: echo, test; env: @(chksum), cut
+chksum=@(chksum)
+t0=res/tmp0.tv
+t1=res/tmp1.tv
+tvo=res/tmp.tv
+efs=0
+EF=
+FRC=0
+BINdir=../bin
+mydir=`pwd`
+scr=$0
+@ROUT tvgenmf
+   @TYPE LIST
+      @define tvrun @tvrun_lst.sh@
+      @define Nargs @"${lst}"@
+      @iexp narg 2 0 +
+   @TYPE RNG
+      @define tvrun @tvrun_rng.sh@
+      @define Nargs @$N1 $NN $Ni@
+      @iexp narg 4 0 +
+   @TYPE !
+@ifdef ! narg
+   @error narg not defined!
+@endifdef
+PRE=d
+PT=t
+BL=a
+LL=a
+rkK=0
+las="potrf getrf geqrf"
+stat=
+fout="res/out.csv"
+if [ $# -lt @(narg) ]
+then
+   echo "This shell script computes MFLOP rates for lapack & BLAS or order N"
+   @TYPE LIST
+   echo "USAGE: $0 \"list\" reps [-P t/s] [-p d/s/c/z] [-L a/s] [-B a/s]"
+   echo "   list    : # N1 ... N#, eg. \"4 200 2000 4000 8000\""
+   @TYPE RNG
+   echo "USAGE: $0 N1 NN Ni reps [-P t/s] -p [d,s,c,z]"
+   echo "   N1:1st N, NN:lastN, Ni:increment between Ns"
+   @TYPE !
+   echo "   -b "blalst" : list of blas routs to time (default: all)"
+   echo "   -l "lalist" : list of lapack routs to time (def: potrf,getrf,geqrf)"
+   echo "      for -l -b, use none to eliminate those timings entirely"
+   echo "   -P t/s : threaded or serial timings"
+   echo "   -p [d,s,c,z]: precision prefix"
+   echo "   -B [a,s]    : which blas library to use"
+   echo "   -L [a,s]    : which lapack library to use"
+   echo "   -K k        : nonzero: time rank-K update with K=k"
+   echo "   -t file.tv  : final tvec file containing N and all MFLOP"
+   echo "   -o out.csv  : (def:res/out.csv) human-readable CSV file"
+   echo "   -S [min/max/avg] : what statvec to grab (def:serial-max;par-avg)"
+   exit 1
+fi
+   @TYPE list
+lst=$1
+NREP=$2
+shift 2
+   @TYPE RNG
+N1=$1
+NN=$2
+Ni=$3
+NREP=$4
+shift 4
+   @TYPE !
+while [ $# -gt 0 ]
+do
+   case $1 in 
+   -P)  PT=$2
+        shift 2
+        ;;
+   -p)  PRE=$2
+        shift 2
+        ;;
+   -K)  rkK=$2
+        shift 2
+        ;;
+   -B)  BL=$2
+        shift 2
+        ;;
+   -L)  LL=$2
+        shift 2
+        ;;
+   -S)  stat=$2
+        shift 2
+        ;;
+   -b)  bls=$2
+        shift 2
+        ;;
+   -l)  las=$2
+        shift 2
+        ;;
+   -o)  fout=$2
+        shift 2
+        ;;
+   -t)  tvo=$2
+        shift 2
+        ;;
+   *)   echo "\nIllegal flag ${1}\n"
+        $scr
+        exit 1
+        ;;
+   esac
+done
+
+if [ ! -n "$stat" ]
+then
+   if [ "$PT" = "t" ]
+   then
+      stat=avg
+   else
+      stat=max
+   fi
+fi
+if [ ! -n "$bls" ]
+then
+   if [ "$PRE" = "z" ] || [ "$PRE" = "c" ]
+   then
+      bls="gemm trsm trmm syrk syr2k hemm herk her2k"
+   else
+      bls="gemm trsm trmm syrk syr2k"
+   fi
+elif [ "$bls" = "none" ]
+then
+   bls=
+fi
+if [ "$las" = "none" ]
+then
+   las=
+fi
+
+btmr=x${PRE}${PT}l3time_${BL}b
+ltmr=x${PRE}${PT}latime_${LL}l_${BL}b
+
+if [ $rkK -gt 0 ]
+then
+   nbl=1
+   nmf=1
+   bmfs="MFLOP_rk${rkK}"
+   brnm="MFLOP_rk${rkK}_${stat} ${PRE}rank${rkK}"
+   bsel="MFLOP_rk${rkK}_${stat}"
+   N_NM="rk${rkK}"
+   rts="${PRE}rank${rkK}"
+   resfs=`./@(tvrun) $btmr gemm @(Nargs) $NREP -E "-k 1 ${rkK}" -L _rk${rkK} -O 1`
+   ./@(tvrun) $btmr gemm @(Nargs) $NREP -E "-k 1 ${rkK}" -L _rk${rkK}
+else
+   nbl=0
+   nmf=0
+   rts=""
+   bmfs=""
+   brnm=""
+   resfs=""
+   rts=""
+   N_NM=
+fi
+for bl in ${bls}
+do
+   if [ ! -n "$N_NM" ]
+   then
+      N_NM="$bl"
+   fi
+   nmf=$(( nmf + 1 ))
+   nbl=$(( nbl + 1 ))
+   fo=`./@(tvrun) $btmr $bl @(Nargs) $NREP -O 1`
+   resfs="${resfs} ${fo}"
+   bmfs="${bmfs} MFLOP_${bl}"
+   bsel="${bsel} MFLOP_${bl}_${stat}"
+   brnm="${brnm} MFLOP_${bl}_${stat} ${PRE}${bl}"
+   rts="${rts} ${PRE}${bl}"
+   ./@(tvrun) $btmr $bl @(Nargs) $NREP -L _$bl
+done
+nla=0
+lresfs=
+lmfs=""
+lsel=""
+lrnm=""
+LN_NM=""
+for la in ${las}
+do
+   if [ ! -n "$N_NM" ]
+   then
+      N_NM="$la"
+   fi
+   if [ ! -n "$LN_NM" ]
+   then
+      LN_NM="$la"
+   fi
+   nmf=$(( nmf + 1 ))
+   nla=$(( nla + 1 ))
+   fo=`./@(tvrun) $ltmr $la @(Nargs) $NREP -O 1`
+   lresfs="${lresfs} ${fo}"
+   lmfs="${lmfs} MFLOP_${la}"
+   lsel="${lsel} MFLOP_${la}_${stat}"
+   lrnm="${lrnm} MFLOP_${la}_${stat} ${PRE}${la}"
+   rts="${rts} ${PRE}${la}"
+   ./@(tvrun) $ltmr $la @(Nargs) $NREP -L _$la
+done
+#
+# Get the problem order and MFLOP rates from all runs.  Must be done in two
+# steps because latime produces different output than l3time
+#
+if [ $nbl -gt 0 ]
+then
+   cat $resfs | $BINdir/tvecget -H 2 N MFLOP \
+      | $BINdir/tvecreduce -R 1 N_${N_NM} -C $nbl $bmfs -o $t0
+   if [ $nla -gt 0 ]
+   then
+      cat $lresfs | $BINdir/tvecget -H 2 N MFLOP \
+         | $BINdir/tvecreduce -R 1 N_${LN_NM} -C $nla $lmfs -o $t1
+   fi
+elif [ $nla -gt 0 ]
+then
+   cat $lresfs | $BINdir/tvecget -H 2 N MFLOP \
+      | $BINdir/tvecreduce -R 1 N_${N_NM} -C $nla $lmfs -o $t1
+fi
+#
+# Grab only needed vectors, and rename them so they just get precision and
+# routine, since all columns but N will be MFLOP.  Create final tvec file
+# that can be further processes by higher level scripts if required, or
+# overwritten by next run if user doesn't use -t
+#
+if [ $nla -gt 0 ] && [ $nbl -gt 0 ]
+then
+   n1=$(( nbl + 1 ))
+   cat $t0 $t1 | $BINdir/tvecselect -# 2 -S $n1 N_${N_NM} $bsel \
+       -R $n1 N_${N_NM} N $brnm -S $nla $lsel -R $nla $lrnm -o $tvo
+elif [ $nbl -gt 0 ]
+then
+   n1=$(( nbl + 1 ))
+   $BINdir/tvecselect -i $t0 -# 1 -S $n1 N_${N_NM} $bsel \
+       -R $n1 N_${N_NM} N $brnm -o $tvo
+elif [ $nla -gt 0 ]
+then
+   n1=$(( nla + 1 ))
+   $BINdir/tvecselect -i $t1 -# 1 -S $n1 N_${N_NM} $lsel \
+       -R $n1 N_${N_NM} N $lrnm -o $tvo
+else
+   exit 0
+fi
+#
+# Print in CSV format, and echo to screen
+#
+n1=$(( nla + nbl + 1 ))
+$BINdir/tvecprint -i $tvo -h 1 -C $n1 N $rts -o $fout
+cat $fout
+@endextract
+@ROUT tvcmpver
+   @iexp narg 4 0 +
+tmr=$2
+@ROUT ! tvgenmf tvcmpver
+tmr=$1
+@ROUT ! tvgenmf
+PRE=`echo "$tmr" | cut -c 2`
+PT=`echo "$tmr" | cut -c 3`
+LIBS=`echo "$tmr" | cut -c 11-`
+PROUT=0
+@ROUT tvcmprep
+   @iexp narg 4 0 +
+@ROUT tvrun
+   @TYPE LIST
+      @iexp narg 4 0 +
+   @TYPE RNG
+      @iexp narg 6 0 +
+   @TYPE !
+@ROUT !
+if [ $# -lt @(narg) ]
+then
+@ROUT tvrun
+   echo "This shell script times N-indexed LAPACK or BLAS problems."
+   @TYPE LIST
+    echo "USAGE: $0 timer rout "list" reps [-L lab] [-E EF] [-O 0/1]"
+   @TYPE RNG
+   echo "USAGE: $0 timer rout N1 NN incN reps [-L lab] [-E EF] [-O 0/1]"
+   @TYPE !
+@ROUT tvcmpver
+   echo "This shell script computes ratio of different ATLAS installs."
+   echo "USAGE: $0 other_bin timer reps "list" [-R rout] [-L lab] [-E EF]"
+@ROUT tvcmprep
+   echo "This shell script computes ratio of different nreps runs."
+   echo "USAGE: $0 timer repN repD "list" [-R rout] [-L lab] [-E EF]"
+@ROUT !
+   echo "   timer: x[z,c,d,s][t,s]latime_[a,s]l_[a,s]b, x[z,c,d,s][t,s]l3time__[a,s]b"
+@ROUT tvcmpver
+   echo "   other_bin: path to the other BLDdir/bin directory to compare."
+   echo "   reps     : repitition count "
+@ROUT tvcmprep
+   echo "   repN    : repitition count to be numerator"
+   echo "   repD    : repitition count to be denominator"
+@ROUT tvcmprep tvcmpver
+   echo "   list    : # N1 ... N#, eg. \"4 200 2000 4000 8000\""
+   echo "   -R rout : time rout as below; default potrf"
+@ROUT !
+   echo "   rout(la): getrf, potrf, geqrf"
+   echo "   rout(l3): gemm, trsm, trmm, syrk, syr2k, hemm, herk, her2k"
+   @TYPE LIST
+   echo "   list    : # N1 ... N#, eg. \"4 200 2000 4000 8000\""
+   @TYPE RNG
+   echo "   N1      : start of problem size range"
+   echo "   NN      : end of problem size range"
+   echo "   incN    : increment between problem sizes"
+   @TYPE !
+@ROUT tvrun
+   echo "   reps    : number of times each problem should be timed"
+   echo  \
+   "   -O 0/1  : if non-zero, do nothing but echo Output timing file to stdout"
+@ROUT !
+   echo "   -L lab  : LABEL for run (default DEF)"
+   echo "   -E EF   : extra flags to pass to timer (eg, -E \"-U 1 L\") (default none)"
+   echo "   -F 0/1  : don't/do force retiming (default don't)"
+   exit 1
+fi
+@ROUT tvcmpver
+BINdir2=$1
+mydir2=$BINdir2/../timing
+NREP=$3
+lst=$4
+RT=potrf
+FRC=0
+@ROUT tvcmprep
+NR1=$2
+NR2=$3
+lst=$4
+RT=potrf
+FRC=0
+@ROUT tvrun
+RT=$2
+   @TYPE LIST
+lst=$3
+NREP=$4
+   @TYPE RNG
+N1=$3
+N2=$4
+Ni=$5
+NREP=$6
+   @TYPE !
+@ROUT !
+shift @(narg)
+while [ $# -gt 0 ]
+do
+   case $1 in 
+@ROUT tvcmprep tvcmpver
+   -R)  RT=$2
+        shift 2
+        ;;
+@ROUT tvrun
+   -O)  PROUT=$2
+        shift 2
+        ;;
+@ROUT !
+   -L)  lab=$2
+        shift 2
+        ;;
+   -E)  EF=$2
+        efs=`echo "${EF}" | ${chksum} | cut -d ' ' -f 1`
+        shift 2
+        ;;
+   -F)  FRC=$2
+        shift 2
+        ;;
+   *)   echo "\nIllegal flag ${1}\n"
+        $scr
+        exit 1
+        ;;
+   esac
+done
+
+@ROUT tvrun
+   @TYPE RNG
+resf=res/${PT}${PRE}${RT}_${LIBS}_${N1}_${N2}_${Ni}_${NREP}_${efs}.out
+   @TYPE LIST
+lchk=`echo "${lst}" | ${chksum} | cut -d ' ' -f 1`
+resf=res/${PT}${PRE}${RT}_${LIBS}_${lchk}_${NREP}_${efs}.out
+   @TYPE !
+if [ $PROUT -ne 0 ]
+then
+   echo $resf
+   exit 0
+fi
+if [ $FRC -ne 0 ] && [ -f $resf ]
+then
+   rm -f $resf
+fi
+if [ ! -x $BINdir/$tmr ]
+then
+   cd $BINdir ; make $tmr
+   cd $mydir
+fi
+if [ ! -d res ]
+then
+   mkdir res
+fi
+if [ ! -f $resf ]
+then
+   echo "  -> running . . ."
+@TYPE LIST `   if $BINdir/$tmr -R 1 $RT $EF -n $lst -# $NREP > $resf`
+@TYPE RNG  `   if $BINdir/$tmr -R 1 $RT $EF -N $N1 $N2 $Ni -# $NREP > $resf`
+   then
+      echo "  -> run finished, output in: ${resf}\n"
+      echo "*** END LABEL=$lab NREP=$NREP" >> $resf
+   else
+      echo "\nERROR in RUN!\n"
+      cat $resf
+      mv -f $resf BAD.OUT
+      exit $i
+   fi
+else
+   echo "   -> output already available in: ${resf}!\n"
+fi
+@ROUT tvcmprep tvcmpver
+if [ -n "$EF" ]
+then
+   ea="-E $EF"
+else
+   ea=
+fi
+lchk=`echo "${lst}" | ${chksum} | cut -d ' ' -f 1`
+@ROUT tvcmprep
+@skip res1f=res/${PT}${PRE}${RT}_${LIBS}_${lchk}_${NR1}_${efs}.out
+@skip res2f=res/${PT}${PRE}${RT}_${LIBS}_${lchk}_${NR2}_${efs}.out
+./tvrun_lst.sh $tmr $RT "${lst}" $NR1 -L _${RT} $ea -F $FRC
+res1f=`./tvrun_lst.sh $tmr $RT "${lst}" $NR1 -L _${RT} $ea -F $FRC -O 1`
+if [ $NR1 -eq $NR2 ] 
+then
+   mv -f $res1f ${res1f}_0
+   res1F=${res1f}_0
+else
+   res1F=${res1f}
+fi
+./tvrun_lst.sh $tmr $RT "${lst}" $NR2 -L _${RT} $ea -F $FRC
+res2f=`./tvrun_lst.sh $tmr $RT "${lst}" $NR2 -L _${RT} $ea -F $FRC -O 1`
+
+$BINdir/tvecget -i $res1F -H 2 N MFLOP \
+   | $BINdir/tvecreduce -R 1 N_${RT} -C 1 MFLOP_${RT} -o $t0
+$BINdir/tvecget -i $res2f -H 2 N MFLOP \
+   | $BINdir/tvecreduce -R 1 N_${RT} -C 1 MFLOP_${RT} -o $t1
+
+echo "Ratio of ${RT}; nrep=${NR1} / nrep=${NR2} (ideally 1.0):"
+cat $t0 $t1 | $BINdir/tvecratio -c 1 N_${RT} \
+   -R 3 MFLOP_${RT}_max MFLOP_${RT}_min MFLOP_${RT}_avg \
+   | $BINdir/tvecrename -R 3 MFLOP_${RT}_avg AVG MFLOP_${RT}_max MAX \
+     MFLOP_${RT}_min MIN \
+   | $BINdir/tvecprint -h 1 -C 4 N_${RT} AVG MAX MIN
+@skip   -C 4 N_${RT} MFLOP_${RT}_max MFLOP_${RT}_min MFLOP_${RT}_avg
+@ROUT tvcmpver
+
+./tvrun_lst.sh $tmr $RT "${lst}" $NREP -L _${RT} $ea -F $FRC
+res1f=`./tvrun_lst.sh $tmr $RT "${lst}" $NREP -L _${RT} $ea -F $FRC -O 1`
+
+cd $mydir2
+make all > /dev/null
+./tvrun_lst.sh $tmr $RT "${lst}" $NREP -L _${RT} $ea -F $FRC
+res2f=`./tvrun_lst.sh $tmr $RT "${lst}" $NREP -L _${RT} $ea -F $FRC -O 1`
+res2f=$mydir2/$res2f
+cd $mydir
+
+$BINdir/tvecget -i $res1f -H 2 N MFLOP \
+   | $BINdir/tvecreduce -R 1 N_${RT} -C 1 MFLOP_${RT} -o $t0
+$BINdir/tvecget -i $res2f -H 2 N MFLOP \
+   | $BINdir/tvecreduce -R 1 N_${RT} -C 1 MFLOP_${RT} -o $t1
+
+echo "Ratio of ${RT} (ideally 1.0):"
+echo "num: ${mydir}/../bin" 
+echo "den: ${BINdir2}"
+cat $t0 $t1 | $BINdir/tvecratio -c 1 N_${RT} \
+   -R 3 MFLOP_${RT}_max MFLOP_${RT}_min MFLOP_${RT}_avg \
+   | $BINdir/tvecrename -R 3 MFLOP_${RT}_avg AVG MFLOP_${RT}_max MAX \
+     MFLOP_${RT}_min MIN \
+   | $BINdir/tvecprint -h 1 -C 4 N_${RT} AVG MAX MIN
+@ROUT !

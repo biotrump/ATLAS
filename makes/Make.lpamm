@@ -1,0 +1,84 @@
+include Make.inc
+mySRCdir = $(SRCdir)/src/lapack/amm
+
+AMMID=0
+all : lib ptlib
+lib : dlib slib zlib clib ilib
+clean : sclean dclean cclean zclean iclean
+
+tlib : ptlib
+ptlib : dtlib stlib ztlib ctlib itlib
+incdep = $(INCSdir)/atlas_lapack.h $(INCAdir)/atlas_du$(AMMID)amm_blk.h \
+         $(INCAdir)/atlas_du$(AMMID)amm_swp.h \
+         $(INCAdir)/atlas_du$(AMMID)amm_kern.h 
+slib : 
+	$(PMAKE) slib.grd
+stlib : 
+dlib : 
+	$(PMAKE) dlib.grd
+dtlib : 
+clib : 
+	$(PMAKE) clib.grd
+ctlib : 
+zlib : 
+	$(PMAKE) zlib.grd
+ztlib : 
+ilib : 
+	$(PMAKE) ilib.grd
+itlib : 
+sobj = ATL_sgetrf_amm.o ATL_slaswp_amm.o
+
+slib.grd : $(sobj)
+	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(sobj)
+	$(RANLIB) $(LAPACKlib)
+	touch slib.grd
+
+ATL_sgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sgetrf_amm.o -DSREAL=1 \
+              $(mySRCdir)/ATL_getrf_amm.c
+ATL_slaswp_amm.o : $(mySRCdir)/ATL_laswp_amm.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_slaswp_amm.o -DSREAL=1 \
+              $(mySRCdir)/ATL_laswp_amm.c
+
+dobj = ATL_dgetrf_amm.o ATL_dlaswp_amm.o
+
+dlib.grd : $(dobj)
+	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(dobj)
+	$(RANLIB) $(LAPACKlib)
+	touch dlib.grd
+
+ATL_dgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dgetrf_amm.o -DDREAL=1 \
+              $(mySRCdir)/ATL_getrf_amm.c
+ATL_dlaswp_amm.o : $(mySRCdir)/ATL_laswp_amm.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dlaswp_amm.o -DDREAL=1 \
+              $(mySRCdir)/ATL_laswp_amm.c
+
+cobj = 
+clib.grd : $(cobj)
+	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(cobj)
+	$(RANLIB) $(LAPACKlib)
+	touch clib.grd
+
+
+zobj = 
+zlib.grd : $(zobj)
+	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(zobj)
+	$(RANLIB) $(LAPACKlib)
+	touch zlib.grd
+
+
+iobj = ATL_blkIpiv_amm.o ATL_unblkIpiv_amm.o
+
+ilib.grd : $(iobj)
+	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(iobj)
+	$(RANLIB) $(LAPACKlib)
+	touch ilib.grd
+
+ATL_blkIpiv_amm.o : $(mySRCdir)/ATL_blkIpiv_amm.c $(incdep)
+	$(KC) $(KCFLAGS) -c -o ATL_blkIpiv_amm.o \
+           $(mySRCdir)/ATL_blkIpiv_amm.c
+ATL_unblkIpiv_amm.o : $(mySRCdir)/ATL_unblkIpiv_amm.c $(incdep)
+	$(KC) $(KCFLAGS) -c -o ATL_unblkIpiv_amm.o \
+           $(mySRCdir)/ATL_unblkIpiv_amm.c
+
