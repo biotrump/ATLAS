@@ -510,7 +510,7 @@ echo flapackgit=$flapackgit
     if test $flapackgit != "ATL_NoOverride"
     then
 	  pwd
-	  mkdir $blddir/src/lapack/
+#	  mkdir $blddir/src/lapack/
 	  ls $blddir/src
 	  cd  $blddir/src/lapack
 	  rm -rf reference
