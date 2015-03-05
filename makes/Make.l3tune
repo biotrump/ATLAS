@@ -54,7 +54,7 @@ xsinvtrsm : sinvtrsm.o ATL_strsm.o
 sbindep :
 	cd $(BINdir) ; $(MAKE) slapack ststlib sl3lib sl2lib \
                             sl1lib scblas
-sinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h $(INCAdir)/smm.h \
+sinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h (INCAdir)/atlas_samm_sum.h \
                   $(INCSdir)/atlas_lvl3.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DATLCINT -DTimeC -DSREAL $(mySRCdir)/invtrsm.c
 ATL_strsm.o : $(mySRCdir)/ATL_trsm.c
@@ -70,7 +70,7 @@ xdinvtrsm : dinvtrsm.o ATL_dtrsm.o
 dbindep :
 	cd $(BINdir) ; $(MAKE) dlapack dtstlib dl3lib dl2lib \
                             dl1lib dcblas
-dinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h $(INCAdir)/dmm.h \
+dinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h (INCAdir)/atlas_damm_sum.h \
                   $(INCSdir)/atlas_lvl3.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DATLCINT -DTimeC -DDREAL $(mySRCdir)/invtrsm.c
 ATL_dtrsm.o : $(mySRCdir)/ATL_trsm.c
@@ -86,7 +86,7 @@ xcinvtrsm : cinvtrsm.o ATL_ctrsm.o
 cbindep :
 	cd $(BINdir) ; $(MAKE) clapack ctstlib cl3lib cl2lib \
                             cl1lib ccblas
-cinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h $(INCAdir)/cmm.h \
+cinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h (INCAdir)/atlas_camm_sum.h \
                   $(INCSdir)/atlas_lvl3.h
 	$(CKC) -o $@ -c $(cKCFLAGS) -DATLCINT -DTimeC -DSCPLX $(mySRCdir)/invtrsm.c
 ATL_ctrsm.o : $(mySRCdir)/ATL_trsm.c
@@ -102,7 +102,7 @@ xzinvtrsm : zinvtrsm.o ATL_ztrsm.o
 zbindep :
 	cd $(BINdir) ; $(MAKE) zlapack ztstlib zl3lib zl2lib \
                             zl1lib zcblas
-zinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h $(INCAdir)/zmm.h \
+zinvtrsm.o : $(mySRCdir)/invtrsm.c $(INCSdir)/atlas_misc.h (INCAdir)/atlas_zamm_sum.h \
                   $(INCSdir)/atlas_lvl3.h
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DATLCINT -DTimeC -DDCPLX $(mySRCdir)/invtrsm.c
 ATL_ztrsm.o : $(mySRCdir)/ATL_trsm.c

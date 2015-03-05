@@ -4,7 +4,6 @@ ATLAS/doc/Windows.txt as well.  Note that all of this documentation is
 probably out of date.  The website always contains the most current versions:
    http://math-atlas.sourceforge.net/faq.html#doc
 
-*** ATLAS needs GCC 4.7 and GFortran 4.7 to build successfully ***
 
 A listing of the ATLAS documentation files is:
 

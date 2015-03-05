@@ -19,6 +19,7 @@ sINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
           $(INCAdir)/atlas_samm_ablk2cmat.h 
 
 sobj = ATL_sGetAmmmInfo.o ATL_sGetRankKInfo.o \
+       ATL_srk4n4.o ATL_sammmREC.o \
        ATL_sammm.o ATL_sammm_1b.o \
        ATL_sammm_rk2.o ATL_sammm_rkK.o ATL_sammmNMK.o \
        ATL_sammm_IP.o ATL_sammm_tN.o ATL_sammmMNK.o
@@ -53,6 +54,10 @@ ATL_sammm_1b.o : $(sINCdep) $(mySRCdir)/ATL_ammm_1b.c
 	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_1b.c
 ATL_sammm.o : $(sINCdep) $(mySRCdir)/ATL_ammm.c
 	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm.c
+ATL_sammmREC.o : $(sINCdep) $(mySRCdir)/ATL_ammmREC.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammmREC.c
+ATL_srk4n4.o : $(sINCdep) $(mySRCdir)/ATL_rk4n4.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_rk4n4.c
 dINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
           $(INCAdir)/atlas_damm_blk.h $(INCAdir)/atlas_damm_flag.h \
           $(INCAdir)/atlas_damm_kern.h \
@@ -60,6 +65,7 @@ dINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
           $(INCAdir)/atlas_damm_ablk2cmat.h 
 
 dobj = ATL_dGetAmmmInfo.o ATL_dGetRankKInfo.o \
+       ATL_drk4n4.o ATL_dammmREC.o \
        ATL_dammm.o ATL_dammm_1b.o \
        ATL_dammm_rk2.o ATL_dammm_rkK.o ATL_dammmNMK.o \
        ATL_dammm_IP.o ATL_dammm_tN.o ATL_dammmMNK.o
@@ -94,6 +100,10 @@ ATL_dammm_1b.o : $(dINCdep) $(mySRCdir)/ATL_ammm_1b.c
 	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_1b.c
 ATL_dammm.o : $(dINCdep) $(mySRCdir)/ATL_ammm.c
 	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm.c
+ATL_dammmREC.o : $(dINCdep) $(mySRCdir)/ATL_ammmREC.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammmREC.c
+ATL_drk4n4.o : $(dINCdep) $(mySRCdir)/ATL_rk4n4.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_rk4n4.c
 cINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
           $(INCAdir)/atlas_samm_blk.h $(INCAdir)/atlas_samm_flag.h \
           $(INCAdir)/atlas_samm_kern.h \

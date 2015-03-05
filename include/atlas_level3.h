@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -33,15 +33,19 @@
  * ===========================================================================
  */
 #ifndef ATLAS_LEVEL3_H
-#define ATLAS_LEVEL3_H
-
+   #define ATLAS_LEVEL3_H
 
 /*
  * Routines with standard 4 prefixes (S, D, C, Z)
  */
 int ATL_sGetNB(void);
 int ATL_sGetNCNB(void);
-void ATL_sgemm(const enum ATLAS_TRANS TransA, const enum ATLAS_TRANS TransB,
+void ATL_sammm
+   (enum ATLAS_TRANS,enum ATLAS_TRANS,ATL_CSZT,ATL_CSZT,ATL_CSZT,
+    const float , const float*,ATL_CSZT,const float*,ATL_CSZT,
+    const float ,float*,ATL_CSZT);
+
+void ATL_sgemm(const enum ATLAS_TRANS, const enum ATLAS_TRANS,
                const int M, const int N, const int K, const float alpha,
                const float *A, const int lda, const float *B, const int ldb,
                const float beta, float *C, const int ldc);
@@ -68,7 +72,12 @@ void ATL_strsm(const enum ATLAS_SIDE Side, const enum ATLAS_UPLO Uplo,
 
 int ATL_dGetNB(void);
 int ATL_dGetNCNB(void);
-void ATL_dgemm(const enum ATLAS_TRANS TransA, const enum ATLAS_TRANS TransB,
+void ATL_dammm
+   (enum ATLAS_TRANS,enum ATLAS_TRANS,ATL_CSZT,ATL_CSZT,ATL_CSZT,
+    const double , const double*,ATL_CSZT,const double*,ATL_CSZT,
+    const double ,double*,ATL_CSZT);
+
+void ATL_dgemm(const enum ATLAS_TRANS, const enum ATLAS_TRANS,
                const int M, const int N, const int K, const double alpha,
                const double *A, const int lda, const double *B, const int ldb,
                const double beta, double *C, const int ldc);
@@ -95,7 +104,12 @@ void ATL_dtrsm(const enum ATLAS_SIDE Side, const enum ATLAS_UPLO Uplo,
 
 int ATL_cGetNB(void);
 int ATL_cGetNCNB(void);
-void ATL_cgemm(const enum ATLAS_TRANS TransA, const enum ATLAS_TRANS TransB,
+void ATL_cammm
+   (enum ATLAS_TRANS,enum ATLAS_TRANS,ATL_CSZT,ATL_CSZT,ATL_CSZT,
+    const float *, const float*,ATL_CSZT,const float*,ATL_CSZT,
+    const float *,float*,ATL_CSZT);
+
+void ATL_cgemm(const enum ATLAS_TRANS, const enum ATLAS_TRANS,
                const int M, const int N, const int K, const float *alpha,
                const float *A, const int lda, const float *B, const int ldb,
                const float *beta, float *C, const int ldc);
@@ -122,7 +136,12 @@ void ATL_ctrsm(const enum ATLAS_SIDE Side, const enum ATLAS_UPLO Uplo,
 
 int ATL_zGetNB(void);
 int ATL_zGetNCNB(void);
-void ATL_zgemm(const enum ATLAS_TRANS TransA, const enum ATLAS_TRANS TransB,
+void ATL_zammm
+   (enum ATLAS_TRANS,enum ATLAS_TRANS,ATL_CSZT,ATL_CSZT,ATL_CSZT,
+    const double *, const double*,ATL_CSZT,const double*,ATL_CSZT,
+    const double *,double*,ATL_CSZT);
+
+void ATL_zgemm(const enum ATLAS_TRANS, const enum ATLAS_TRANS,
                const int M, const int N, const int K, const double *alpha,
                const double *A, const int lda, const double *B, const int ldb,
                const double *beta, double *C, const int ldc);

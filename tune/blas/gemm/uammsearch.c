@@ -1,6 +1,6 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
- * Copyright (C) 2013, 2012 R. Clint Whaley
+ *             Automatically Tuned Linear Algebra Software v3.11.32
+ * Copyright (C) 2015, 2013, 2012 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@ static enum VECTYPE {VTAVXZ=0, VTAVX=1, VTSSE=2, VTGV=3, VTSC=4} VECi=VTSC;
 static int VLEN[5] = {8, 4, 2, 2, 1};  /* assume double, fix later if nec */
 static char *VECs[5] = {"avxz", "avx", "sse", "gvec", "scalar"};
 static int TSIZE=8;
+static int IMVS=3;     /* move ptrs in timing encoded in last 3 bits: CBA */
 #define KRUNMUL 1.02   /* KRUNTIME speedup increase over K-compile time */
 
 static int Mylcm(const int M, const int N)
@@ -139,6 +140,160 @@ double TimeMMKernel_KB
    }
    return(mf);
 }
+/*
+ * Finds best blocking factors for kernel mmp trying all legal values
+ * between [b0, bN]
+ */
+ATL_mmnode_t *BestBlocking_BFI
+(
+   int verb,
+   char pre,
+   ATL_mmnode_t *mmp,
+   int b0,
+   int bN,
+   int minInc,  /* minimum increment to use */
+   int FORCE
+)
+/*
+ * Times all legal block factors in all dims between [b0,bN].
+ * RETURNS: ptr to best performing kernel, NULL if no legal block factors
+ */
+{
+   ATL_mmnode_t *mp;
+   int mbB=0, nbB=0, kbB=0;
+   int mbS=0, nbS=0, kbS=0;
+   int mu = mmp->mu, nu = mmp->nu, ku = mmp->ku;
+   int k0, kn, m0, mn, n0, nn, m, n, k;
+   double mfB=0.0, mfS=0.0;
+
+   if (!mmp)
+      return(NULL);
+   if (minInc > mu)
+      mu = ((minInc+mu-1)/mu)*mu;
+   if (minInc > nu)
+      nu = ((minInc+nu-1)/nu)*nu;
+   if (minInc > ku)
+      ku = ((minInc+ku-1)/ku)*ku;
+   m0 = ((b0+mu-1)/mu)*mu;
+   n0 = ((b0+nu-1)/nu)*nu;
+   k0 = ((b0+ku-1)/ku)*ku;
+   mn = ((bN+mu-1)/mu)*mu;
+   nn = ((bN+nu-1)/nu)*nu;
+   kn = ((bN+ku-1)/ku)*ku;
+   mp = CloneMMNode(mmp);
+   if (mp->kbmax && mp->kbmax < kn)
+      kn = mp->kbmax;
+   if (mp->kbmin && mp->kbmin > k0)
+      k0 = mp->kbmin;
+
+
+   printf("SEARCH BLKING [%d - %d] for %d.%s:\n\n", b0, bN, mp->ID, mp->rout);
+   printf("  MB    NB    KB        MFLOP    mbB  nbB  kbB      mflopB\n");
+   printf("====  ====  ====  ===========   ==== ==== ==== ===========\n");
+   for (m=m0; m <= mn; m += mu)
+   {
+      for (n=m0; n <= nn; n += nu)
+      {
+         for (k=k0; k <= kn; k += ku)
+         {
+            double mf;
+            mf = TimeMMKernel(verb, FORCE, mp, pre, m, n, k, k, k, m, 1, 0, -1);
+            printf("%4d %5d %5d %11.1f %4d %4d %4d %11.1f\n",
+                   m, n, k, mf, mbB, nbB, kbB, mfB);
+            if (mf > mfB)
+            {
+               mfB = mf;
+               mbB = m;
+               nbB = n;
+               kbB = k;
+            }
+            if (m == n && m == k)
+            {
+               if (mf > mfS)
+               {
+                  mfS = mf;
+                  mbS = m;
+                  nbS = n;
+                  kbS = k;
+               }
+            }
+         }
+      }
+   }
+   if (mfB == 0)
+   {
+      printf("NO KERNEL POSSIBLE FOR RANGE=[%d,%d]\n", b0, bN);
+      KillMMNode(mp);
+      return(NULL);
+   }
+   mp->mbB = mbB;
+   mp->nbB = nbB;
+   mp->kbB = kbB;
+   mp->mflop[0] = mfB;
+   printf("FOR %d.'%s': MB=%d, NB=%d, KB=%d, MFLOPS=%.1f\n",
+          mp->ID, mp->rout, mbB, nbB, kbB, mfB);
+   k = MMKernelFailsTest(pre, mbB, nbB, kbB, 0, mp);
+   if (!k)
+      k = MMKernelFailsTest(pre, mbB, nbB, kbB, 1, mp);
+   if (!k)
+      k = MMKernelFailsTest(pre, mbB, nbB, kbB, -1, mp);
+   if (k)
+   {
+      printf("KERNEL FAILS TESTER FOR [M,N,K]B=%d,%d,%d\n", mbB, nbB, kbB);
+      exit(k);
+   }
+   if (mbS == 0)
+      mp->next = NULL;
+   else
+   {
+      k = MMKernelFailsTest(pre, mbS, nbS, kbS, 0, mp);
+      if (!k)
+         k = MMKernelFailsTest(pre, mbS, nbS, kbS, 1, mp);
+      if (!k)
+         k = MMKernelFailsTest(pre, mbS, nbS, kbS, -1, mp);
+      if (k)
+         mp->next = NULL;
+      else
+      {
+         mp->next = CloneMMNode(mp);
+         mp->next->mbB = mbS;
+         mp->next->nbB = nbS;
+         mp->next->kbB = kbS;
+         mp->next->mflop[0] = mfS;
+      }
+   }
+   WriteMMFileWithPath(pre, "res", "AMMEXBLKS.sum", mp);
+   return(mp);
+}
+
+ATL_mmnode_t *TimeExtraBlockings(char pre, int verb)
+{
+   ATL_mmnode_t *eb;
+   eb = ReadMMFileWithPath(pre, "res", "AMMEXBLKS.sum");
+   if (!eb)
+      return(eb);
+   if (eb->mflop[0] < 0)
+   {
+      ATL_mmnode_t *mp;
+      printf("EXTRA BLOCKING FACTOR TIMINGS:\n\n");
+      if (verb)
+      {
+         printf("  MB    NB    KB        MFLOP\n");
+         printf("====  ====  ====  ===========\n");
+      }
+      for (mp=eb; mp; mp = mp->next)
+      {
+         mp->mflop[0] = TimeMMKernel(verb, 0, mp, pre, mp->mbB, mp->nbB,
+                                     mp->kbB, 0, 0, mp->mbB, 1, 0, -1);
+         if (verb)
+            printf("%4d %5d %5d %11.1f\n",
+                   mp->mbB, mp->nbB, mp->kbB, mp->mflop[0]);
+      }
+      WriteMMFileWithPath(pre, "res", "AMMEXBLKS.sum", eb);
+   }
+   return(eb);
+}
+
 ATL_mmnode_t *BestForThisNB
 (
    int verb,
@@ -197,7 +352,7 @@ ATL_mmnode_t *BestForThisNB
  *    Give bonus to K-runtime variable over K-compile time; K-runtime kernels
  *    can be used for some K-cleanup, and they can be used for any required KB
  *    as well as being typically much smaller instruction load, so they are
- *    strongly prefered
+ *    strongly preferred
  */
       mf = FLAG_IS_SET(mmp->flag, MMF_KRUNTIME) ? mf0*KRUNMUL : mf0;
       if (mf > mfB)
@@ -276,7 +431,7 @@ int DeleteBadBigNBs(ATL_mmnode_t *mmb, int *nbs)
 
 ATL_mmnode_t *FindBestForEachNB(int verb, char pre, ATL_mmnode_t *mmb, int *nbs)
 {
-   int i, n, FORCE;
+   int i, n, FORCE=0;
    ATL_mmnode_t *best, *bp;
 /*
  * If # of nbs is negative, then each nb is required and that exact size
@@ -302,6 +457,26 @@ ATL_mmnode_t *FindBestForEachNB(int verb, char pre, ATL_mmnode_t *mmb, int *nbs)
    return(best);
 }
 
+static INLINE void ApplyMoves2Flag
+(
+   ATL_mmnode_t *mmp,  /* kernel to set MMF_MV[A,B,C] flag bits */
+   int mvBits          /* last 3 bits: MOVE_[CBA] */
+)
+{
+   int flag = mmp->flag & (~MMF_MVSET);         /* zero existing move bits */
+   mmp->flag = flag | ((mvBits & 7)<<MMF_MVA); /* put new move bits in */
+}
+static void ApplyMoves2Flags
+(
+   ATL_mmnode_t *mmb,  /* kernel to set MMF_MV[A,B,C] flag bits */
+   int mvBits          /* last 3 bits: MOVE_[CBA] */
+)
+{
+   const unsigned int mvMSK = ~MMF_MVSET, mvSET = (mvBits&7)<<MMF_MVA;
+   ATL_mmnode_t *mmp;
+   for (mmp=mmb; mmp; mmp = mmp->next)
+      mmp->flag = ((mmp->flag) & mvMSK) | mvSET;
+}
 
 char *GenString(char pre, int lat, int nb, int mu, int nu, int ku,
                 int kmaj, char *rt)
@@ -395,11 +570,12 @@ ATL_mmnode_t *GetNewGenNode(char pre, int nb, int lat, int mu, int nu, int ku,
    np->lat = lat;
    np->kmaj = kmaj;
    np->genstr = GenString(pre, lat, nb, mu, nu, ku, kmaj, np->rout);
+   ApplyMoves2Flag(np, IMVS);
    return(np);
 }
 
-void FindDefMUNU(int verb, char pre, int nreg, int lat, int nb, int ku,
-                 int *MU, int *NU)
+ATL_mmnode_t *FindDefMUNU(int verb, char pre, int nreg, int lat, int nb, int ku,
+                          int *MU, int *NU)
 {
    ATL_mmnode_t *mmp;
    double mf, mfB=0.0;
@@ -426,8 +602,7 @@ void FindDefMUNU(int verb, char pre, int nreg, int lat, int nb, int ku,
       *MU = mmp->mu / VLEN[VECi];
       assert(*MU);
       *NU = mmp->nu;
-      KillMMNode(mmp);
-      return;
+      return (mmp);
    }
    mmp = GetMMNode();
    mmp->ku = ku;
@@ -520,22 +695,15 @@ void FindDefMUNU(int verb, char pre, int nreg, int lat, int nb, int ku,
    mmp->mbB = (nb >= muB) ? (nb/muB)*muB : muB;
    mmp->nbB = (nb >= nuB) ? (nb/nuB)*nuB : nuB;
    mmp->kbB = nb;
-/*
- * This second timing is necessary to force best case to be generated to
- * output file, for later use in timing in search, so don't take out even
- * though it seems redundant.
- */
    if (mmp->genstr)
      free(mmp->genstr);
    mmp->genstr = GenString(pre, lat, nb, muB, nuB, ku, mmp->kmaj, mmp->rout);
-   mf = TimeMMKernel(verb, 1, mmp, pre, mmp->mbB, mmp->nbB, nb,
-                     nb, nb, mmp->mbB, 1, 0, -1);
    WriteMMFileWithPath(pre, "res", "gAMMMUNU.sum", mmp);
-   KillMMNode(mmp);
    printf("BEST CASE IS MU=%d, NU=%d, MFLOP=%.2f (%.2f)\n\n",
           muB, nuB, mf, mfB);
    *MU = muB;
    *NU = nuB;
+   return(mmp);
 }
 
 void GetMUNUbyNB(int nb, int nreg, int *MU, int *NU)
@@ -854,7 +1022,7 @@ ATL_mmnode_t *FindBestGenCases(int verb, char pre, int nreg,
  * this timing, and 120 = LCM(2,3,4,5,6,8,12).  Use ku=1 so that large
  * problems don't have large K-driven advantage.
  */
-   FindDefMUNU(verb, pre, nreg, 0, 120, 1, &MU, &NU);
+   KillMMNode(FindDefMUNU(verb, pre, nreg, 0, 120, 1, &MU, &NU));
    gmmb = CreateGenCasesFromNBs(ummb, pre, nbs, nreg, MU, NU, 1);
    if (verb > 1)
    {
@@ -867,7 +1035,7 @@ ATL_mmnode_t *FindBestGenCases(int verb, char pre, int nreg,
    {
       int mu;
       mp->mflop[0] = TimeMMKernel(verb, 0, mp, pre, mp->mbB, mp->nbB, mp->kbB,
-                                  mp->kbB, mp->kbB, mp->kbB, 1, 0, -1);
+                                  mp->kbB, mp->kbB, mp->mbB, 1, 0, -1);
       mu = (mp->vlen) ? mp->mu / mp->vlen : mp->mu;
       printf("   NB=%d, mu=%d, nu=%d, vlen=%d, MFLOPS=%.2f\n",
              mp->kbB, mu, mp->nu, mp->vlen, mp->mflop[0]);
@@ -929,7 +1097,7 @@ ATL_mmnode_t *FindBestUserCases(int verb, char pre, int *nbs, ATL_mmnode_t *mmb)
       {
          if (mmp->ID > 0 && mmp->mflop[0] < 0.0)
             mmp->mflop[0] = TimeMMKernel(verb, 0, mmp, pre, mmp->mbB, mmp->nbB,
-                                         mmp->kbB, mmp->kbB, mmp->kbB, mmp->kbB,
+                                         mmp->kbB, mmp->kbB, mmp->kbB, mmp->mbB,
                                          1, 0, -1);
          if (mmp->ID > 0)
             printf("USER KERNEL AT NB=%d gets MFLOP=%.2f\n",
@@ -1116,7 +1284,6 @@ ATL_mmnode_t *WinnowCases
 
    if (!mb)
       return(NULL);
-   mb = WinnowHugeNB(imf, mb);
    mp = mb->next;
    while (mp)
    {
@@ -1182,9 +1349,11 @@ ATL_mmnode_t *MergeAndWinnowCases
    }
    KillAllMMNodes(umb);
    KillAllMMNodes(gmb);
-   mmb = WinnowHugeNB(0, mmb);
+   mmb = WinnowCases(0, mmb);
    return(mmb);
 }
+
+
 
 int FailKCleanTests(char pre, int nb, ATL_mmnode_t *kp)
 /*
@@ -1596,7 +1765,7 @@ ATL_mmnode_t *KCleanByNB
          p->next = NULL;
       }
       p->nbB = nb; p->mbB = mb;  p->kbB = kb;
-      p->mflop[0] = TimeMMKernel(verb, 0, p, pre, mb, nb, kb, 0, 0, kb,
+      p->mflop[0] = TimeMMKernel(verb, 0, p, pre, mb, nb, kb, 0, 0, mb,
                                  0, 0, -1);
       mf = mb*nb;
       p->mflop[1] = mf / p->mflop[0];   /* time in microseconds for 1 k it */
@@ -1973,6 +2142,43 @@ int KernelIsUnique(ATL_mmnode_t *mmb, ATL_mmnode_t *mmp)
          return(0);
    return(1);  /* didn't find it, must be first time in list */
 }
+/*
+ * Returns a non-repetitive list of user kernels (ID>0) found in rb.  Note that
+ * differing compilations of the same kernel are reduced to one entry.
+ * rb is left unchanged.
+ */
+ATL_mmnode_t *GetUniqueUserKerns(ATL_mmnode_t *rb)
+{
+   ATL_mmnode_t *ub=NULL, *p;
+
+   if (!rb)
+      return(NULL);
+   for (p=rb; p; p = p->next)
+      if (p->ID > 0)
+         break;
+   if (!p)
+      return(NULL);
+   ub = CloneMMNode(p);
+   for (p=p->next; p; p = p->next)
+   {
+       if (p->ID > 0)
+       {
+          ATL_mmnode_t *np;
+          int ID = p->ID;
+
+          for (np=ub; np; np = np->next)
+             if (np->ID == ID)
+                break;
+          if (!np)
+          {
+             np = CloneMMNode(p);
+             np->next = ub;
+             ub = np;
+          }
+       }
+   }
+   return(ub);
+}
 
 ATL_mmnode_t *TimeKBRegion
 (
@@ -2161,8 +2367,7 @@ ATL_mmnode_t *DecentGenCase(int verb, char pre, int nreg)
 /*
  * 120 = LCM(2,3,4,5,6,8), and large enough to stress mu/nu
  */
-   FindDefMUNU(verb, pre, nreg, 0, 120, 1, &mu, &nu);
-   return(ReadMMFileWithPath(pre, "res", "gAMMMUNU.sum"));
+   return(FindDefMUNU(verb, pre, nreg, 0, 120, 1, &mu, &nu));
 }
 
 /*
@@ -2180,7 +2385,8 @@ ATL_mmnode_t *GetLowRankKKernels
 (
    int verb,            /* verbosity */
    char pre,            /* s,d */
-   int NB,              /* default mb/nb to time with */
+   int MB,              /* default mb to time with */
+   int NB,              /* default nb to time with */
    ATL_mmnode_t *inb    /* all working ukerns */
 )
 {
@@ -2233,7 +2439,7 @@ ATL_mmnode_t *GetLowRankKKernels
          for (mp=inb; mp; mp = mp->next)
          {
             const int mu = mp->mu, nu = mp->nu, ku = mp->ku;
-            const int mb = (NB/mu)*mu, nb = (NB/nu)*nu;
+            const int mb = (MB/mu)*mu, nb = (NB/nu)*nu;
             const int KK = (mp->kmaj < 2) ? k : ((k+ku-1)/ku)*ku;
             double mf;
 
@@ -2296,7 +2502,8 @@ ATL_mmnode_t *GetRuntimeKKernels
 (
    int verb,            /* verbosity */
    char pre,            /* s,d */
-   int NB,              /* default mb/nb to time with */
+   int MB,              /* default mb to time with */
+   int NB,              /* default nb to time with */
    ATL_mmnode_t *inb    /* all working ukerns */
 )
 {
@@ -2308,7 +2515,7 @@ ATL_mmnode_t *GetRuntimeKKernels
    while (inb && !FLAG_IS_SET(inb->flag, MMF_KRUNTIME))
       inb = KillMMNode(inb);
 /*
- * Got rid of any at base, not get rid of non-K-runtime from internal nodes
+ * Got rid of any at base, now get rid of non-K-runtime from internal nodes
  */
    if (inb)
    {
@@ -2337,11 +2544,11 @@ ATL_mmnode_t *GetRuntimeKKernels
       KU = 32;
    else
       KU = ((16+KU-1)/KU)*KU;
-   printf("TRYING ALL RUNTIMEK KERNS WITH NB=%d, KB=%d:\n", NB, KU);
+   printf("TRYING ALL RUNTIMEK KERNS WITH MB=%d, NB=%d, KB=%d:\n", MB, NB, KU);
    for (mp=inb; mp; mp = mp->next)
    {
       int mu=mp->mu, nu=mp->nu, ku=mp->ku;
-      int mb = (NB/mu)*mu, nb = (NB/nu)*nu, kb = (KU/ku)*ku;
+      int mb = (MB/mu)*mu, nb = (NB/nu)*nu, kb = (KU/ku)*ku;
       double mf;
       assert(mb && nb && kb);
       mf = TimeMMKernel(verb, 0, mp, pre, mb, nb, kb, 0, 0, 0, 0, 0, -1);
@@ -2403,6 +2610,7 @@ int IsSlowerThanList
 (
    int verb,            /* verbosity */
    char pre,            /* s,d */
+   int MB,
    int NB,              /* default mb/nb to time with */
    ATL_mmnode_t *mmc,  /* candidate mmkern */
    ATL_mmnode_t *mmb   /* kernels to time candidate against */
@@ -2418,7 +2626,7 @@ int IsSlowerThanList
    kb = mmc->kbB;
    mu = mmc->mu;
    nu = mmc->nu;
-   mb = (NB/mu)*mu;
+   mb = (MB/mu)*mu;
    nb = (NB/nu)*nu;
    assert(mb && nb && kb);
    KB = (mmc->kmaj < 2) ? kb : ((kb+mmc->ku-1)/mmc->ku)*mmc->ku;
@@ -2438,7 +2646,7 @@ int IsSlowerThanList
          int KK = (mp->kmaj > 1) ? ((kb+ku-1)/ku)*ku : kb;
          mu = mp->mu;
          nu = mp->nu;
-         mb = (NB/mu)*mu;
+         mb = (MB/mu)*mu;
          nb = (NB/nu)*nu;
          assert(mb && nb);
          mf = TimeMMKernel(verb, 0, mp, pre, mb, nb, KK, 0, 0, 0, 0, 0, -1);
@@ -2452,6 +2660,104 @@ int IsSlowerThanList
    return(0);
 }
 
+/*
+ * Finds best-performing square cases in list of pre-existing kernels, mmb.
+ * Does not modify original mmb list, and will return only kernels that are
+ * faster than smaller square cases.
+ * RETURNS: new list of all square cases that got best performance from
+ *          original mmb.
+ */
+ATL_mmnode_t *FindBestSquareCases(char pre, int verb, ATL_mmnode_t *mmb)
+{
+   ATL_mmnode_t *mmp, *mmSQ=NULL, *prev=NULL;
+   int maxNB=0, maxU=0, i;
+
+   for (mmp=mmb; mmp; mmp = mmp->next)
+   {
+      if (mmp->mu > maxU)
+         maxU = mmp->mu;
+      if (mmp->nu > maxU)
+         maxU = mmp->nu;
+      if (mmp->nbB > maxNB)
+         maxNB = mmp->nbB;
+      if (mmp->mbB > maxNB)
+         maxNB = mmp->mbB;
+      if (mmp->kbB > maxNB)
+         maxNB = mmp->kbB;
+   }
+   maxNB = ((maxNB+maxU-1) / maxU)*maxU;
+
+   for (i=4; i < maxNB; i++)
+   {
+      mmp = BestForThisNB(verb, pre, mmb, i, i-1, i+1, 1);
+      if (mmSQ)
+      {
+         if (prev->mflop[0] >= mmp->mflop[0])
+            KillMMNode(mmp);
+         else
+         {
+            prev->next = mmp;
+            prev = mmp;
+         }
+      }
+      else
+         mmSQ = prev = mmp;
+   }
+   return(mmSQ);
+}
+/*
+ * ASSUMES: mmb comes in ordered from smallest blocking to largest.
+ * Kills any kernel that is not faster than a smaller-NB kernel.
+ */
+ATL_mmnode_t *HarshPrune(ATL_mmnode_t *mmb)
+{
+   ATL_mmnode_t *mmp=mmb;
+   while (mmp)
+   {
+      if (!mmp->next)
+         return(mmb);
+      do
+      {
+         if (!mmp->next)
+            return(mmb);
+         if (mmp->mflop[0] > mmp->next->mflop[0])
+            mmp->next = KillMMNode(mmp->next);
+         else
+            mmp = mmp->next;
+      }
+      while (mmp);
+   }
+}
+/*
+ * ASSUMES: mmb comes in ordered from smallest blocking to largest.
+ * Kills any kernel that is not faster than a smaller-NB kernel.
+ */
+ATL_mmnode_t *TolerantPrune
+(
+   ATL_mmnode_t *mmb,   /* list of kernels to prune */
+   double tol           /* set > 1 to allow slow kernels to stay */
+)                       /* < 1 to make pruning harsher */
+{
+   ATL_mmnode_t *mmp=mmb;
+   double mfB = 0.0;
+   while (mmp)
+   {
+      if (!mmp->next)
+         return(mmb);
+      do
+      {
+         if (!mmp->next)
+            return(mmb);
+         if (mmp->mflop[0] > mfB)
+            mfB = mmp->mflop[0];
+         if (mfB > tol*mmp->next->mflop[0])
+            mmp->next = KillMMNode(mmp->next);
+         else
+            mmp = mmp->next;
+      }
+      while (mmp);
+   }
+}
 #define CON_NOKVEC 0
 #define CON_NOMVEC 1
 #define CON_NOCOMPK 2
@@ -2462,16 +2768,17 @@ ATL_mmnode_t *FindBestKerns
 (
    char pre,
    int verb,
-   ATL_mmnode_t *mmb,  /* candidate user-supplied kerns */
-   int N,              /* number of forced block factors */
+   ATL_mmnode_t *mmb,            /* candidate user-supplied kerns */
+   int N,                        /* number of forced block factors */
    int *mbs, int *nbs, int *kbs, /* forced block factors */
-   int C               /* constraints */
+   int C,                        /* constraints */
+   float tol                     /* tolerance in getting rid of slow kerns */
 )
 {
    ATL_mmnode_t *nmmb=NULL, *mp, *mpB, *mpG, *mpg;
    const int TRYKVEC=!(C & (1<<CON_NOKVEC));
    const int TRYMVEC=!(C & (1<<CON_NOMVEC));
-   int i;
+   int i, mbB=0;
    double mfB, mf;
 /*
  * Find basic register blocking for generated case
@@ -2486,11 +2793,13 @@ ATL_mmnode_t *FindBestKerns
    printf("SEARCHING %d USER BLOCKINGS:\n", N);
    for (i=N-1; i >= 0; i--)
    {
-      int mb=mbs[i], nb=nbs[i], kb=kbs[i];
+      int mb=mbs[i], nb=nbs[i], kb=kbs[i], MB=mbs[i];
       int kuG, KK=kb, veci0=VECi;
       double mfK=0.0, mfM=0.0;
       int iveci = VECi, VL=VLEN[VECi];
-
+/*
+ *    If mb not specified, choose one near specified KB
+ */
       printf("\n   FINDING KERNEL FOR MB=%d, NB=%d, KB=%d:\n", mb, nb, kb);
 /*
  *    Find best of M- or K-vectorized generated code for this problem size
@@ -2500,9 +2809,21 @@ ATL_mmnode_t *FindBestKerns
       {
          int muG=mpG->mu, nuG=mpG->nu, ut=muG*nuG;
 /*
- *       If mb not a multiple of vlen, reduce vlen until it is
+ *       If mb is not specified, make it a multiple of mu & vlen
  */
-         if (mb%VLEN[VECi])
+         if (!MB)
+         {
+            int mb0;
+            mb = Mylcm(muG, VL);
+            mb0 = (kb/mb)*mb;
+            mb = ((kb+mb-1)/mb)*mb;
+            if (mb0 && mb-kb > kb-mb0)
+               mb = mb0;
+         }
+/*
+ *       If specified mb not a multiple of vlen, reduce vlen until it is
+ */
+         else if (mb%VL)
          {
             if (VECi == VTAVX && !(mb%VLEN[VTSSE]))
                VECi = VTSSE;
@@ -2524,11 +2845,15 @@ ATL_mmnode_t *FindBestKerns
             nuG--;
          kuG = 1;
          mpg = GetNewGenNode(pre, kb, 0, muG/VLEN[VECi], nuG, 1, 0);
-         mfM = TimeMMKernel(verb, 0, mpg, pre, mb, nb, KK, KK, KK, KK, 1, 0,-1);
+         mpg->mbB = mb;
+         mfM = TimeMMKernel(verb, 0, mpg, pre, mb, nb, KK, KK, KK, mb, 1, 0,-1);
          printf("      Gen mu=%d, nu=%d, kmaj=%d, mf=%.2f\n", muG, nuG, 0, mfM);
       }
       VECi = iveci;
-      if (TRYKVEC)
+/*
+ *    Generator currently does not support k-vectorized kernels
+ */
+      if (0 && TRYKVEC)
       {
          int muG, nuG=mpG->nu, ut;
 
@@ -2560,7 +2885,8 @@ ATL_mmnode_t *FindBestKerns
          if (kuG > 1)
          {
             mpB =  GetNewGenNode(pre, kb, 0, muG, nuG, kuG, kuG);
-            mfK = TimeMMKernel(verb, 0, mpB, pre, mb, nb, KK, KK, KK, KK,
+            mpg->mbB = mb;
+            mfK = TimeMMKernel(verb, 0, mpB, pre, mb, nb, KK, KK, KK, mb,
                                1, 0,-1);
             printf("      Gen mu=%d, nu=%d, kmaj=%d, mf=%.2f\n", muG, nuG, kuG,
                    mfK);
@@ -2588,14 +2914,28 @@ ATL_mmnode_t *FindBestKerns
  *    Search through all user kernels, and take best performing
  */
       mpB = mpg;
+      mbB = mpg->mbB;
       for (mp=mmb; mp; mp = mp->next)
       {
          const int mu=mp->mu, nu=mp->nu, ku=mp->ku, kmaj=mp->kmaj;
          const int KB = (kmaj < 2) ? kb : ((kb+ku-1)/ku)*ku;
          int SKIP=0;
-         if (mb%mu || nb%nu || KB%ku)
+         if (!MB)
+         {
+            if (nb%nu || KB%ku)
+               SKIP=1;
+            else
+            {
+               int mb0;
+               mb0 = (kb/mu)*mu;
+               mb = ((kb+mu-1)/mu)*mu;
+               if (mb0 && (mb-kb > kb-mb0))
+                  mb = mb0;
+            }
+         }
+         else if (mb%mu || nb%nu || KB%ku)
             SKIP=1;
-         else if (mp->kbmin && mp->kbmin > kb)
+         if (mp->kbmin && mp->kbmin > kb)
             SKIP=1;
          else if (mp->kbmax && mp->kbmax < kb)
             SKIP=1;
@@ -2604,7 +2944,7 @@ ATL_mmnode_t *FindBestKerns
             printf("      %d-%s: SKIPPED\n", mp->ID, mp->rout);
             continue;
          }
-         mf = TimeMMKernel(verb, 0, mp, pre, mb, nb, KB, KB, KB, KB, 1, 0, -1);
+         mf = TimeMMKernel(verb, 0, mp, pre, mb, nb, KB, KB, KB, mb, 1, 0, -1);
          if (KB != kb)
             mf *= (double)kb / (double)KB;
          printf("      %d-%s: %.2f\n", mp->ID, mp->rout, mf);
@@ -2612,9 +2952,10 @@ ATL_mmnode_t *FindBestKerns
          {
             mfB = mf;
             mpB = mp;
+            mbB = mb;
          }
       }
-      printf("    [M,N,K]B=%d,%d,%d BEST: %d-%s %.2f\n", mb, nb, kb,
+      printf("    [M,N,K]B=%d,%d,%d BEST: %d-%s %.2f\n", mbB, nb, kb,
              mpB->ID, mpB->rout, mfB);
       if (mpB == mpg)
       {
@@ -2629,13 +2970,15 @@ ATL_mmnode_t *FindBestKerns
          nmmb = mp;
       }
       nmmb->mflop[0] = mfB;
-      nmmb->mbB = mb;
+      nmmb->mbB = mbB;
       nmmb->nbB = nb;
       nmmb->kbB = kb;
       VECi = veci0;
    }
    KillAllMMNodes(mmb);
    KillMMNode(mpG);
+   if (tol > 0.0)
+      nmmb = TolerantPrune(nmmb, tol);
    WriteMMFileWithPath(pre, "res", "uAMMFRC.sum", nmmb);
    printf("DONE.\n");
    return(nmmb);
@@ -2673,27 +3016,52 @@ void PrintUsage(char *name, int ierr, char *flag)
    else if (ierr < 0)
       fprintf(stderr, "ERROR: %s\n", flag);
    fprintf(stderr, "USAGE: %s [flags]:\n", name);
-   fprintf(stderr, "   -p [s,d,c,z]: set type/precision prefix (d) \n");
+   fprintf(stderr,
+   "   -S <file> : take kerns from sum file, force square sizes\n");
+   fprintf(stderr, "   -T #  : set pruning tolerance for slower kernels:\n");
+   fprintf(stderr,
+   "      # <= 0.0 : keep all legal kernel sizes regardless of performance\n");
+   fprintf(stderr,
+   "      # >=0.0 : delete all kerns wt perf*# < maxSmallerPerf\n");
+   fprintf(stderr,
+   "                maxSmallerPerf= max perf found in smaller-sized kern\n");
+   fprintf(stderr, "   -p [s,d]: set precision prefix (d) \n");
    fprintf(stderr, "   -b # nb1 ... nb# : square NBs to force\n");
    fprintf(stderr, "   -B # mb1 nb1 kb1 ... mb# nb# kb#: dims to force\n");
+   fprintf(stderr,
+           "   -M # abc1 ... abc#: which matblks should be cache flushed\n");
    fprintf(stderr, "   -v <verb> : set verbosity (1)\n");
    fprintf(stderr, "   -C [kmc] : Constrain kernel choice:\n");
    fprintf(stderr, "      k : don't allow K-vectorized storage\n");
    fprintf(stderr, "      m : don't allow M-vectorized storage\n");
    fprintf(stderr, "      c : don't allow compile-time K kernels\n");
+   fprintf(stderr, "   -K <1/0> : do/don't generate K cleanup\n");
+
+   fprintf(stderr,
+      "   -F <b0> <bN> <KI> <idx> <rfn>: brute-force blocking search:\n");
+   fprintf(stderr, "       b0: smallest value to try for all dims\n");
+   fprintf(stderr, "       b1: largest value to try for all dims\n");
+   fprintf(stderr, "       KI: min K increment\n");
+   fprintf(stderr, "      idx: index in rfn to use; -1 means last\n");
+   fprintf(stderr, "      rfn: search result file name to read kern from\n");
    exit(ierr ? ierr : -1);
 }
 
-int GetFlags(int nargs, char **args, char *PRE, int *VERB, int *C,
-             int **MBS, int **NBS, int **KBS)
+ATL_mmnode_t *GetFlags(int nargs, char **args, char *PRE, int *VERB, int *NN,
+                       int *C, int **MBS, int **NBS, int **KBS, float *TOL,
+                       int *KCLEAN)
 {
+   ATL_mmnode_t *mmb=NULL;
+   int B0=0, BN, KI;
    int *mbs=NULL, *nbs=NULL, *kbs=NULL;
-   int i, k, N=0;
+   int i, k, j, N=0, ALL=0, MV;
    char *cs;
 
+   *TOL = 0.0;
    *VERB = 1;
    *PRE = 'd';
    *C = 0;
+   *KCLEAN = 1;
    for (i=1; i < nargs; i++)
    {
       int n;
@@ -2702,6 +3070,67 @@ int GetFlags(int nargs, char **args, char *PRE, int *VERB, int *C,
 
       switch(args[i][1])
       {
+      case 'T':
+         if (++i >= nargs)
+            PrintUsage(args[0], i-1, NULL);
+         *TOL = atof(args[i]);
+         if (*TOL < 0.0)
+            *TOL = 0.0;
+         break;
+      case 'F':  /* <b0> <bN> <KI> <idx> <rfn> */
+         if (i+5 >= nargs)
+            PrintUsage(args[0], i-1, NULL);
+         else
+         {
+            int I, k;
+            ATL_mmnode_t *mp;
+
+            B0 = atoi(args[i+1]);
+            BN = atoi(args[i+2]);
+            KI = atoi(args[i+3]);
+            I = atoi(args[i+4]);
+            mmb = ReadMMFile(args[i+5]);
+            assert(mmb);
+            if (I < 0)
+               for (mp=mmb; mp->next; mp = mp->next);
+            else
+               for (k=0, mp=mmb; k < I && mp; k++, mp = mp->next);
+            assert(mp);
+            mp = CloneMMNode(mp);
+            KillAllMMNodes(mmb);
+            mmb = mp;
+         }
+         i += 5;
+         break;
+      case 'M':
+         if (++i >= nargs)
+            PrintUsage(args[0], i-1, NULL);
+         n = atoi(args[i]);
+         for (MV=k=0; k < n; k++)
+         {
+           if (++i >= nargs)
+               PrintUsage(args[0], i-1, NULL);
+            if (args[i][0] == 'a' || args[i][0] == 'A')
+               MV |= 1;
+            else if (args[i][0] == 'b' || args[i][0] == 'B')
+               MV |= 2;
+            else if (args[i][0] == 'c' || args[i][0] == 'C')
+               MV |= 4;
+            else
+               PrintUsage(args[0], -i, "UNKNOWN MATRIX FOR -M");
+         }
+         IMVS = MV;
+         break;
+      case 'S':
+         if (++i >= nargs)
+            PrintUsage(args[0], i-1, NULL);
+         mmb = ReadMMFile(args[i]);
+         break;
+      case 'K':
+         if (++i >= nargs)
+            PrintUsage(args[0], i-1, NULL);
+         *KCLEAN = atoi(args[i]);
+         break;
       case 'v':
          if (++i >= nargs)
             PrintUsage(args[0], i-1, NULL);
@@ -2775,6 +3204,11 @@ int GetFlags(int nargs, char **args, char *PRE, int *VERB, int *C,
          if (++i >= nargs)
             PrintUsage(args[0], i-1, NULL);
          N = atoi(args[i]);
+         if (N < 0)
+         {
+            ALL = (N == -2) ? 32 : -1;  /* -2: don't force MB */
+            N = 36;
+         }
          assert(N > 0);
          nbs = malloc(N*sizeof(int));
          assert(nbs);
@@ -2782,23 +3216,75 @@ int GetFlags(int nargs, char **args, char *PRE, int *VERB, int *C,
          assert(nbs);
          kbs = malloc(N*sizeof(int));
          assert(nbs);
-         for (k=0; k < N; k++)
+         if (ALL)  /* special case to just try most possible NBs */
          {
-           if (++i >= nargs)
-               PrintUsage(args[0], i-1, NULL);
-            mbs[k] = kbs[k] = nbs[k] = atoi(args[i]);
+            mbs[ 0]=nbs[ 0]=kbs[ 0]=4;
+            mbs[ 1]=nbs[ 1]=kbs[ 1]=6;
+            mbs[ 2]=nbs[ 2]=kbs[ 2]=8;
+            mbs[ 3]=nbs[ 3]=kbs[ 3]=12;
+            mbs[ 4]=nbs[ 4]=kbs[ 4]=14;
+            mbs[ 5]=nbs[ 5]=kbs[ 5]=16;
+            mbs[ 6]=nbs[ 6]=kbs[ 6]=20;
+            mbs[ 7]=nbs[ 7]=kbs[ 7]=22;
+            mbs[ 8]=nbs[ 8]=kbs[ 8]=24;
+            mbs[ 9]=nbs[ 9]=kbs[ 9]=26;
+            mbs[10]=nbs[10]=kbs[10]=28;
+            mbs[11]=nbs[11]=kbs[11]=32;
+            mbs[12]=nbs[12]=kbs[12]=36;
+            mbs[13]=nbs[13]=kbs[13]=40;
+            mbs[14]=nbs[14]=kbs[14]=44;
+            mbs[15]=nbs[15]=kbs[15]=48;
+            mbs[16]=nbs[16]=kbs[16]=52;
+            mbs[17]=nbs[17]=kbs[17]=56;
+            mbs[18]=nbs[18]=kbs[18]=60;
+            mbs[19]=nbs[19]=kbs[19]=64;
+            mbs[20]=nbs[20]=kbs[20]=72;
+            mbs[21]=nbs[21]=kbs[21]=80;
+            mbs[22]=nbs[22]=kbs[22]=84;
+            mbs[23]=nbs[23]=kbs[23]=88;
+            mbs[24]=nbs[24]=kbs[24]=96;
+            mbs[25]=nbs[25]=kbs[25]=104;
+            mbs[26]=nbs[26]=kbs[26]=112;
+            mbs[27]=nbs[27]=kbs[27]=120;
+            mbs[28]=nbs[28]=kbs[28]=128;
+            mbs[29]=nbs[29]=kbs[29]=132;
+            mbs[30]=nbs[30]=kbs[30]=144;
+            mbs[31]=nbs[31]=kbs[31]=156;
+            mbs[32]=nbs[32]=kbs[32]=168;
+            mbs[33]=nbs[33]=kbs[33]=192;
+            mbs[34]=nbs[34]=kbs[34]=216;
+            mbs[35]=nbs[35]=kbs[35]=240;
+            for (k=0; k < ALL; k++)     /* don't force any particular */
+               mbs[k] = 0;              /* MB during search */
+         }
+         else
+         {
+            for (k=0; k < N; k++)
+            {
+              if (++i >= nargs)
+                  PrintUsage(args[0], i-1, NULL);
+               mbs[k] = kbs[k] = nbs[k] = atoi(args[i]);
+            }
          }
          break;
       default:
          PrintUsage(args[0], i, args[i]);
       }
    }
-   if (!nbs)
-      PrintUsage(args[0], -1, "Dimensional flag (-b or -B) required!");
+   if (B0 && mmb)
+   {
+      ATL_mmnode_t *mp;
+      mp = BestBlocking_BFI(1, *PRE, mmb, B0, BN, KI, 0);
+      KillMMNode(mmb);
+      KillMMNode(mp);
+      exit(0);
+   }
+   if (!nbs && !mmb)
+      PrintUsage(args[0], -1, "Dimensional flag (-b or -B) or -S required!");
    *MBS = mbs;
    *NBS = nbs;
    *KBS = kbs;
-   if (*PRE == 's')
+   if (*PRE == 's' || *PRE == 'c')
    {
       VLEN[VTAVXZ] = 16;
       VLEN[VTAVX] = 8;
@@ -2825,24 +3311,65 @@ int GetFlags(int nargs, char **args, char *PRE, int *VERB, int *C,
    #elif defined(ATL_VSX)
       VECi = VTGV;
    #endif
-   return(N);
+   *NN = N;
+   return(mmb);
+}
+
+/*
+ * Finds best-performing square cases from input list of good kernels, which
+ * are first pruned of any losers (any kernel that is not faster than a
+ * kernel with a smaller NB).
+ */
+ATL_mmnode_t *FindBestSquareKern(char pre, int verb, ATL_mmnode_t *mmb)
+{
+   ATL_mmnode_t *mmp, *mmSQ=NULL, *prev=NULL;
+
+   mmb = HarshPrune(mmb);  /* kill uncompetitive kernels */
+   assert(mmb);
+
+   mmSQ = FindBestSquareCases(pre, verb, mmb);
+   assert(mmSQ);
+   KillAllMMNodes(mmb);
+   WriteMMFileWithPath(pre, "res", "uAMMFRC.sum", mmSQ);
+   printf("DONE.\n");
+   return(mmSQ);
 }
 
 int main(int nargs, char **args)
 {
-   int *nbs, *mbs, *kbs, verb, N, C=0;
+   int *nbs, *mbs, *kbs, verb, N, C=0, KCLEAN;
+   float tol;
    char pre;
    ATL_mmnode_t *mmb, *mp, *mmB;
    double mfB;
 
-   N = GetFlags(nargs, args, &pre, &verb, &C, &mbs, &nbs, &kbs);
+   mmb = GetFlags(nargs, args, &pre, &verb, &N, &C, &mbs, &nbs, &kbs, &tol,
+                  &KCLEAN);
 /*
- * Get all working kernels
+ * If -S is thrown, we take kernels from prior search, and just retune with
+ * requirement that the kernels be square
  */
-   mmb = GetWorkingUserCases(verb, pre);
-   mmb = ApplyConstraints(mmb, C);
-   mmb = FindBestKerns(pre, verb, mmb, N, mbs, nbs, kbs, C);
-   ComputeKClean(verb, pre, mmb);
+   if (mmb)
+   {
+      mmb = ApplyConstraints(mmb, C);
+      assert(mmb);
+      ApplyMoves2Flags(mmb, IMVS);
+      mmb = FindBestSquareKern(pre, verb, mmb);
+   }
+   else
+   {
+      char upr=pre;
+      if (pre == 'z')
+         upr = 'd';
+      else if (pre == 'c')
+         upr = 's';
+      mmb = GetWorkingUserCases(verb, upr);  /* get all working kernels */
+      mmb = ApplyConstraints(mmb, C);        /* reject disallowed kerns */
+      ApplyMoves2Flags(mmb, IMVS);           /* indicate A/B/C movememnt */
+      mmb = FindBestKerns(pre, verb, mmb, N, mbs, nbs, kbs, C, tol);
+   }
+   if (KCLEAN)
+      ComputeKClean(verb, pre, mmb);
    mmb = ATL_SortMMNodesByMflop(0, mmb);
    mmB = ReadMMFileWithPath(pre, "res", "eAMMRES.sum");
    mmB = ATL_SortMMNodesByMflop(0, mmB);
@@ -2851,8 +3378,12 @@ int main(int nargs, char **args)
       printf("YOUR BEST CASE: %d-%s, BLK=%d,%d,%d  %.2f\n",
              mmb->ID, mmb->rout, mmb->mbB, mmb->nbB, mmb->kbB, mmb->mflop[0]);
    if (mmB)
-      printf("ATLAS BEST CASE: %d-%s, BLK=%d,%d,%d  %.2f\n",
-             mmB->ID, mmB->rout, mmB->mbB, mmB->nbB, mmB->kbB, mmB->mflop[0]);
+   {
+      printf("ATLAS BEST CASE: %d-%s, BLK=%d,%d,%d  %.2f\n", mmB->ID,
+             mmB->rout, mmB->mbB, mmB->nbB, mmB->kbB, mmB->mflop[0]);
+      if (mmb)
+         printf("   RATIO=%0.4f\n", mmb->mflop[0] / mmB->mflop[0]);
+   }
 
    KillAllMMNodes(mmb);
    KillAllMMNodes(mmB);

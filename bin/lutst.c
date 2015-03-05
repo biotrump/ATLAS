@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,6 +46,16 @@ double time00();
    #define Cgetrf Mjoin(Mjoin(clapack_,PRE),getrf)
    #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
       ATL_assert(Cgetrf(Major_, M_, N_, A_, lda_, ipiv_) == 0)
+#elif defined(AMMIDX)
+   #define ATL_getrf_amm Mjoin(PATL,getrf_amm)
+   int ATL_getrfC_amm(const int M, const int N, TYPE *A, const int lda,
+                      int *ipiv, int IAMM);
+   #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
+      ATL_assert(ATL_getrf_amm(M_, N_, A_, lda_, ipiv_, AMMIDX) == 0)
+#elif defined(TimeBCAMM)
+   #include "atlas_bcamm.h"
+   #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
+      ATL_assert(Mjoin(PATL,tgetrf_bcAmm)(Major_, M_, N_, A_, lda_, ipiv_) == 0)
 #else
    #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
       ATL_assert(ATL_getrf(Major_, M_, N_, A_, lda_, ipiv_) == 0)
@@ -234,6 +244,9 @@ static TYPE lutestC(int CacheSize, int M, int N, int lda, int *npiv,
 
    Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);
    normA = Mjoin(PATL,genrm1)(M, N, A, lda);
+   #ifdef DEBUG
+      Mjoin(PATL,geprint)("A0", M, N, A, lda);
+   #endif
 
    t0 = ATL_flushcache(-1);
 
@@ -244,7 +257,13 @@ static TYPE lutestC(int CacheSize, int M, int N, int lda, int *npiv,
 
    t0 = ATL_flushcache(0);
 
+   #ifdef DEBUG
+      Mjoin(PATL,geprint)("LU", M, N, A, lda);
+   #endif
    LmU = ATL_LmulUC(M, N, A, lda);  /* LmU contains L * U */
+   #ifdef DEBUG
+      Mjoin(PATL,geprint)("L*U", M, N, LmU, M);
+   #endif
    Mjoin(PATL,gegen)(M, N, A, lda, M*N+lda);  /* regenerate A, overwriting LU */
    ATL_laswp(N, A, lda, 0, MN, ipiv, 1);  /* apply swaps to A */
    resid = Mjoin(PATL,gediffnrm1)(M, N, A, lda, LmU, M);
@@ -317,7 +336,7 @@ int RunCase(int CacheSize, TYPE thresh, int MFLOP, enum ATLAS_ORDER Order,
    if (tim > 0.0) mflop = mflops / tim;
    else mflop = 0.0;
    fprintf(stdout, "%5d  %3s   %6d %6d %6d %6d %9.3f %9.3f %9.3e\n",
-           nreps, cord, M, N, lda, npiv, tim, mflop, resid);
+           (int)nreps, cord, M, N, lda, npiv, tim, mflop, resid);
    return(resid <= thresh);
 }
 

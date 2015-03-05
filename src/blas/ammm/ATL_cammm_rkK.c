@@ -76,6 +76,7 @@ static int ATL_ComputeB           /* RETURNS: selected blocking */
    *NT = nblks;
    return(nb);
 }
+
 /*
  * This routine called when 2 < K <= MAXK
  */
@@ -340,8 +341,7 @@ int Mjoin(PATL,ammm_aliased_rkK)
             ldB = 1;
          }
       }
-      ATL_assert(!Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, a, ldA, b, ldB,
-                                   beta, C, ldc));
+      Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, a, ldA, b, ldB, beta, C, ldc);
       if (xp)
          free(xp);
       if (yp)

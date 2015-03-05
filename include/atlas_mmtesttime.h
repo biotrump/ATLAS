@@ -333,10 +333,13 @@ double TimeMMKernel
    const char *LO = FLAG_IS_SET(mmp->flag, MMF_AOUTER) ? "IJK": "JIK";
    const int JKMAJOR = FLAG_IS_SET(mmp->flag, MMF_JKMABC), ku=mmp->ku;
    const int KB = (mmp->kmaj < 2) ? kb : ((kb+ku-1)/ku)*ku;
+   int DOTIME=1;
+   int MV=3;  /* bit pattern on move CBA (C=4, B=2, A=1) */
    char *be;
    int i, j;
    char ch;
    double *dp;
+   MV = ((mmp->flag) >> MMF_MVA)&7;
 /*
  * If it's a emit_mm generated file w/o the genstring, create the genstring
  * assuming it is a mmK
@@ -347,20 +350,6 @@ double TimeMMKernel
                                     mmp->fftch, mmp->iftch, mmp->nftch,
                                     FLAG_IS_SET(mmp->flag, MMF_LDCTOP),
                                     mmp->pref);
-
-   if (FLAG_IS_SET(mmp->flag, MMF_LDISKB))
-      lda = ldb = kb;
-   else
-   {
-      if (lda < 1)
-         lda = kb;
-      if (ldb < 1)
-         ldb = kb;
-      if (ldc < 1)
-         ldc = mb + 8;
-   }
-   if (FLAG_IS_SET(mmp->flag, MMF_LDAB))
-      ldb = lda;
 /*
  * If the file is generated, call generator to create it
  */
@@ -376,76 +365,156 @@ double TimeMMKernel
          exit(-1);
       }
    }
+   #ifndef ATL_SERIAL_INSTALL
+      #define RESACT 2   /* want average frm ReadResultsFile for parallel */
+/*
+ *    Figure out the name of the output file
+ */
+      if (FORCETIME)
+         strcpy(fnam, "res/tmpout.ktim");
+/*
+ *    PREammID_MBxNBxKB_MUxNUxKU_FLAG_v[M,K]VLENbBETA_CFLUSH
+ */
+      else
+      {
+         if (mmp->vlen < 2)
+            ch = 'S';
+         else
+            ch = (mmp->kmaj > 1) ? 'K' : 'M';
 
-   if (beta == 0)
-      be = "b0";
-   else if (beta == 1)
-      be = "b1";
-   else if (beta == -1)
-      be = "bn1";
-   else
-      be = "bX";
-   if (FORCETIME)
-      sprintf(fnam, "res/tmpout");
-   else if (JKMAJOR)
-   /*   dmmMNK%d_JMMBxNBxKB_muxnuk#xku_rtK_LDTOP_vlen_pf_a1_bX_flushKB */
-      sprintf(fnam,
-              "res/%cmm%s%d_%dx%dd%dx%d_%dx%dx%d_rtK%d__v%d_%d_%d_a1_%s_%d",
-              pre, FLAG_IS_SET(mmp->flag, MMF_AOUTER) ? "MNK" : "NMK",
-              mmp->ID, mb, nb, mmp->kmaj, kb, mmp->mu, mmp->nu, mmp->ku,
-              FLAG_IS_SET(mmp->flag, MMF_KRUNTIME),
-              FLAG_IS_SET(mmp->flag, MMF_LDCTOP),
-              mmp->vlen, mmp->pref, be, cflush);
+         sprintf(fnam, "res/%cammm%d_%dx%dx%d_%dx%dx%d_%d_v%c%db%d_%d.ktim",
+                 pre, mmp->ID, mb, nb, KB, mmp->mu, mmp->nu, mmp->ku, mmp->flag,
+                 ch, mmp->vlen, beta, cflush);
+      }
+/*
+ *    If we actually need to do timing, must also construct timer call
+ */
+      if (!FORCETIME)
+         DOTIME = !FileExists(fnam);
+      if (DOTIME)
+      {
+         i = sprintf(ln, "make x%cammtime_pt mb=%d nb=%d kb=%d",
+                     pre, mb, nb, KB);
+         if (mmp->genstr)
+            i += sprintf(ln+i, " mmrout=%s", mmp->rout);
+         else
+            i += sprintf(ln+i, " mmrout=AMMCASES/%s", mmp->rout);
+         i += sprintf(ln+i, " mu=%d nu=%d ku=%d", mmp->mu, mmp->nu, mmp->ku);
+         i += sprintf(ln+i, " mvA=%d mvB=%d mvC=%d", ((mmp->flag >> MMF_MVA)&1),
+                      ((mmp->flag >> MMF_MVB)&1), ((mmp->flag >> MMF_MVC)&1));
+         i += sprintf(ln+i, " kmoves=\"");
+         if (FLAG_IS_SET(mmp->flag, MMF_MVA))
+            i += sprintf(ln+i, " -DATL_MOVEA");
+         if (FLAG_IS_SET(mmp->flag, MMF_MVB))
+            i += sprintf(ln+i, " -DATL_MOVEB");
+         if (FLAG_IS_SET(mmp->flag, MMF_MVC))
+            i += sprintf(ln+i, " -DATL_MOVEC");
+         i += sprintf(ln+i, "\"");
+         if (beta == 1 || beta == 0)
+            i += sprintf(ln+i, " beta=%d", beta);
+         else
+            i += sprintf(ln+i, " beta=-1 betan=\"N1\"");
+         ch = (pre == 'c' || pre == 's') ? 'S' : 'D';
+         if (mmp->comp)
+            i += sprintf(ln+i, " %cMC=\"%s\"", ch, mmp->comp);
+         if (mmp->cflags)
+            i += sprintf(ln+i, " %cMCFLAGS=\"%s\"", ch, mmp->cflags);
+         i += sprintf(ln+i, " outF=\"-f %s\"", fnam);
+      }
+   #else
+      #define RESACT 0   /* ReadResultsFile uses ACTION=0 */
+      if (FLAG_IS_SET(mmp->flag, MMF_LDISKB))
+         lda = ldb = kb;
+      else
+      {
+         if (lda < 1)
+            lda = kb;
+         if (ldb < 1)
+            ldb = kb;
+         if (ldc < 1)
+            ldc = mb + 8;
+      }
+      if (FLAG_IS_SET(mmp->flag, MMF_LDAB))
+         ldb = lda;
 
-   else /*   dmm%d_TNMBxNBxKB_muxnuxku_ldc_rtMxrtNxrtK_LDTOP_pf_a1_bX_flushKB */
-      sprintf(fnam,
-              "res/%cmm%s%d_%c%c%dx%dx%d_%dx%dx%d_%d_%dx%dx%d_%d_%d_a1_%s_%d",
-              pre, FLAG_IS_SET(mmp->flag, MMF_AOUTER) ? "MNK" : "NMK",
-              mmp->ID, 'T', 'N', mb, nb, kb, mmp->mu, mmp->nu, mmp->ku, ldc,
-              FLAG_IS_SET(mmp->flag, MMF_MRUNTIME),
-              FLAG_IS_SET(mmp->flag, MMF_NRUNTIME),
-              FLAG_IS_SET(mmp->flag, MMF_KRUNTIME),
-              FLAG_IS_SET(mmp->flag, MMF_LDCTOP), mmp->pref, be, cflush);
+      if (beta == 0)
+         be = "b0";
+      else if (beta == 1)
+         be = "b1";
+      else if (beta == -1)
+         be = "bn1";
+      else
+         be = "bX";
+      if (FORCETIME)
+         sprintf(fnam, "res/tmpout");
+      else if (JKMAJOR)
+      /*   dmmMNK%d_JMMBxNBxKB_muxnuk#xku_rtK_LDTOP_vlen_pf_a1_bX_MV_flushKB */
+         sprintf(fnam,
+         "res/%cmm%s%d_%dx%dd%dx%d_%dx%dx%d_rtK%d__v%d_%d_%d_a1_%s_%d_%d.ktim",
+                 pre, FLAG_IS_SET(mmp->flag, MMF_AOUTER) ? "MNK" : "NMK",
+                 mmp->ID, mb, nb, mmp->kmaj, kb, mmp->mu, mmp->nu, mmp->ku,
+                 FLAG_IS_SET(mmp->flag, MMF_KRUNTIME),
+                 FLAG_IS_SET(mmp->flag, MMF_LDCTOP),
+                 mmp->vlen, mmp->pref, be, MV, cflush);
 
+      else /*dmm%d_TNMBxNBxKB_muxnuxku_ldc_rtMxrtNxrtK_LDTOP_pf_a1_bX_MV_flushKB */
+         sprintf(fnam,
+        "res/%cmm%s%d_%c%c%dx%dx%d_%dx%dx%d_%d_%dx%dx%d_%d_%d_a1_%s_%d_%d.ktim",
+                 pre, FLAG_IS_SET(mmp->flag, MMF_AOUTER) ? "MNK" : "NMK",
+                 mmp->ID, 'T', 'N', mb, nb, kb, mmp->mu, mmp->nu, mmp->ku, ldc,
+                 FLAG_IS_SET(mmp->flag, MMF_MRUNTIME),
+                 FLAG_IS_SET(mmp->flag, MMF_NRUNTIME),
+                 FLAG_IS_SET(mmp->flag, MMF_KRUNTIME),
+                 FLAG_IS_SET(mmp->flag, MMF_LDCTOP), mmp->pref, be, MV, cflush);
+
+      if (!FORCETIME)
+         DOTIME = !FileExists(fnam);
+      if (DOTIME)
+      {
+         if (pre == 'c' || pre == 'z')
+            i = sprintf(ln, "make cmmucase mmrout=%s csC=2 ", mmp->rout);
+         else if (JKMAJOR)
+         {
+            if (mmp->ID > 0)
+               i = sprintf(ln, "make mmucaseN mmrout=AMMCASES/%s ", mmp->rout);
+            else
+               i = sprintf(ln, "make mmucaseN mmrout=%s ", mmp->rout);
+            if (mmp->kmaj > 1)
+               i += sprintf(ln+i, "kmaj=%d ", mmp->kmaj);
+         }
+         else
+            i = sprintf(ln, "make mmucase mmrout=%s ", mmp->rout);
+         if (mmp->cflags)
+         {
+            ch = (pre == 'c' || pre == 's') ? 'S' : 'D';
+            i += sprintf(ln+i, "%cMCFLAGS=\"%s\" ", ch, mmp->cflags);
+         }
+         if (mmp->comp)
+         {
+            ch = (pre == 'c' || pre == 's') ? 'S' : 'D';
+            i += sprintf(ln+i, "%cMC=\"%s\" ", ch, mmp->comp);
+         }
+         if (mmp->moves)
+            i += sprintf(ln+i, " moves=\"%s\" ", mmp->moves);
+         if (mmp->exflags)
+            i += sprintf(ln+i, " %s ", mmp->exflags);
+
+         if (!cflush)
+            i += sprintf(ln+i, "moves=\"\" ");
+
+         i += sprintf(ln+i, "casnam=%s ", fnam);
+         i += sprintf(ln+i, "pre=%c M=%d N=%d K=%d mb=%d nb=%d kb=%d ",
+                      pre, mb, nb, KB,
+                      FLAG_IS_SET(mmp->flag, MMF_MRUNTIME) ? 0:mb,
+                      FLAG_IS_SET(mmp->flag, MMF_NRUNTIME) ? 0:nb,
+                      FLAG_IS_SET(mmp->flag, MMF_KRUNTIME) ? 0:KB);
+         i += sprintf(ln+i, "mu=%d nu=%d ku=%d lda=%d ldb=%d ldc=%d beta=%d",
+                      mmp->mu, mmp->nu, mmp->ku, lda, ldb, ldc, beta);
+      }
+   }
+   #endif
    if (FORCETIME || !FileExists(fnam))
    {
-      if (pre == 'c' || pre == 'z')
-         i = sprintf(ln, "make cmmucase mmrout=%s csC=2 ", mmp->rout);
-      else if (JKMAJOR)
-      {
-         if (mmp->ID > 0)
-            i = sprintf(ln, "make mmucaseN mmrout=AMMCASES/%s ", mmp->rout);
-         else
-            i = sprintf(ln, "make mmucaseN mmrout=%s ", mmp->rout);
-         if (mmp->kmaj > 1)
-            i += sprintf(ln+i, "kmaj=%d ", mmp->kmaj);
-      }
-      else
-         i = sprintf(ln, "make mmucase mmrout=%s ", mmp->rout);
-      if (mmp->cflags)
-      {
-         ch = (pre == 'c' || pre == 's') ? 'S' : 'D';
-         i += sprintf(ln+i, "%cMCFLAGS=\"%s\" ", ch, mmp->cflags);
-      }
-      if (mmp->comp)
-      {
-         ch = (pre == 'c' || pre == 's') ? 'S' : 'D';
-         i += sprintf(ln+i, "%cMC=\"%s\" ", ch, mmp->comp);
-      }
-      if (mmp->exflags)
-         i += sprintf(ln+i, " %s ", mmp->exflags);
-
-      if (!cflush)
-         i += sprintf(ln+i, "moves=\"\" ");
-
-      i += sprintf(ln+i, "casnam=%s ", fnam);
-      i += sprintf(ln+i, "pre=%c M=%d N=%d K=%d mb=%d nb=%d kb=%d ",
-                   pre, mb, nb, KB,
-                   FLAG_IS_SET(mmp->flag, MMF_MRUNTIME) ? 0:mb,
-                   FLAG_IS_SET(mmp->flag, MMF_NRUNTIME) ? 0:nb,
-                   FLAG_IS_SET(mmp->flag, MMF_KRUNTIME) ? 0:KB);
-      i += sprintf(ln+i, "mu=%d nu=%d ku=%d lda=%d ldb=%d ldc=%d beta=%d",
-                   mmp->mu, mmp->nu, mmp->ku, lda, ldb, ldc, beta);
       if (verb < 3)
          i += sprintf(ln+i, " > /dev/null 2>&1\n");
       else
@@ -463,22 +532,30 @@ double TimeMMKernel
          exit(-1);
       }
    }
-   dp = ReadResultsFile(0, 0, fnam);
+   dp = ReadResultsFile(RESACT, 0, fnam);
    if (!dp)
    {
       fprintf(stderr, "\nEmpty file '%s'!\n", fnam);
       fprintf(stderr, "From command: '%s'\n", ln);
+      fprintf(stderr, "DOTIME=%d, genstr='%s'\n", DOTIME,
+              (mmp->genstr) ? mmp->genstr : "");
       exit(-1);
+   }
+   if (mmp->genstr && DOTIME)
+   {
+      sprintf(ln, "rm %s\n", mmp->rout);
+      i = system(ln);  /* return value unused, just to shut gcc up */
    }
    if (kb != KB)
    {
       double mf;
-      mf = *((double*)ReadResultsFile(0, 0, fnam));
+      mf = *((double*)ReadResultsFile(RESACT, 0, fnam));
       mf = (mf / KB)*kb;
       return(mf);
    }
 
-   return(*((double*)ReadResultsFile(0, 0, fnam)));
+   return(*((double*)ReadResultsFile(RESACT, 0, fnam)));
+   #undef RESACT
 }
 
 /* procedure 7 */

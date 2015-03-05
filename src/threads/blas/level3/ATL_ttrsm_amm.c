@@ -201,7 +201,7 @@ static int ttrsm_ammL
    pd.wsL = szL = pd.blkszB + pd.panszC;
    sz = szA + P*szL + pd.mu*pd.nu*pd.ku;
    sz = ATL_MulBySize(sz) + ATL_Cachelen;
-   if ((sz>>20) > ATL_PTMAXMALLOC_MB)
+   if (sz > ATL_PTMAXMALLOC)
       return(2);
    vp = malloc(sz);
    if (!vp)

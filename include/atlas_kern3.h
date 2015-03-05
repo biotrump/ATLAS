@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,8 +39,8 @@
 /*
  * Gemm entry points
  */
-#ifndef ATL_ammm
-   #define ATL_ammm Mjoin(PATL,ammm)
+#ifndef ATL_gemm
+   #define ATL_gemm Mjoin(PATL,gemm)
 #endif
 #define ATL_almm Mjoin(PATL,ammm_aliased_rkK)
 

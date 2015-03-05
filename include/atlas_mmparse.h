@@ -27,16 +27,24 @@
 #define MMF_JKMAB      20  /* 1: Jam-K major A/B, column-major C */
 #define MMF_BMAB       21  /* 1: block major A/B, col-maj C */
 #define MMF_BMABC      22  /* 1: block major A/B/C */
+#define MMF_MVA        23  /* 1: A expected to change between calls */
+#define MMF_MVB        24  /* 1: B expected to change between calls */
+#define MMF_MVC        25  /* 1: C expected to change between calls */
 
+#define MMF_MVSET  ( (1<<MMF_MVA) | (1<<MMF_MVB) | (1<<MMF_MVC) )
+#define MMF_MVDEF  ( (1<<MMF_MVA) | (1<<MMF_MVB) )
 #ifdef ATL_JKMDEF
    #define MMF_DEFAULT ( (1<<MMF_LDCTOP) | (1<<MMF_JKMABC) | (1<<MMF_AOUTER) | \
-                         (1<<MMF_NRUNTIME) | (1<<MMF_MRUNTIME) )
+                         (1<<MMF_NRUNTIME) | (1<<MMF_MRUNTIME) | MMF_MVDEF )
 #else
-   #define MMF_DEFAULT ( (1<<MMF_LDISKB) | (1<<MMF_LDAB) )
+   #define MMF_DEFAULT ( (1<<MMF_LDISKB) | (1<<MMF_LDAB) | MMF_MVDEF )
 #endif
 #ifndef  FLAG_IS_SET
    #define FLAG_IS_SET(field_, bit_) ( ((field_) & (1<<(bit_))) != 0 )
 #endif
+#define ATL_MMF_MVGET(field_) (((field_) >> MMF_MVA) & 7)
+#define ATL_MMF_MVPUT(field_, v_) \
+   (field_) = ( ((field_) & ~MMF_MVSET) | (((v_) & 7) << MMF_MVA) )
 
 typedef struct MMNode ATL_mmnode_t;
 struct MMNode
@@ -55,7 +63,8 @@ struct MMNode
    char *str;                   /* tmp string used in generation */
    char *genstr;                /* system(genstr) will generate gened kernel */
    char *exflags;               /* extra flags to pass test/time call */
-   int flag;
+   char *moves;                 /* -DMove[A,B,C] to use, NULL default */
+   unsigned int flag;
    ATL_mmnode_t *next;
 };
 
@@ -94,6 +103,8 @@ static ATL_mmnode_t *CloneMMNode(ATL_mmnode_t *dup)
       p->genstr = DupString(dup->genstr);
    if (dup->exflags)
       p->exflags = DupString(dup->exflags);
+   if (dup->moves)
+      p->moves = DupString(dup->moves);
    p->next = NULL;
    return(p);
 }
@@ -169,6 +180,8 @@ static ATL_mmnode_t *KillMMNode(ATL_mmnode_t *die)
          free(die->genstr);
       if (die->exflags)
          free(die->exflags);
+      if (die->moves)
+         free(die->moves);
       free(die);
    }
    return(p);
@@ -656,6 +669,13 @@ static ATL_mmnode_t *ParseMMLine(char *ln)
    else
       p->ID = 0;
 
+   sp = strstr(ln, "OPMV=");
+   if (sp)
+   {
+      int imv;
+      imv = atoi(sp+5);
+      ATL_MMF_MVPUT(p->flag, imv);
+   }
 
    sp = strstr(ln, "BMABC=");
    if (sp)
@@ -912,6 +932,8 @@ static void PrintMMLine(FILE *fpout, ATL_mmnode_t *np)
    fprintf(fpout, "   ");
    i = 3;
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
+   i += fprintf(fpout, "OPMV=%d ", ATL_MMF_MVGET(np->flag));
+   if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    i += fprintf(fpout, "KMAJ=%d ", np->kmaj);
    if (i > 70) { fprintf(fpout, " \\\n   "); i = 3; }
    i += fprintf(fpout, "VLEN=%d ", np->vlen);
@@ -1080,7 +1102,7 @@ static ATL_mmnode_t *ReadMMFile(char *file)
    nq = p = GetMMNode();
    while (ln = GetJoinedLines(fpin))
    {
-      if (ln[0] != '#')
+      if (ln[0] != '#' && ln[0] != '\0')
       {
          p->next = ParseMMLine(ln);
          p = p->next;

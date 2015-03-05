@@ -5,7 +5,7 @@ INCdep = $(INCSdir)/atlas_misc.h $(INCSdir)/atlas_f77.h \
          $(INCSdir)/atlas_tst.h
 INCdep1 = $(INCSdir)/atlas_misc.h $(INCSdir)/atlas_tst.h
 
-obj = ATL_rand.o
+obj = ATL_rand.o ATL_print2dBV.o ATL_print1dBV.o ATL_getIpiv.o
 
    sf77wobjs = ATL_sf77wrap.o
    df77wobjs = ATL_df77wrap.o
@@ -77,6 +77,7 @@ sobj = $(sblas) ATL_sgegen.o ATL_sgeprint.o \
             ATL_sepsilon.o ATL_sgediff.o ATL_sgenrm1.o \
             ATL_sgediffnrm1.o ATL_sinfnrm.o ATL_svdiff.o \
             ATL_strgen.o ATL_strnrm1.o ATL_sgbnrm1.o \
+            ATL_scmpmatBV.o \
             ATL_ssbnrm.o ATL_sspnrm.o ATL_ssynrm.o \
             ATL_stbnrm1.o ATL_stpnrm1.o ATL_ststsqtran.o \
             ATL_shediffnrm.o
@@ -95,6 +96,7 @@ dobj = $(dblas) ATL_dgegen.o ATL_dgeprint.o \
             ATL_depsilon.o ATL_dgediff.o ATL_dgenrm1.o \
             ATL_dgediffnrm1.o ATL_dinfnrm.o ATL_dvdiff.o \
             ATL_dtrgen.o ATL_dtrnrm1.o ATL_dgbnrm1.o \
+            ATL_dcmpmatBV.o \
             ATL_dsbnrm.o ATL_dspnrm.o ATL_dsynrm.o \
             ATL_dtbnrm1.o ATL_dtpnrm1.o ATL_dtstsqtran.o \
             ATL_dhediffnrm.o
@@ -113,6 +115,7 @@ cobj = $(cblas) ATL_cgegen.o ATL_cgeprint.o \
             ATL_cepsilon.o ATL_cgediff.o ATL_cgenrm1.o \
             ATL_cgediffnrm1.o ATL_cinfnrm.o ATL_cvdiff.o \
             ATL_ctrgen.o ATL_ctrnrm1.o ATL_cgbnrm1.o \
+            ATL_ccmpmatBV.o \
             ATL_chbnrm.o ATL_chpnrm.o ATL_chenrm.o \
             ATL_csbnrm.o ATL_cspnrm.o ATL_csynrm.o \
             ATL_ctbnrm1.o ATL_ctpnrm1.o ATL_ctstsqtran.o \
@@ -132,6 +135,7 @@ zobj = $(zblas) ATL_zgegen.o ATL_zgeprint.o \
             ATL_zepsilon.o ATL_zgediff.o ATL_zgenrm1.o \
             ATL_zgediffnrm1.o ATL_zinfnrm.o ATL_zvdiff.o \
             ATL_ztrgen.o ATL_ztrnrm1.o ATL_zgbnrm1.o \
+            ATL_zcmpmatBV.o \
             ATL_zhbnrm.o ATL_zhpnrm.o ATL_zhenrm.o \
             ATL_zsbnrm.o ATL_zspnrm.o ATL_zsynrm.o \
             ATL_ztbnrm1.o ATL_ztpnrm1.o ATL_ztstsqtran.o \
@@ -249,6 +253,8 @@ ATL_sf77gerqf.o : $(mySRCdir)/ATL_f77gerqf.c $(INCdep)
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL $(mySRCdir)/ATL_f77gerqf.c
 ATL_sf77geqrf.o : $(mySRCdir)/ATL_f77geqrf.c $(INCdep)
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL $(mySRCdir)/ATL_f77geqrf.c
+ATL_scmpmatBV.o : $(mySRCdir)/ATL_cmpmatBV.c $(INCSdir)/atlas_misc.h
+	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL $(mySRCdir)/ATL_cmpmatBV.c
 ATL_shediffnrm.o : $(mySRCdir)/ATL_hediffnrm.c $(INCSdir)/atlas_misc.h
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL $(mySRCdir)/ATL_hediffnrm.c
 ATL_svdiff.o : $(mySRCdir)/ATL_vdiff.c $(INCSdir)/atlas_misc.h
@@ -377,6 +383,8 @@ ATL_df77gerqf.o : $(mySRCdir)/ATL_f77gerqf.c $(INCdep)
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL $(mySRCdir)/ATL_f77gerqf.c
 ATL_df77geqrf.o : $(mySRCdir)/ATL_f77geqrf.c $(INCdep)
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL $(mySRCdir)/ATL_f77geqrf.c
+ATL_dcmpmatBV.o : $(mySRCdir)/ATL_cmpmatBV.c $(INCSdir)/atlas_misc.h
+	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL $(mySRCdir)/ATL_cmpmatBV.c
 ATL_dhediffnrm.o : $(mySRCdir)/ATL_hediffnrm.c $(INCSdir)/atlas_misc.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL $(mySRCdir)/ATL_hediffnrm.c
 ATL_dvdiff.o : $(mySRCdir)/ATL_vdiff.c $(INCSdir)/atlas_misc.h
@@ -420,6 +428,12 @@ ATL_dsf77dot.o : $(mySRCdir)/ATL_dsf77dot.c $(INCSdir)/atlas_misc.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DSREAL $(mySRCdir)/ATL_dsf77dot.c
 ATL_rand.o : $(mySRCdir)/ATL_rand.c $(INCSdir)/atlas_misc.h
 	$(DKC) -o $@ -c $(dKCFLAGS) -DSREAL $(mySRCdir)/ATL_rand.c
+ATL_print1dBV.o : $(mySRCdir)/ATL_print1dBV.c $(INCSdir)/atlas_misc.h
+	$(DKC) -o $@ -c $(dKCFLAGS) -DSREAL $(mySRCdir)/ATL_print1dBV.c
+ATL_print2dBV.o : $(mySRCdir)/ATL_print2dBV.c $(INCSdir)/atlas_misc.h
+	$(DKC) -o $@ -c $(dKCFLAGS) -DSREAL $(mySRCdir)/ATL_print2dBV.c
+ATL_getIpiv.o : $(mySRCdir)/ATL_getIpiv.c $(INCSdir)/atlas_misc.h
+	$(DKC) -o $@ -c $(dKCFLAGS) -DSREAL $(mySRCdir)/ATL_getIpiv.c
 
 ATL_cf77gemm.o : $(mySRCdir)/ATL_f77gemm.c $(INCdep)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_f77gemm.c
@@ -519,6 +533,7 @@ ATL_cf77gerqf.o : $(mySRCdir)/ATL_f77gerqf.c $(INCdep)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_f77gerqf.c
 ATL_cf77geqrf.o : $(mySRCdir)/ATL_f77geqrf.c $(INCdep)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_f77geqrf.c
+      
 ATL_cvdiff.o : $(mySRCdir)/ATL_vdiff.c $(INCdep1)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_vdiff.c
 ATL_cinfnrm.o : $(mySRCdir)/ATL_infnrm.c $(INCdep1)
@@ -547,6 +562,8 @@ ATL_cgbnrm1.o : $(mySRCdir)/ATL_gbnrm1.c $(INCdep1)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_gbnrm1.c
 ATL_ctrnrm1.o : $(mySRCdir)/ATL_trnrm1.c $(INCdep1)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_trnrm1.c
+ATL_ccmpmatBV.o : $(mySRCdir)/ATL_cmpmatBV.c $(INCdep1)
+	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_cmpmatBV.c
 ATL_ctstsqtran.o : $(mySRCdir)/ATL_tstsqtran.c $(INCdep1)
 	$(CKC) -o $@ -c $(cKCFLAGS) -DSCPLX $(mySRCdir)/ATL_tstsqtran.c
 ATL_chenrm.o : $(mySRCdir)/ATL_henrm.c $(INCdep1)
@@ -661,6 +678,7 @@ ATL_zf77gerqf.o : $(mySRCdir)/ATL_f77gerqf.c $(INCdep)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_f77gerqf.c
 ATL_zf77geqrf.o : $(mySRCdir)/ATL_f77geqrf.c $(INCdep)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_f77geqrf.c
+      
 ATL_zvdiff.o : $(mySRCdir)/ATL_vdiff.c $(INCdep1)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_vdiff.c
 ATL_zinfnrm.o : $(mySRCdir)/ATL_infnrm.c $(INCdep1)
@@ -689,6 +707,8 @@ ATL_zgbnrm1.o : $(mySRCdir)/ATL_gbnrm1.c $(INCdep1)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_gbnrm1.c
 ATL_ztrnrm1.o : $(mySRCdir)/ATL_trnrm1.c $(INCdep1)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_trnrm1.c
+ATL_zcmpmatBV.o : $(mySRCdir)/ATL_cmpmatBV.c $(INCdep1)
+	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_cmpmatBV.c
 ATL_ztstsqtran.o : $(mySRCdir)/ATL_tstsqtran.c $(INCdep1)
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX $(mySRCdir)/ATL_tstsqtran.c
 ATL_zhenrm.o : $(mySRCdir)/ATL_henrm.c $(INCdep1)

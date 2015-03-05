@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -58,9 +58,9 @@
    if (vc == NULL) return(1);
    c = ATL_AlignPtr(vc);
    #ifdef Transpose_
-      ATL_ammm(AtlasConjTrans, AtlasNoTrans, N, N, K, valpha, A, lda, B, ldb,
+      ATL_gemm(AtlasConjTrans, AtlasNoTrans, N, N, K, valpha, A, lda, B, ldb,
    #else
-      ATL_ammm(AtlasNoTrans, AtlasConjTrans, N, N, K, valpha, A, lda, B, ldb,
+      ATL_gemm(AtlasNoTrans, AtlasConjTrans, N, N, K, valpha, A, lda, B, ldb,
    #endif
                zero, c, N);
    if ( beta == 1.0 ) Mjoin(her2k_put,_b1)(N, c, vbeta, C, ldc);

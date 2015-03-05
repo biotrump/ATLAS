@@ -47,30 +47,17 @@
 /*
  * Include files
  */
+#include "atlas_misc.h"
 #include "atlas_rblas3.h"
 #include "atlas_kernel3.h"
+#include "atlas_level3.h"
 
-void           Mjoin( PATL, gemmNN )
-( const int,       const int,       const int,       const SCALAR,
-  const TYPE *,    const int,       const TYPE *,    const int,
-  const SCALAR,    TYPE *,          const int );
-void           Mjoin( PATL, gemmNT )
-( const int,       const int,       const int,       const SCALAR,
-  const TYPE *,    const int,       const TYPE *,    const int,
-  const SCALAR,    TYPE *,          const int );
-void           Mjoin( PATL, gemmTN )
-( const int,       const int,       const int,       const SCALAR,
-  const TYPE *,    const int,       const TYPE *,    const int,
-  const SCALAR,    TYPE *,          const int );
-#ifdef TCPLX
-void           Mjoin( PATL, gemmNC )
-( const int,       const int,       const int,       const SCALAR,
-  const TYPE *,    const int,       const TYPE *,    const int,
-  const SCALAR,    TYPE *,          const int );
-void           Mjoin( PATL, gemmCN )
-( const int,       const int,       const int,       const SCALAR,
-  const TYPE *,    const int,       const TYPE *,    const int,
-  const SCALAR,    TYPE *,          const int );
+#ifdef TREAL
+   #define H_ALP (const SCALAR)(*((TYPE *)(ALPHA)))
+   #define H_BET (const SCALAR)(*((TYPE *)(BETA)))
+#else
+   #define H_ALP (const SCALAR)(ALPHA)
+   #define H_BET (const SCALAR)(BETA)
 #endif
 /*
  * Type-less wrappers around the ATLAS matrix-multiply functions.
@@ -90,15 +77,8 @@ void Mjoin( PATL, gemmNN_RB )
    const int                  LDC
 )
 {
-#ifdef TREAL
-   Mjoin( PATL, gemmNN )( M, N, K, (const SCALAR)(*((TYPE *)(ALPHA))),
-                          (const TYPE *)(A), LDA, (const TYPE *)(B), LDB,
-                          (const SCALAR)(*((TYPE *)(BETA))), (TYPE *)(C), LDC );
-#else
-   Mjoin( PATL, gemmNN )( M, N, K, (const SCALAR)(ALPHA), (const TYPE *)(A),
-                          LDA, (const TYPE *)(B), LDB, (const SCALAR)(BETA),
-                          (TYPE *)(C), LDC );
-#endif
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasNoTrans, M, N, K, H_ALP, A, LDA,
+                    (const TYPE *)(B), LDB, H_BET, (TYPE *)(C), LDC);
 }
 
 void Mjoin( PATL, gemmNT_RB )
@@ -116,15 +96,8 @@ void Mjoin( PATL, gemmNT_RB )
    const int                  LDC
 )
 {
-#ifdef TREAL
-   Mjoin( PATL, gemmNT )( M, N, K, (const SCALAR)(*((TYPE *)(ALPHA))),
-                          (const TYPE *)(A), LDA, (const TYPE *)(B), LDB,
-                          (const SCALAR)(*((TYPE *)(BETA))), (TYPE *)(C), LDC );
-#else
-   Mjoin( PATL, gemmNT )( M, N, K, (const SCALAR)(ALPHA), (const TYPE *)(A),
-                          LDA, (const TYPE *)(B), LDB, (const SCALAR)(BETA),
-                          (TYPE *)(C), LDC );
-#endif
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasTrans, M, N, K, H_ALP, A, LDA,
+                    (const TYPE *)(B), LDB, H_BET, (TYPE *)(C), LDC);
 }
 
 void Mjoin( PATL, gemmTN_RB )
@@ -142,15 +115,8 @@ void Mjoin( PATL, gemmTN_RB )
    const int                  LDC
 )
 {
-#ifdef TREAL
-   Mjoin( PATL, gemmTN )( M, N, K, (const SCALAR)(*((TYPE *)(ALPHA))),
-                          (const TYPE *)(A), LDA, (const TYPE *)(B), LDB,
-                          (const SCALAR)(*((TYPE *)(BETA))), (TYPE *)(C), LDC );
-#else
-   Mjoin( PATL, gemmTN )( M, N, K, (const SCALAR)(ALPHA), (const TYPE *)(A),
-                          LDA, (const TYPE *)(B), LDB, (const SCALAR)(BETA),
-                          (TYPE *)(C), LDC );
-#endif
+   Mjoin(PATL,ammm)(AtlasTrans, AtlasNoTrans, M, N, K, H_ALP, A, LDA,
+                    (const TYPE *)(B), LDB, H_BET, (TYPE *)(C), LDC);
 }
 
 #ifdef TCPLX
@@ -169,9 +135,10 @@ void Mjoin( PATL, gemmNC_RB )
    const int                  LDC
 )
 {
-   Mjoin( PATL, gemmNC )( M, N, K, (const SCALAR)(ALPHA), (const TYPE *)(A),
-                          LDA, (const TYPE *)(B), LDB, (const SCALAR)(BETA),
-                          (TYPE *)(C), LDC );
+   Mjoin(PATL,ammm)(AtlasNoTrans, AtlasConjTrans, M, N, K,
+                    (const SCALAR)(ALPHA), (const TYPE *)(A), LDA,
+                    (const TYPE *)(B), LDB, (const SCALAR)(BETA),
+                    (TYPE *)(C), LDC );
 }
 
 void Mjoin( PATL, gemmCN_RB )
@@ -189,8 +156,9 @@ void Mjoin( PATL, gemmCN_RB )
    const int                  LDC
 )
 {
-   Mjoin( PATL, gemmCN )( M, N, K, (const SCALAR)(ALPHA), (const TYPE *)(A),
-                          LDA, (const TYPE *)(B), LDB, (const SCALAR)(BETA),
-                          (TYPE *)(C), LDC );
+   Mjoin(PATL,ammm)(AtlasConjTrans, AtlasNoTrans, M, N, K,
+                    (const SCALAR)(ALPHA), (const TYPE *)(A), LDA,
+                    (const TYPE *)(B), LDB, (const SCALAR)(BETA),
+                    (TYPE *)(C), LDC );
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2008 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,6 +56,8 @@ int f77geqrf(const enum ATLAS_ORDER Order, const int M, const int N,
    ATL_assert(Order == AtlasColMajor);
 
    F77GEQRF(&F77M, &F77N, A, &F77lda, tau, work, &F77lwork, &F77info);
+   #ifndef ATL_FunkyInts
+   #endif
 
    return(F77info);
 }

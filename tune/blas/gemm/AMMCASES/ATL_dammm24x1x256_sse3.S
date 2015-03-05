@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2013 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -40,6 +40,7 @@
 #define incPF   %rbx
 #define pfB     %rdx
 #define incAm   %r11
+#define r256    %r8
 
 #define rA0     %xmm0
 #define rB0     %xmm1
@@ -55,18 +56,43 @@
 #define rC09    %xmm11
 #define rC10    %xmm12
 #define rC11    %xmm13
-#ifndef prefA
-   #define prefA prefetcht1
-#endif
-#ifndef prefB
-   #define prefB prefetcht1
-#endif
-#ifndef prefC
+/*
+ * Small problems on AMD can be prefetched to L1
+ */
+#if KB < 45
    #ifdef ATL_3DNow
-      #define prefC prefetchw
+      #ifdef ATL_MOVEB
+         #define prefA(m_)
+         #define prefB(m_) prefetcht0 m_
+      #elif defined(ATL_MOVEA)
+         #define prefA(m_) prefetcht0 m_
+         #define prefB(m_)
+      #endif
    #else
-      #define prefC prefetcht0
+      #define prefA(m_) prefetcht1 m_
+      #define prefB(m_) prefetcht1 m_
    #endif
+#else
+   #if KB > 78  /* very large problems should only pref 1 block */
+      #ifdef ATL_MOVEB
+         #define prefB(m_) prefetcht2 m_
+         #define prefA(m_)
+      #else
+         #define prefA(m_) prefetcht2 m_
+         #define prefB(m_)
+      #endif
+   #else
+      #define prefA(m_) prefetcht2 m_
+      #define prefB(m_) prefetcht2 m_
+   #endif
+#endif
+#ifdef ATL_3DNow
+   #define prefC(m_) prefetchw m_
+#else
+   #define prefC(m_) prefetcht0 m_
+#endif
+#if defined(BETAN) || defined(BETAn)
+   #define BETAN1
 #endif
 #ifdef BETAN1
    #define BETCOP subpd
@@ -121,6 +147,7 @@ ATL_asmdecor(ATL_USERMM):
    sub $-128, pfB
    mov $KB*24*8, incAm           /* incAm = KB*MU*size */
    movq pB, pB0
+   mov $256, r256
 
    ALIGN16
    .local MNLOOP
@@ -148,31 +175,43 @@ ATL_asmdecor(ATL_USERMM):
          movddup -128(pB), rC00
          MOVAPD rC00, rC01
          mulpd -128(pA), rC00
-         prefC -128(pC)
+         prefC(-128(pC))
          MOVAPD rC01, rC02
          mulpd -112(pA), rC01
-         prefC -64(pC)
+         prefC(-64(pC))
          MOVAPD rC02, rC03
          mulpd -96(pA), rC02
-         prefC (pC)
+         prefC((pC))
          MOVAPD rC03, rC04
          mulpd -80(pA), rC03
-         prefB -128(pfB)
+         #ifdef ATL_MOVEB
+            prefB(-128(pfB))
+         #else
+            prefC(64(pC))
+         #endif
          MOVAPD rC04, rC05
          mulpd -64(pA), rC04
-         prefB -64(pfB)
+         #ifdef ATL_MOVEB
+            prefB(-64(pfB))
+         #else
+            prefC(-128(pC,r256))
+         #endif
          MOVAPD rC05, rC06
          mulpd -48(pA), rC05
-         prefB (pfB)
+         #ifdef ATL_MOVEB
+            prefB((pfB))
+         #else
+            prefC(-64(pC,r256))
+         #endif
          MOVAPD rC06, rC07
          mulpd -32(pA), rC06
-         prefA -128(pfA)
+         prefA(-128(pfA))
          MOVAPD rC07, rC08
          mulpd -16(pA), rC07
-         prefA -64(pfA)
+         prefA(-64(pfA))
          MOVAPD rC08, rC09
          mulpd (pA), rC08
-         prefA (pfA)
+         prefA((pfA))
          MOVAPD rC09, rC10
          mulpd 16(pA), rC09
          MOVAPD rC10, rC11

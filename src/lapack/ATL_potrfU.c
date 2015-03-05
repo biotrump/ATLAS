@@ -2,11 +2,9 @@
  * HERK actually uses real gemm, so use real blocking factors
  */
 #ifdef SCPLX
-   #define CMM_H
-   #include "smm.h"
+   #include "atlas_samm_sum.h"
 #elif defined(DCPLX)
-   #define ZMM_H
-   #include "zmm.h"
+   #include "atlas_damm_sum.h"
 #endif
 #include "atlas_misc.h"
 #include "atlas_lvl3.h"
@@ -26,7 +24,7 @@
    #define llt_trans AtlasTrans
 #endif
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -239,8 +237,9 @@ int ATL_potrfU(const int N, TYPE *A, const int lda)
    #endif
    {
       Nleft = N >> 1;
-      #ifdef NB
-         if (Nleft > NB<<1) Nleft = ATL_MulByNB(ATL_DivByNB(Nleft));
+      #ifdef ATL_AMM_98LCMMN
+         if (Nleft > ATL_AMM_98LCMMN<<1)
+            Nleft = (Nleft/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
       #endif
       Nright = N - Nleft;
       ierr = ATL_potrfU(Nleft, A, lda);

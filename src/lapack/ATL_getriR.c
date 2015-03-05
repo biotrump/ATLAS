@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -69,9 +69,16 @@ int ATL_getriR(const int N, TYPE *A, const int lda, const int *ipiv,
  *    Find largest NB we can use with our provided workspace
  */
     jb = lwrk / N;
-    if (jb >= NB) nb = ATL_MulByNB(ATL_DivByNB(jb));
-    else if (jb >= ATL_mmMU) nb = (jb/ATL_mmMU)*ATL_mmMU;
-    else nb = jb;
+    nb = Mjoin(PATL,laGetB)(N, 0, N, 0);
+    if (jb < nb)
+    {
+       if (jb >= ATL_AMM_98LCMMN)
+          nb = (jb/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
+       else if (jb >= 4)
+          nb = 4;
+       else
+          nb = jb;
+    }
     if (!nb) return(-6);  /* need at least 1 row of workspace */
 /*
  *    Only first iteration will have partial block, unroll it

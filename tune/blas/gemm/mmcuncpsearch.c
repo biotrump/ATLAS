@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004, 2005, 2006,
  *               2007, 2008, 2009, 2010 R. Clint Whaley
  *
@@ -2975,8 +2975,8 @@ void GetMulAdd(char pre, int *MULADD, int *lat)
    }
    fp = fopen(nam, "r");
    assert(fp != NULL);
-   fscanf(fp, "%d", MULADD);
-   fscanf(fp, "%d", lat);
+   assert(fscanf(fp, "%d", MULADD) == 1);
+   assert(fscanf(fp, "%d", lat) == 1);
    fclose(fp);
 }
 

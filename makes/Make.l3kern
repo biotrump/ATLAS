@@ -372,6 +372,8 @@ ATL_zCtrsmKR.o : $(mySRCdir)/ATL_CtrsmK.c
 	$(ZKC) -o $@ -c $(zKCFLAGS) -DDCPLX -DRight_ $(mySRCdir)/ATL_CtrsmK.c
 ATL_strsmKR_rk4.o : $(mySRCdir)/ATL_trsmKR_rk4.c
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DLeft_ $(mySRCdir)/ATL_trsmKR_rk4.c
+ATL_strsmK_LLNU_a1.o : $(mySRCdir)/ATL_trsmK_LLNU_a1.c
+	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL $(mySRCdir)/ATL_trsmK_LLNU_a1.c
 ATL_strsmKL_rk4.o : $(mySRCdir)/ATL_trsmKL_rk4.c
 	$(SKC) -o $@ -c $(sKCFLAGS) -DSREAL -DLeft_ $(mySRCdir)/ATL_trsmKL_rk4.c
 ATL_ssycopyU_aX.o : $(mySRCdir)/ATL_sycopyU.c $(dep)
@@ -626,6 +628,8 @@ $(INCAdir)/atlas_strsmXover.h :
 
 ATL_dtrsmKR_rk4.o : $(mySRCdir)/ATL_trsmKR_rk4.c
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DLeft_ $(mySRCdir)/ATL_trsmKR_rk4.c
+ATL_dtrsmK_LLNU_a1.o : $(mySRCdir)/ATL_trsmK_LLNU_a1.c
+	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL $(mySRCdir)/ATL_trsmK_LLNU_a1.c
 ATL_dtrsmKL_rk4.o : $(mySRCdir)/ATL_trsmKL_rk4.c
 	$(DKC) -o $@ -c $(dKCFLAGS) -DDREAL -DLeft_ $(mySRCdir)/ATL_trsmKL_rk4.c
 ATL_dsycopyU_aX.o : $(mySRCdir)/ATL_sycopyU.c $(dep)

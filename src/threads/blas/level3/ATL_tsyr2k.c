@@ -71,7 +71,7 @@ void Mjoin(PATL,tsyr2k)
       sy.TA2 = AtlasNoTrans;
       sy.TB2 = AtlasTrans;
    }
-   sy.nb = Mjoin(PATL,GetNB)();
+   sy.nb = ATL_AMM_66KB;
    ATL_tvsyr2k_rec(&sy, N/sy.nb, N%sy.nb, A, B, C);
 }
 

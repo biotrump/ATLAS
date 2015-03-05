@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Code contributers : R. Clint Whaley, Antoine P. Petitet
@@ -49,6 +49,11 @@ double time00();
    #define dumb_rand() ( 0.5 - ((double)rand())/((double)RAND_MAX) )
 #endif
 
+int *ATL_getIpiv(ATL_UINT N, ATL_UINT seed);
+void ATL_ipivinit(ATL_UINT N, int *ipiv);
+void ATL_print2dBV(int M, int N, int *bv);
+void ATL_print1dBV(int COL, int N, int *bv);
+int *ATL_scmpmatBV(int,double,int,int,const float*,int,const float*,int);
 void ATL_ststsqtran(const int N, float *A, const int lda);
 void ATL_sgeprint
    (char *mat, const int M, const int N, const float *A, const int lda);
@@ -100,6 +105,7 @@ void ATL_svdiff(const int N, const float *X, const int incX,
                 const float *Y, const int incY, float *Z, const int incZ);
 void ATL_sgediff(const int M, const int N, const float *A, const int lda,
                  const float *B, const int ldb, float *C, const int ldc);
+int *ATL_dcmpmatBV(int,double,int,int,const double*,int,const double*,int);
 void ATL_dtstsqtran(const int N, double *A, const int lda);
 void ATL_dgeprint
    (char *mat, const int M, const int N, const double *A, const int lda);
@@ -151,6 +157,7 @@ void ATL_dvdiff(const int N, const double *X, const int incX,
                 const double *Y, const int incY, double *Z, const int incZ);
 void ATL_dgediff(const int M, const int N, const double *A, const int lda,
                  const double *B, const int ldb, double *C, const int ldc);
+int *ATL_ccmpmatBV(int,double,int,int,const float*,int,const float*,int);
 void ATL_ctstsqtran(const int N, float *A, const int lda);
 void ATL_cgeprint
    (char *mat, const int M, const int N, const float *A, const int lda);
@@ -202,6 +209,7 @@ void ATL_cvdiff(const int N, const float *X, const int incX,
                 const float *Y, const int incY, float *Z, const int incZ);
 void ATL_cgediff(const int M, const int N, const float *A, const int lda,
                  const float *B, const int ldb, float *C, const int ldc);
+int *ATL_zcmpmatBV(int,double,int,int,const double*,int,const double*,int);
 void ATL_ztstsqtran(const int N, double *A, const int lda);
 void ATL_zgeprint
    (char *mat, const int M, const int N, const double *A, const int lda);
@@ -259,7 +267,7 @@ void ATL_zgediff(const int M, const int N, const double *A, const int lda,
  */
 int ATL_sf77getri
    (const enum ATLAS_ORDER, const int, float*, const int, int*,
-    float*, int*);
+    float*, int);
 int ATL_sf77getrf
    (const enum ATLAS_ORDER, const int, const int, float*, const int, int*);
 int ATL_sf77potrf(const enum ATLAS_UPLO, const int, float*, const int);
@@ -271,7 +279,7 @@ int ATL_sf77gesv(const int, const int, float*, const int, int*, float*, const in
 int ATL_sf77gels(const enum ATLAS_TRANS, const int, const int, const int, float*, const int, float*, const int);
 int ATL_df77getri
    (const enum ATLAS_ORDER, const int, double*, const int, int*,
-    double*, int*);
+    double*, int);
 int ATL_df77getrf
    (const enum ATLAS_ORDER, const int, const int, double*, const int, int*);
 int ATL_df77potrf(const enum ATLAS_UPLO, const int, double*, const int);
@@ -283,7 +291,7 @@ int ATL_df77gesv(const int, const int, double*, const int, int*, double*, const 
 int ATL_df77gels(const enum ATLAS_TRANS, const int, const int, const int, double*, const int, double*, const int);
 int ATL_cf77getri
    (const enum ATLAS_ORDER, const int, float*, const int, int*,
-    float*, int*);
+    float*, int);
 int ATL_cf77getrf
    (const enum ATLAS_ORDER, const int, const int, float*, const int, int*);
 int ATL_cf77potrf(const enum ATLAS_UPLO, const int, float*, const int);
@@ -295,7 +303,7 @@ int ATL_cf77gesv(const int, const int, float*, const int, int*, float*, const in
 int ATL_cf77gels(const enum ATLAS_TRANS, const int, const int, const int, float*, const int, float*, const int);
 int ATL_zf77getri
    (const enum ATLAS_ORDER, const int, double*, const int, int*,
-    double*, int*);
+    double*, int);
 int ATL_zf77getrf
    (const enum ATLAS_ORDER, const int, const int, double*, const int, int*);
 int ATL_zf77potrf(const enum ATLAS_UPLO, const int, double*, const int);

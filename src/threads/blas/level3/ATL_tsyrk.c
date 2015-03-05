@@ -1,7 +1,6 @@
 #include "atlas_misc.h"
 #include "atlas_threads.h"
 #include "atlas_tlvl3.h"
-#include Mstr(Mjoin(PRE,mm.h))
 
 /*
  * Prototype functions in ATL_Xtsyrk

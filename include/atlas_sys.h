@@ -257,9 +257,10 @@ static FILE *atlsys(char *targ, char *cmnd, int verb, int IgnoreErr)
       fprintf(stderr, "\nierr=%d in command='%s'!\n\n", i, cmnd);
       if (verb > 1)
       {
+         int gccsucks;
          fprintf(stderr, "OUTPUT:\n=======\n");
          sprintf(sp, "cat %s", tnam);
-         system(sp);
+         gccsucks = system(sp);
       }
    }
    free(sp);

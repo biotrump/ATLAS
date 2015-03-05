@@ -3,6 +3,8 @@ pre=d
 la=_al
 bl=_ab
 N0=0
+efs=0
+EF=
 lrts="getrf potrf geqrf"
 while [ $# -gt 0 ]
 do
@@ -14,6 +16,10 @@ do
         shift 2
         ;;
    -L)  la=$2
+        shift 2
+        ;;
+   -E)  EF=$2
+        efs=`echo "${EF}" | ${chksum} | cut -d ' ' -f 1`
         shift 2
         ;;
    -N)  N0=$2

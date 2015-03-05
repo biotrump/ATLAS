@@ -18,7 +18,7 @@ clean : dclean sclean cclean zclean
 	rm -f KERNEL/*.o
 
 sINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
-          $(INCAdir)/smm.h $(INCSdir)/atlas_lvl3.h
+          $(INCAdir)/atlas_samm_sum.h $(INCSdir)/atlas_lvl3.h
 
 sobj = ATL_sMBJBmm.o ATL_sIBNBmm.o ATL_sIBJBmm.o ATL_sgemm.o ATL_sGetNB.o \
        ATL_sGetNCNB.o ATL_sgemmNN.o ATL_sgemmNT.o ATL_sgemmTN.o ATL_sgemmTT.o \
@@ -31,7 +31,7 @@ sobj = ATL_sMBJBmm.o ATL_sIBNBmm.o ATL_sIBJBmm.o ATL_sgemm.o ATL_sGetNB.o \
 stobj = ATL_stgemmNN.o ATL_stgemmNT.o ATL_stgemmTN.o ATL_stgemmTT.o
 
 dINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
-          $(INCAdir)/dmm.h $(INCSdir)/atlas_lvl3.h
+          $(INCAdir)/atlas_damm_sum.h $(INCSdir)/atlas_lvl3.h
 
 dobj = ATL_dMBJBmm.o ATL_dIBNBmm.o ATL_dIBJBmm.o ATL_dgemm.o ATL_dGetNB.o \
        ATL_dGetNCNB.o ATL_dgemmNN.o ATL_dgemmNT.o ATL_dgemmTN.o ATL_dgemmTT.o \
@@ -44,7 +44,7 @@ dobj = ATL_dMBJBmm.o ATL_dIBNBmm.o ATL_dIBJBmm.o ATL_dgemm.o ATL_dGetNB.o \
 dtobj = ATL_dtgemmNN.o ATL_dtgemmNT.o ATL_dtgemmTN.o ATL_dtgemmTT.o
 
 cINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
-          $(INCAdir)/cmm.h $(INCSdir)/atlas_lvl3.h
+          $(INCAdir)/atlas_camm_sum.h $(INCSdir)/atlas_lvl3.h
 
 cobj = ATL_cMBJBmm.o ATL_cIBNBmm.o ATL_cIBJBmm.o ATL_cgemm.o ATL_cGetNB.o \
        ATL_cGetNCNB.o ATL_cgemmNN.o ATL_cgemmNT.o ATL_cgemmTN.o ATL_cgemmTT.o \
@@ -65,7 +65,7 @@ ctobj = ATL_ctgemmNN.o ATL_ctgemmNT.o ATL_ctgemmTN.o ATL_ctgemmTT.o \
         ATL_ctgemmCC.o
 
 zINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
-          $(INCAdir)/zmm.h $(INCSdir)/atlas_lvl3.h
+          $(INCAdir)/atlas_zamm_sum.h $(INCSdir)/atlas_lvl3.h
 
 zobj = ATL_zMBJBmm.o ATL_zIBNBmm.o ATL_zIBJBmm.o ATL_zgemm.o ATL_zGetNB.o \
        ATL_zGetNCNB.o ATL_zgemmNN.o ATL_zgemmNT.o ATL_zgemmTN.o ATL_zgemmTT.o \

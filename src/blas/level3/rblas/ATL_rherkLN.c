@@ -47,8 +47,10 @@
 /*
  * Include files
  */
+#include "atlas_misc.h"
 #include "atlas_rblas3.h"
 #include "atlas_kernel3.h"
+#include "atlas_level3.h"
 
 void ATL_rherkLN
 (

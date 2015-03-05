@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,6 +42,7 @@
 #include "atlas_lvl3.h"
 #include "atlas_tst.h"
 #include "cblas.h"
+#include "atlas_bitvec.h"
 #ifdef ATL_USEPTHREADS
    #include "atlas_tlvl3.h"
 #endif
@@ -210,6 +211,9 @@ static int IK0=0, IKN=0, incIK=1, IIK=0;
    #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,gpmm)(PackGen, TA, PackGen, TB, PackGen, m, n, k, al, \
                        A, 0, 0, lda, B, 0, 0, ldb, be, C, 0, 0, ldc)
+#elif defined(TEST_AMMREC)
+   #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
+      Mjoin(PATL,ammmREC)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
 #elif defined(TEST_AMM2)
    #define test_gemm(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc) \
       Mjoin(PATL,ammm)(TA, TB, m, n, k, al, A, lda, B, ldb, be, C, ldc)
@@ -279,6 +283,7 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
    #define MBETA *beta, beta[1]
    char *form="%4d   %c   %c %4d %4d %4d  %5.1f %5.1f  %5.1f %5.1f  %6.2f %6.1f %4.2f   %3s\n";
 #endif
+   int errBV=NULL;
    int ii, jj, i, j=0, PASSED, nerrs, Na, Nb, ibad=(-1), jbad=(-1);
    double t0, t1, t2, t3, mflop;
    TYPE maxval, f1, ferr;
@@ -434,15 +439,18 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
       {
          for (i=0; i != M SHIFT; i++)
          {
+            int eltbad=0;
             #ifdef ATL_NANC
                if (D[i] != D[i])
                {
+                  eltbad=1;
                   nerrs++;
                   PASSED = 0;
                   printf("NaN in test_gemm at C(%d,%d)\n", i, j);
                }
                if (C[i] != C[i])
                {
+                  eltbad=1;
                   nerrs++;
                   PASSED = 0;
                   printf("NaN in trusted_gemm at C(%d,%d)\n", i, j);
@@ -452,6 +460,7 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
             if (f1 < 0.0) f1 = -f1;
             if (f1 > ferr)
             {
+               eltbad=1;
                if (ibad == -1)
                   ibad = i+1;
                if (jbad == -1)
@@ -468,10 +477,17 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
             }
             else if (D[i] != D[i])
             {
+               eltbad=1;
                nerrs++;
                PASSED = 0;
                pc = "NaN";
                maxval = D[i];
+            }
+            if (eltbad && N < 80 && M < 80)
+            {
+               if (!errBV)
+                  errBV = ATL_NewBV((M SHIFT)*N);
+               ATL_SetBitBV(errBV, i*N+j);
             }
          }
          D += ldd SHIFT;
@@ -508,6 +524,11 @@ int mmcase(int TEST, int CACHESIZE, char TA, char TB, int M, int N, int K,
    #if !ATL_LINEFLUSH
       l2ret = ATL_flushcache( 0 );
    #endif
+   if (errBV)
+   {
+      ATL_print2dBV(M, N, errBV);
+      ATL_FreeBV(errBV);
+   }
    return(PASSED);
 }
 

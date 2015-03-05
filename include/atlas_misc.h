@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -55,10 +55,10 @@
    #define WALL
 #endif
 #ifndef time00
-   #if defined(WALL)
-      #define time00 ATL_walltime
-   #else
+   #if defined(CPUTIME)
       #define time00 ATL_cputime
+   #else
+      #define time00 ATL_walltime
    #endif
 #endif
 #define Mabs(x) ( (x) >= 0 ? (x) : -(x) )
@@ -104,6 +104,8 @@
 #endif
 #define ATL_SZT size_t
 #define ATL_CSZT const size_t
+#define ATL_UINT unsigned ATL_INT
+#define ATL_CUINT const unsigned ATL_INT
 
 
 #define ATL_QTYPE long double
@@ -243,6 +245,10 @@
    #define SCALAR_IS_ZERO(M_scalar) \
       ( (*(M_scalar) == ATL_rzero) && ((M_scalar)[1] == ATL_rzero) )
 #endif
+#define ATLAS_PRE Mjoin(atlas_,PRE)
+#define ATLAS_UPR Mjoin(atlas_,UPR)
+#define AMM_PRE Mjoin(ATLAS_PRE,amm)
+#define AMM_UPR Mjoin(ATLAS_UPR,amm)
 
 #if defined(ALPHA1)
    #define ATL_MulByALPHA(x_) (x_)

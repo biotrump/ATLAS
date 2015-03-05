@@ -24,7 +24,7 @@ static int ATL_tsyr2kK(ATL_SYR2K_t *syp, ATL_CINT N, ATL_CINT K,
    if (!(ldw&(ldw-1)))
       ldw += 4;
    sz = (ldw*N)<<eltsh;
-   if ((sz>>20) <= ATL_PTMAXMALLOC_MB)
+   if (sz <= ATL_PTMAXMALLOC)
       v = malloc(sz + ATL_Cachelen);
    if (!v)
       return(1);  /* signal we can't get memory */

@@ -1,23 +1,11 @@
 #ifndef ATLAS_TRSMNB_H
 #define ATLAS_TRSMNB_H
+#include "atlas_misc.h"
+#include Mstr(Mjoin(AMM_UPR,_sum.h))
 
 #ifndef TRSM_NB
    #ifdef TREAL
-      #ifdef ATL_ARCH_ATHLON
-         #ifdef DREAL
-            #define TRSM_NB NB
-         #else
-            #define TRSM_NB (NB/4)
-         #endif
-      #elif defined(ATL_ARCH_HAMMER64) || defined(ATL_ARCH_HAMMER32)
-         #ifdef DREAL
-            #define TRSM_NB (NB/3)
-         #else
-            #define TRSM_NB (NB/2)
-         #endif
-      #else
-         #define TRSM_NB NB
-      #endif
+      #define TRSM_NB ATL_AMM_66KB
 /*
  *    For larger NB than 8, the intel compiler screws up the TRSM kernel,
  *    so force 8 as our largest stopping factor.  This is OK performance-

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -52,26 +52,33 @@ static void geinv
    (const enum CBLAS_ORDER Order, const int N, TYPE *A, const int lda)
 {
    int *ipiv;
-   TYPE *wrk;
+   TYPE *wrk, WQ;
    int lwrk;
 
    ipiv = malloc(sizeof(int)*N);
    ATL_assert(ipiv);
    #ifdef TimeF77
-      lwrk = N * Mjoin(PATL,GetNB)();
-      wrk = malloc(ATL_MulBySize(lwrk));
       if (Order == AtlasRowMajor) Mjoin(PATL,tstsqtran)(N, A, lda);
       ATL_assert(Mjoin(PATL,f77getrf)(AtlasColMajor, N, N, A, lda, ipiv) == 0);
-      ATL_assert(Mjoin(PATL,f77getri)
-         (AtlasColMajor, N, A, lda, ipiv, wrk, &lwrk) == 0);
-      if (Order == AtlasRowMajor) Mjoin(PATL,tstsqtran)(N, A, lda);
+      lwrk = -1;
+      ATL_assert(Mjoin(PATL,f77getri)(AtlasColMajor, N, A, lda, ipiv,
+                                      &WQ, lwrk) == 0);
+      lwrk = WQ;
+      wrk = malloc(ATL_MulBySize(lwrk));
+      ATL_assert(wrk);
+      ATL_assert(Mjoin(PATL,f77getri)(AtlasColMajor, N, A, lda, ipiv,
+                                      wrk, lwrk) == 0);
       free(wrk);
+      if (Order == AtlasRowMajor) Mjoin(PATL,tstsqtran)(N, A, lda);
    #elif defined(TimeC)
       ATL_assert(Mjoin(CLP,getrf)(Order, N, N, A, lda, ipiv) == 0);
       ATL_assert(Mjoin(CLP,getri)(Order, N, A, lda, ipiv) == 0);
   #else
-      lwrk = N * Mjoin(PATL,GetNB)();
+      lwrk = -1;
+      ATL_assert(Mjoin(PATL,getri)(Order, N, A, lda, ipiv, &WQ, &lwrk) == 0);
+      lwrk = WQ;
       wrk = malloc(ATL_MulBySize(lwrk));
+      ATL_assert(wrk);
       ATL_assert(Mjoin(PATL,getrf)(Order, N, N, A, lda, ipiv) == 0);
       ATL_assert(Mjoin(PATL,getri)(Order, N, A, lda, ipiv, wrk, &lwrk) == 0);
       free(wrk);

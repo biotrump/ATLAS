@@ -22,14 +22,15 @@ enum ARCHFAM {AFOther=0, AFPPC, AFSPARC, AFALPHA, AFX86, AFIA64, AFMIPS,
  * Corei1: Nahalem / Westmere
  * Corei2: ivy bridge, sandy bridge: AVX
  * Corei3: haswell: AVXMAC
+ * Corei3EP: v3 Haswell, E5-26XX
  */
-#define NMACH 54
+#define NMACH 55
 static char *machnam[NMACH] =
    {"UNKNOWN", "POWER3", "POWER4", "POWER5", "PPCG4", "PPCG5",
     "POWER6", "POWER7", "POWERe6500", "IBMz9", "IBMz10", "IBMz196",
     "x86x87", "x86SSE1", "x86SSE2", "x86SSE3",
     "P5", "P5MMX", "PPRO", "PII", "PIII", "PM", "CoreSolo",
-    "CoreDuo", "Core2Solo", "Core2", "Corei1", "Corei2", "Corei3",
+    "CoreDuo", "Core2Solo", "Core2", "Corei1", "Corei2", "Corei3", "Corei3EP",
     "Atom", "P4", "P4E",
     "Efficeon", "K7", "HAMMER", "AMD64K10h", "AMDLLANO", "AMDDOZER","AMDDRIVER",
     "UNKNOWNx86", "IA64Itan", "IA64Itan2",
@@ -41,7 +42,7 @@ enum MACHTYPE {MACHOther, IbmPwr3, IbmPwr4, IbmPwr5, PPCG4, PPCG5,
                x86x87, x86SSE1, x86SSE2, x86SSE3, /* generic targets */
                IntP5, IntP5MMX, IntPPRO, IntPII, IntPIII, IntPM, IntCoreS,
                IntCoreDuo, IntCore2Solo, IntCore2, IntCorei1, IntCorei2,
-               IntCorei3, IntAtom, IntP4, IntP4E, TMEff,
+               IntCorei3, IntCorei3EP, IntAtom, IntP4, IntP4E, TMEff,
                AmdAthlon, AmdHammer, Amd64K10h, AmdLlano, AmdDozer, AmdDriver,
                x86X, IA64Itan, IA64Itan2,
                SunUSI, SunUSII, SunUSIII, SunUSIV, SunUST2, SunUSX,

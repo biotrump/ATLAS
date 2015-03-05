@@ -39,7 +39,7 @@
 # Level 1 & 2, but must confirm)
 #
 # Core2/Corei1/Corei2/Corei3
-MACH=Corei3 OS=ALL LVL=1000 COMPS=smc,dmc,skc,dkc,icc,gcc,xcc
+MACH=Corei3,Corei3EP OS=ALL LVL=1000 COMPS=smc,dmc,skc,dkc,icc,gcc,xcc
    'gcc' '-fomit-frame-pointer -mfpmath=sse -O2'
 MACH=Corei2 OS=Win9x,WinNT,Win64 LVL=1005 COMPS=smc,dmc,skc,dkc,icc
    'gcc-4' '-fomit-frame-pointer -mfpmath=sse -O2 -fno-schedule-insns2'

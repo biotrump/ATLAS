@@ -8,7 +8,6 @@ single    : slib
 complex   : clib
 complex16 : zlib
 clean : iclean dclean sclean cclean zclean
-
 deps = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
        $(INCSdir)/atlas_lvl3.h $(INCSdir)/atlas_tlvl3.h \
        $(INCAdir)/atlas_pthreads.h $(INCSdir)/atlas_threads.h \
@@ -31,7 +30,7 @@ ATL_Xtsyr2k.o : $(deps) $(mySRCdir)/ATL_Xtsyr2k.c
 ATL_Xtsyrk.o : $(deps) $(mySRCdir)/ATL_Xtsyrk.c
 	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_Xtsyrk.c
 
-sINCdep = $(deps) $(INCAdir)/smm.h
+sINCdep = $(deps) $(INCAdir)/atlas_samm_sum.h
 
 sobj = ATL_sthreadMM.o ATL_stNumGemmThreads.o ATL_stsymm.o ATL_sttrmm.o \
        ATL_sttrsm.o ATL_stsyrk.o ATL_stsyr2k.o ATL_stgemm.o ATL_sttrsm_amm.o \
@@ -98,7 +97,7 @@ ATL_stgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
                -c $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 
-dINCdep = $(deps) $(INCAdir)/dmm.h
+dINCdep = $(deps) $(INCAdir)/atlas_damm_sum.h
 
 dobj = ATL_dthreadMM.o ATL_dtNumGemmThreads.o ATL_dtsymm.o ATL_dttrmm.o \
        ATL_dttrsm.o ATL_dtsyrk.o ATL_dtsyr2k.o ATL_dtgemm.o ATL_dttrsm_amm.o \
@@ -165,7 +164,7 @@ ATL_dtgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
                -c $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 
-cINCdep = $(deps) $(INCAdir)/cmm.h
+cINCdep = $(deps) $(INCAdir)/atlas_camm_sum.h
 
 cobj = ATL_cthreadMM.o ATL_ctNumGemmThreads.o ATL_ctsymm.o ATL_cttrmm.o \
        ATL_cttrsm.o ATL_ctsyrk.o ATL_ctsyr2k.o ATL_ctgemm.o ATL_ctherk.o \
@@ -225,7 +224,7 @@ ATL_ctgemm_bigMN_Kp_CE.o : $(deps) slib $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
                -c $(mySRCdir)/ATL_tgemm_bigMN_Kp.c
 
 
-zINCdep = $(deps) $(INCAdir)/zmm.h
+zINCdep = $(deps) $(INCAdir)/atlas_zamm_sum.h
 
 zobj = ATL_zthreadMM.o ATL_ztNumGemmThreads.o ATL_ztsymm.o ATL_zttrmm.o \
        ATL_zttrsm.o ATL_ztsyrk.o ATL_ztsyr2k.o ATL_ztgemm.o ATL_ztherk.o \

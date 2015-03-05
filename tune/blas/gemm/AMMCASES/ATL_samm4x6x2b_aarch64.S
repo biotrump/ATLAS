@@ -3,7 +3,7 @@
  * R. Clint Whaley's original ATL_samm4x6x2_arm.S as a template.
  */
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2014 Dave Nuechterlein
  *
  * Code contributers : Dave Nuechterlein, R. Clint Whaley

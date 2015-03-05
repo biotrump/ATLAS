@@ -468,8 +468,9 @@ DoNothing:
 make_subdirs:
 	mkdir src bin tune interfaces timing
 	cd src ; mkdir testing auxil blas lapack pthreads threads
+	cd src/lapack ; mkdir amm
 	cd src/blas ; \
-           mkdir f77reference reference gemv ger gemm ammm kbmm \
+           mkdir f77reference reference gemv ger ammm kbmm \
                  level1 level2 level3 pklevel3
 	cd src/blas/reference ; mkdir level1 level2 level3
 	cd src/blas/level2 ; mkdir kernel
@@ -477,7 +478,8 @@ make_subdirs:
 	cd src/blas/level3 ; mkdir rblas kernel
 	cd src/pthreads ; mkdir blas misc
 	cd src/pthreads/blas ; mkdir level1 level2 level3
-	cd src/threads ; mkdir blas lapack
+	cd src/threads ; mkdir cbc blas lapack
+	cd src/threads/lapack ; mkdir amm
 	cd src/threads/blas ; mkdir level3 level2
 	cd tune ; mkdir blas sysinfo lapack threads
 	cd tune/blas ; mkdir gemm gemv ger level1 level3

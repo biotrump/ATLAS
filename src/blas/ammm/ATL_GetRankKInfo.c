@@ -1,4 +1,6 @@
+#define ATL_NOAMM 1
 #include "atlas_misc.h"
+#undef ATL_NOAMM
 #include Mstr(Mjoin(Mjoin(atlas_,PRE),amm_rankK.h))
 #include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_rkkblk.h))
 #include Mstr(Mjoin(Mjoin(atlas_,UPR),amm_rkkflag.h))

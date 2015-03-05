@@ -915,7 +915,7 @@ static ATL_mvnode_t *ReadMVFile(char *file)
    nq = p = GetMVNode();
    while (ln = GetJoinedLines(fpin))
    {
-      if (ln[0] != '#')
+      if (ln[0] != '#' && ln[0] != '\0')
       {
          p->next = ParseMVLine(ln);
          p = p->next;

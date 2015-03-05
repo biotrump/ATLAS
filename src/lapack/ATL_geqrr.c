@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2009 Siju Samuel
  *
  * Code contributers : Siju Samuel, Anthony M. Castaldo, R. Clint Whaley
@@ -141,14 +141,14 @@ int ATL_geqrr(ATL_CINT M, ATL_CINT N, TYPE *A, ATL_CINT LDA, TYPE  *TAU,
        * For small problems, make M a mult of MU (many x86 have NU=1 anyway!).
        */
 
-         if (minMN >= NB+NB)                    /* big prob, put rmnder right */
+         if (minMN >= 2*ATL_AMM_98KB) /* big prob, put rmnder right */
          {
-            left = ATL_MulByNB(ATL_DivByNB(minMN>>1));
+            left = ((minMN>>1) / ATL_AMM_98KB)*ATL_AMM_98KB;
             right = N - left;                   /* for QR, right as N - left  */
          }
          else /* small prob, keep M mult of MU (MU more critical than NU)     */
          {
-            right = ((minMN>>1)/ATL_mmMU)*ATL_mmMU;
+            right = ((minMN>>1)/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
             left = minMN - right;
             right = N - left;                   /* for QR, right as N - left  */
          }

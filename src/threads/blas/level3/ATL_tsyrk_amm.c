@@ -1107,7 +1107,7 @@ int Mjoin(PATL,tsyrk_amm_N)
       if (pd.ncntxts > 1)
          sz += ATL_Cachelen*(pd.ncores+1);
    #endif
-   if ((sz>>20) > ATL_PTMAXMALLOC_MB)       /* if I'm over malloc limit */
+   if (sz > ATL_PTMAXMALLOC)                /* if I'm over malloc limit */
       return(2);                            /* return and recur on K */
    vp = malloc(sz);
    if (!vp)

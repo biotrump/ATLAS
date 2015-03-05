@@ -26,9 +26,10 @@ obj = ATL_flushcache.o ATL_flushCacheByAddr.o ATL_cputime.o ATL_walltime.o \
       ATL_zgeset.o ATL_ztrsetL.o ATL_ztrsetU.o ATL_cgemoveC.o \
       ATL_caxpbyConj.o ATL_caxpyConj.o ATL_cmoveConj.o ATL_ccopyConj.o \
       ATL_cscalConj.o ATL_chereflect.o ATL_ccplxdivide.o ATL_ccplxinvert.o \
-      ATL_caxpyConj_x1_y1.o ATL_chescal.o ATL_cgeApBc_NB.o ATL_cheApAc_NB.o \
-      ATL_cheApAc.o ATL_cgemove_aXi0.o ATL_cgemove_aX.o ATL_cgemove_a1.o \
-      ATL_cgemove_a0.o ATL_caxpbyConj_aXi0_bXi0.o ATL_caxpby_aXi0_bXi0.o \
+      ATL_caxpyConj_x1_y1.o ATL_chescal.o ATL_cswap_cplx2real.o \
+      ATL_cgeApBc_NB.o ATL_cheApAc_NB.o ATL_cheApAc.o ATL_cgemove_aXi0.o \
+      ATL_cgemove_aX.o ATL_cgemove_a1.o ATL_cgemove_a0.o \
+      ATL_caxpbyConj_aXi0_bXi0.o ATL_caxpby_aXi0_bXi0.o \
       ATL_cgeadd_aXi0_bXi0.o ATL_caxpbyConj_aX_bXi0.o ATL_caxpby_aX_bXi0.o \
       ATL_cgeadd_aX_bXi0.o ATL_caxpbyConj_a1_bXi0.o ATL_caxpby_a1_bXi0.o \
       ATL_cgeadd_a1_bXi0.o ATL_caxpbyConj_a0_bXi0.o ATL_caxpby_a0_bXi0.o \
@@ -48,9 +49,10 @@ obj = ATL_flushcache.o ATL_flushCacheByAddr.o ATL_cputime.o ATL_walltime.o \
       ATL_cgeadd_a0_b0.o ATL_cgescal_b0.o ATL_zgemoveC.o ATL_zaxpbyConj.o \
       ATL_zaxpyConj.o ATL_zmoveConj.o ATL_zcopyConj.o ATL_zscalConj.o \
       ATL_zhereflect.o ATL_zcplxdivide.o ATL_zcplxinvert.o \
-      ATL_zaxpyConj_x1_y1.o ATL_zhescal.o ATL_zgeApBc_NB.o ATL_zheApAc_NB.o \
-      ATL_zheApAc.o ATL_zgemove_aXi0.o ATL_zgemove_aX.o ATL_zgemove_a1.o \
-      ATL_zgemove_a0.o ATL_zaxpbyConj_aXi0_bXi0.o ATL_zaxpby_aXi0_bXi0.o \
+      ATL_zaxpyConj_x1_y1.o ATL_zhescal.o ATL_zswap_cplx2real.o \
+      ATL_zgeApBc_NB.o ATL_zheApAc_NB.o ATL_zheApAc.o ATL_zgemove_aXi0.o \
+      ATL_zgemove_aX.o ATL_zgemove_a1.o ATL_zgemove_a0.o \
+      ATL_zaxpbyConj_aXi0_bXi0.o ATL_zaxpby_aXi0_bXi0.o \
       ATL_zgeadd_aXi0_bXi0.o ATL_zaxpbyConj_aX_bXi0.o ATL_zaxpby_aX_bXi0.o \
       ATL_zgeadd_aX_bXi0.o ATL_zaxpbyConj_a1_bXi0.o ATL_zaxpby_a1_bXi0.o \
       ATL_zgeadd_a1_bXi0.o ATL_zaxpbyConj_a0_bXi0.o ATL_zaxpby_a0_bXi0.o \
@@ -943,6 +945,8 @@ ATL_cheApAc_NB.o : $(cINCdep) $(mySRCdir)/ATL_syApAt_NB.c
 ATL_cheApAc.o : $(cINCdep) $(mySRCdir)/ATL_syApAt.c
 	$(SKC) $(NM) $@ $(OJ) $(CDEFS) $(SKCFLAGS) -DConj_ -DSCPLX \
               $(mySRCdir)/ATL_syApAt.c
+ATL_cswap_cplx2real.o : $(cINCdep) $(mySRCdir)/ATL_swap_cplx2real.c
+	$(SKC) $(NM) $@ $(OJ) $(CDEFS) $(SKCFLAGS) -DSCPLX $(mySRCdir)/ATL_swap_cplx2real.c
 ATL_chereflect.o : $(cINCdep) $(mySRCdir)/ATL_hereflect.c
 	$(SKC) $(NM) $@ $(OJ) $(CDEFS) $(SKCFLAGS) -DSCPLX $(mySRCdir)/ATL_hereflect.c
 ATL_chescal.o : $(cINCdep) $(mySRCdir)/ATL_hescal.c
@@ -1029,6 +1033,8 @@ ATL_zheApAc_NB.o : $(zINCdep) $(mySRCdir)/ATL_syApAt_NB.c
 ATL_zheApAc.o : $(zINCdep) $(mySRCdir)/ATL_syApAt.c
 	$(DKC) $(NM) $@ $(OJ) $(CDEFS) $(DKCFLAGS) -DConj_ -DDCPLX \
               $(mySRCdir)/ATL_syApAt.c
+ATL_zswap_cplx2real.o : $(zINCdep) $(mySRCdir)/ATL_swap_cplx2real.c
+	$(DKC) $(NM) $@ $(OJ) $(CDEFS) $(DKCFLAGS) -DDCPLX $(mySRCdir)/ATL_swap_cplx2real.c
 ATL_zhereflect.o : $(zINCdep) $(mySRCdir)/ATL_hereflect.c
 	$(DKC) $(NM) $@ $(OJ) $(CDEFS) $(DKCFLAGS) -DDCPLX $(mySRCdir)/ATL_hereflect.c
 ATL_zhescal.o : $(zINCdep) $(mySRCdir)/ATL_hescal.c

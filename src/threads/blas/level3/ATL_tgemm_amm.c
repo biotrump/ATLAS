@@ -33,8 +33,10 @@ int Mjoin(PATL,ammm_REC)
  *    Stopping criteria in case something is horribly wrong
  */
       if (K <= ATL_AMM_MAXKB && M <= ATL_AMM_MAXMB && N <= ATL_AMM_MAXNB)
-         return(Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb,
-                                 beta, C, ldc));
+      {
+         Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+         return(0);
+      }
 /*
  *    Divide K first: it cuts space from both A & B
  */

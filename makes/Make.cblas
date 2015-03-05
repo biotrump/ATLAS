@@ -117,89 +117,88 @@ zptlib : zptlvl3 zptlvl2 zptlvl1
 ptclean : sptclean dptclean cptclean zptclean
 	rm -f $(aobj)
 
-sptlvl1 :
+sptlvl1 : 
 	$(PMAKE) sptlvl1.grd
 sptlvl1.grd : $(sptlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl1obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch sptlvl1.grd
-sptlvl2 :
+sptlvl2 : 
 	$(PMAKE) sptlvl2.grd
 sptlvl2.grd : $(sptlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl2obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch sptlvl2.grd
-sptlvl3 :
+sptlvl3 : 
 	$(PMAKE) sptlvl3.grd
 sptlvl3.grd : $(sptlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(sptlvl3obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch sptlvl3.grd
 sptclean :
 	rm -f $(sptlvl1obj) $(sptlvl2obj) $(sptlvl3obj) s?ptlvl?.grd
-dptlvl1 :
+dptlvl1 : 
 	$(PMAKE) dptlvl1.grd
 dptlvl1.grd : $(dptlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl1obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch dptlvl1.grd
-dptlvl2 :
+dptlvl2 : 
 	$(PMAKE) dptlvl2.grd
 dptlvl2.grd : $(dptlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl2obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch dptlvl2.grd
-dptlvl3 :
+dptlvl3 : 
 	$(PMAKE) dptlvl3.grd
 dptlvl3.grd : $(dptlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(dptlvl3obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch dptlvl3.grd
 dptclean :
 	rm -f $(dptlvl1obj) $(dptlvl2obj) $(dptlvl3obj) d?ptlvl?.grd
-cptlvl1 :
+cptlvl1 : 
 	$(PMAKE) cptlvl1.grd
 cptlvl1.grd : $(cptlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl1obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch cptlvl1.grd
-cptlvl2 :
+cptlvl2 : 
 	$(PMAKE) cptlvl2.grd
 cptlvl2.grd : $(cptlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl2obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch cptlvl2.grd
-cptlvl3 :
+cptlvl3 : 
 	$(PMAKE) cptlvl3.grd
 cptlvl3.grd : $(cptlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(cptlvl3obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch cptlvl3.grd
 cptclean :
 	rm -f $(cptlvl1obj) $(cptlvl2obj) $(cptlvl3obj) c?ptlvl?.grd
-zptlvl1 :
+zptlvl1 : 
 	$(PMAKE) zptlvl1.grd
 zptlvl1.grd : $(zptlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl1obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch zptlvl1.grd
-zptlvl2 :
+zptlvl2 : 
 	$(PMAKE) zptlvl2.grd
 zptlvl2.grd : $(zptlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl2obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch zptlvl2.grd
-zptlvl3 :
+zptlvl3 : 
 	$(PMAKE) zptlvl3.grd
 zptlvl3.grd : $(zptlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTCBLASlib) $(zptlvl3obj) $(aobj) 
 	$(RANLIB) $(PTCBLASlib)
 	touch zptlvl3.grd
 zptclean :
 	rm -f $(zptlvl1obj) $(zptlvl2obj) $(zptlvl3obj) z?ptlvl?.grd
 all : lib
 lib : dlib slib zlib clib
-	-ln -s $(CBLASlib) $(FLAdir)
 
 lvl3 : dlvl3 slvl3 clvl3 zlvl3
 lvl2 : dlvl2 slvl2 clvl2 zlvl2
@@ -211,89 +210,89 @@ zlib : zlvl3 zlvl2 zlvl1
 clean : sclean dclean cclean zclean
 	rm -f $(aobj)
 
-slvl1 :
+slvl1 : 
 	$(PMAKE) slvl1.grd
 slvl1.grd : $(slvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl1obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch slvl1.grd
-slvl2 :
+slvl2 : 
 	$(PMAKE) slvl2.grd
 slvl2.grd : $(slvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl2obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch slvl2.grd
-slvl3 :
+slvl3 : 
 	$(PMAKE) slvl3.grd
 slvl3.grd : $(slvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(slvl3obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch slvl3.grd
 sclean :
 	rm -f $(slvl1obj) $(slvl2obj) $(slvl3obj) s?lvl?.grd
-dlvl1 :
+dlvl1 : 
 	$(PMAKE) dlvl1.grd
 dlvl1.grd : $(dlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl1obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch dlvl1.grd
-dlvl2 :
+dlvl2 : 
 	$(PMAKE) dlvl2.grd
 dlvl2.grd : $(dlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl2obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch dlvl2.grd
-dlvl3 :
+dlvl3 : 
 	$(PMAKE) dlvl3.grd
 dlvl3.grd : $(dlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(dlvl3obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch dlvl3.grd
 dclean :
 	rm -f $(dlvl1obj) $(dlvl2obj) $(dlvl3obj) d?lvl?.grd
-clvl1 :
+clvl1 : 
 	$(PMAKE) clvl1.grd
 clvl1.grd : $(clvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl1obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch clvl1.grd
-clvl2 :
+clvl2 : 
 	$(PMAKE) clvl2.grd
 clvl2.grd : $(clvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl2obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch clvl2.grd
-clvl3 :
+clvl3 : 
 	$(PMAKE) clvl3.grd
 clvl3.grd : $(clvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(clvl3obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch clvl3.grd
 cclean :
 	rm -f $(clvl1obj) $(clvl2obj) $(clvl3obj) c?lvl?.grd
-zlvl1 :
+zlvl1 : 
 	$(PMAKE) zlvl1.grd
 zlvl1.grd : $(zlvl1obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl1obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl1obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch zlvl1.grd
-zlvl2 :
+zlvl2 : 
 	$(PMAKE) zlvl2.grd
 zlvl2.grd : $(zlvl2obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl2obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl2obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch zlvl2.grd
-zlvl3 :
+zlvl3 : 
 	$(PMAKE) zlvl3.grd
 zlvl3.grd : $(zlvl3obj) $(aobj)
-	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl3obj) $(aobj)
+	$(ARCHIVER) $(ARFLAGS) $(CBLASlib) $(zlvl3obj) $(aobj) 
 	$(RANLIB) $(CBLASlib)
 	touch zlvl3.grd
 zclean :
 	rm -f $(zlvl1obj) $(zlvl2obj) $(zlvl3obj) z?lvl?.grd
 
 INCdep = $(INCSdir)/atlas_misc.h $(INCSdir)/atlas_lvl3.h \
-         $(INCSdir)/cblas.h $(INCSdir)/atlas_level1.h
+         $(INCSdir)/cblas.h $(INCSdir)/atlas_level1.h 
 INCPTdep = $(INCSdir)/atlas_misc.h $(INCSdir)/atlas_lvl3.h \
            $(INCSdir)/cblas.h $(INCSdir)/atlas_level1.h \
            $(INCSdir)/atlas_refalias1.h $(INCSdir)/atlas_refalias2.h \

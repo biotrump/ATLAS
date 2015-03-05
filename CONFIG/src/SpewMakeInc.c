@@ -553,7 +553,7 @@ int main(int nargs, char **args)
          ISAX = i;
 
    fprintf(fpout, "#  ----------------------------\n");
-   fprintf(fpout, "#  Make.inc for ATLAS3.11.31\n");
+   fprintf(fpout, "#  Make.inc for ATLAS3.11.32\n");
    fprintf(fpout, "#  ----------------------------\n\n");
 
    fprintf(fpout, "#  ----------------------------------\n");

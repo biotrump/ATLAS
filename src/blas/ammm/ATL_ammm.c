@@ -74,6 +74,17 @@ static int ATL_ammm
       return(0);
    }
 /*
+ * Special case mainly for LU, where K==4, N==4 beta=1.0, TA==AtlasNoTrans;
+ * Can do a no-copy update with only one loop.
+ */
+   if (K == 4 && N == 4 && TA==AtlasNoTrans && SCALAR_IS_ONE(beta))
+   {
+      int Mjoin(PATL,rk4n4)(enum ATLAS_TRANS,ATL_CSZT,const SCALAR,
+          const TYPE*,ATL_CSZT,const TYPE*,ATL_CSZT,TYPE*,ATL_CSZT);
+      if (!Mjoin(PATL,rk4n4)(TB, M, alpha, A, lda, B, ldb, C, ldc))
+         return(0);
+   }
+/*
  * 1-block special case code can return w/o doing op if it thinks
  * rank-K would be faster
  */
@@ -126,7 +137,7 @@ static int ATL_ammm
  * This routine uses recursion to cut the dimensions of the matrices until
  * workspace requirements are low enough that a call to ATL_ammm succeeds
  */
-int Mjoin(PATL,ammm)
+void Mjoin(PATL,ammm)
 (
    enum ATLAS_TRANS TA,
    enum ATLAS_TRANS TB,
@@ -143,23 +154,27 @@ int Mjoin(PATL,ammm)
    ATL_CSZT ldc
 )
 {
+   if (!M || !N)
+      return;
 /*
  * Cases where all we must do is possibly scale and return
  */
-   if (SCALAR_IS_ZERO(alpha))
+   if (SCALAR_IS_ZERO(alpha) || !K)
    {
       if (SCALAR_IS_ZERO(beta))
          Mjoin(PATL,gezero)(M, N, C, ldc);
       else if (!SCALAR_IS_ONE(beta))
          Mjoin(PATL,gescal)(M, N, beta, C, ldc);
-      return(0);
+      return;
    }
 /*
- * Our stopping criteria is if ATL_ammm signals success
+ * Our stopping criteria is if ATL_ammm signals success in mallocing mem
  */
    if (K <= ATL_MAX_RK)
-      if (!ATL_ammm(TA, TB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc))
-         return(0);
+   {
+      if(!ATL_ammm(TA, TB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc))
+         return;
+   }
 /*
  * =========================================================================
  * Otherwise, problem too large, so we'll recursively divide its largest dim
@@ -207,6 +222,12 @@ int Mjoin(PATL,ammm)
       C += mL SHIFT;
       Mjoin(PATL,ammm)(TA, TB, mR, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
    }
-   return(0);
 }
 
+void Mjoin(PATL,gemm)(const enum ATLAS_TRANS TA, const enum ATLAS_TRANS TB,
+                      const int M, const int N, const int K, const SCALAR alpha,
+                      const TYPE *A, const int lda, const TYPE *B,
+                      const int ldb, const SCALAR beta, TYPE *C, const int ldc)
+{
+   Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+}

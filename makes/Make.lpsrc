@@ -30,15 +30,15 @@ ztlib :
 	
 stobj = ATL_itlaenv.o ATL_sgelq2.o ATL_sgeql2.o ATL_sgeqr2.o ATL_sgerq2.o \
         ATL_sgetf2.o ATL_sgetrfR.o ATL_sgetri.o ATL_sgetriC.o ATL_sgetriR.o \
-        ATL_sgetrs.o ATL_slamch.o ATL_slapy2.o ATL_slarf.o ATL_slarfb.o \
-        ATL_slarfg.o ATL_slarft.o ATL_slascl.o ATL_slaswp.o ATL_slauum.o \
-        ATL_slauumCL.o ATL_slauumCU.o ATL_slauumRL.o ATL_slauumRU.o \
-        ATL_sormlq.o ATL_sormql.o ATL_sormqr.o ATL_sormrq.o ATL_spotrf.o \
-        ATL_spotrfL.o ATL_spotrfU.o ATL_spotrs.o ATL_stgelqf.o ATL_stgelqr.o \
-        ATL_stgels.o ATL_stgeqlf.o ATL_stgeqlr.o ATL_stgeqrf.o ATL_stgeqrr.o \
-        ATL_stgerqf.o ATL_stgerqr.o ATL_stgetrf.o ATL_stgetrfC.o ATL_strtri.o \
-        ATL_strtriCL.o ATL_strtriCU.o ATL_strtriRL.o ATL_strtriRU.o \
-        ATL_strtrs.o
+        ATL_sgetrs.o ATL_slaGetB.o ATL_slamch.o ATL_slapy2.o ATL_slarf.o \
+        ATL_slarfb.o ATL_slarfg.o ATL_slarft.o ATL_slascl.o ATL_slaswp.o \
+        ATL_slauum.o ATL_slauumCL.o ATL_slauumCU.o ATL_slauumRL.o \
+        ATL_slauumRU.o ATL_sormlq.o ATL_sormql.o ATL_sormqr.o ATL_sormrq.o \
+        ATL_spotrf.o ATL_spotrfL.o ATL_spotrfU.o ATL_spotrs.o ATL_stgelqf.o \
+        ATL_stgelqr.o ATL_stgels.o ATL_stgeqlf.o ATL_stgeqlr.o ATL_stgeqrf.o \
+        ATL_stgeqrr.o ATL_stgerqf.o ATL_stgerqr.o ATL_stgetrf.o \
+        ATL_stgetrfC.o ATL_strtri.o ATL_strtriCL.o ATL_strtriCU.o \
+        ATL_strtriRL.o ATL_strtriRU.o ATL_strtrs.o
 
 incdep = $(INCSdir)/atlas_lapack.h
 stlib.grd : $(stobj)
@@ -113,6 +113,12 @@ ATL_stgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_stgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(SKC) $(sKCFLAGS) -c -o ATL_stgeqr2.o -DSREAL \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_geqr2.c
+ATL_stlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_stlaGetB.o -DSREAL \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_laGetB.c
+ATL_stgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_stgetrf_amm.o -DSREAL \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_getrf_amm.c
 ATL_stpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(SKC) $(sKCFLAGS) -c -o ATL_stpotrfL.o -DSREAL \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_potrfL.c
@@ -210,13 +216,13 @@ stclean :
 	rm -f $(stobj)
 dtobj = ATL_dgelq2.o ATL_dgeql2.o ATL_dgeqr2.o ATL_dgerq2.o ATL_dgetf2.o \
         ATL_dgetrfR.o ATL_dgetri.o ATL_dgetriC.o ATL_dgetriR.o ATL_dgetrs.o \
-        ATL_dlamch.o ATL_dlapy2.o ATL_dlarf.o ATL_dlarfb.o ATL_dlarfg.o \
-        ATL_dlarft.o ATL_dlascl.o ATL_dlaswp.o ATL_dlauum.o ATL_dlauumCL.o \
-        ATL_dlauumCU.o ATL_dlauumRL.o ATL_dlauumRU.o ATL_dormlq.o \
-        ATL_dormql.o ATL_dormqr.o ATL_dormrq.o ATL_dpotrf.o ATL_dpotrfL.o \
-        ATL_dpotrfU.o ATL_dpotrs.o ATL_dtgelqf.o ATL_dtgelqr.o ATL_dtgels.o \
-        ATL_dtgeqlf.o ATL_dtgeqlr.o ATL_dtgeqrf.o ATL_dtgeqrr.o ATL_dtgerqf.o \
-        ATL_dtgerqr.o ATL_dtgetrf.o ATL_dtgetrfC.o ATL_dtrtri.o \
+        ATL_dlaGetB.o ATL_dlamch.o ATL_dlapy2.o ATL_dlarf.o ATL_dlarfb.o \
+        ATL_dlarfg.o ATL_dlarft.o ATL_dlascl.o ATL_dlaswp.o ATL_dlauum.o \
+        ATL_dlauumCL.o ATL_dlauumCU.o ATL_dlauumRL.o ATL_dlauumRU.o \
+        ATL_dormlq.o ATL_dormql.o ATL_dormqr.o ATL_dormrq.o ATL_dpotrf.o \
+        ATL_dpotrfL.o ATL_dpotrfU.o ATL_dpotrs.o ATL_dtgelqf.o ATL_dtgelqr.o \
+        ATL_dtgels.o ATL_dtgeqlf.o ATL_dtgeqlr.o ATL_dtgeqrf.o ATL_dtgeqrr.o \
+        ATL_dtgerqf.o ATL_dtgerqr.o ATL_dtgetrf.o ATL_dtgetrfC.o ATL_dtrtri.o \
         ATL_dtrtriCL.o ATL_dtrtriCU.o ATL_dtrtriRL.o ATL_dtrtriRU.o \
         ATL_dtrtrs.o ATL_itlaenv.o
 
@@ -293,6 +299,12 @@ ATL_dtgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_dtgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(DKC) $(dKCFLAGS) -c -o ATL_dtgeqr2.o -DDREAL \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_geqr2.c
+ATL_dtlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dtlaGetB.o -DDREAL \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_laGetB.c
+ATL_dtgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dtgetrf_amm.o -DDREAL \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_getrf_amm.c
 ATL_dtpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(DKC) $(dKCFLAGS) -c -o ATL_dtpotrfL.o -DDREAL \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_potrfL.c
@@ -390,11 +402,11 @@ dtclean :
 	rm -f $(dtobj)
 ctobj = ATL_cgelq2.o ATL_cgeql2.o ATL_cgeqr2.o ATL_cgerq2.o ATL_cgetf2.o \
         ATL_cgetrfR.o ATL_cgetri.o ATL_cgetriC.o ATL_cgetriR.o ATL_cgetrs.o \
-        ATL_clacgv.o ATL_cladiv.o ATL_clapy2.o ATL_clapy3.o ATL_clarf.o \
-        ATL_clarfb.o ATL_clarfg.o ATL_clarft.o ATL_clascl.o ATL_claswp.o \
-        ATL_clauum.o ATL_clauumCL.o ATL_clauumCU.o ATL_clauumRL.o \
-        ATL_clauumRU.o ATL_cormlq.o ATL_cormql.o ATL_cormqr.o ATL_cormrq.o \
-        ATL_cpotrf.o ATL_cpotrfL.o ATL_cpotrfRL.o ATL_cpotrfRU.o \
+        ATL_claGetB.o ATL_clacgv.o ATL_cladiv.o ATL_clapy2.o ATL_clapy3.o \
+        ATL_clarf.o ATL_clarfb.o ATL_clarfg.o ATL_clarft.o ATL_clascl.o \
+        ATL_claswp.o ATL_clauum.o ATL_clauumCL.o ATL_clauumCU.o \
+        ATL_clauumRL.o ATL_clauumRU.o ATL_cormlq.o ATL_cormql.o ATL_cormqr.o \
+        ATL_cormrq.o ATL_cpotrf.o ATL_cpotrfL.o ATL_cpotrfRL.o ATL_cpotrfRU.o \
         ATL_cpotrfU.o ATL_cpotrs.o ATL_ctgelqf.o ATL_ctgelqr.o ATL_ctgels.o \
         ATL_ctgeqlf.o ATL_ctgeqlr.o ATL_ctgeqrf.o ATL_ctgeqrr.o ATL_ctgerqf.o \
         ATL_ctgerqr.o ATL_ctgetrf.o ATL_ctgetrfC.o ATL_ctrtri.o \
@@ -486,6 +498,12 @@ ATL_ctgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_ctgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(CKC) $(cKCFLAGS) -c -o ATL_ctgeqr2.o -DSCPLX \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_geqr2.c
+ATL_ctlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_ctlaGetB.o -DSCPLX \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_laGetB.c
+ATL_ctgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_ctgetrf_amm.o -DSCPLX \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_getrf_amm.c
 ATL_ctpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(CKC) $(cKCFLAGS) -c -o ATL_ctpotrfL.o -DSCPLX \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_potrfL.c
@@ -583,9 +601,9 @@ ctclean :
 	rm -f $(ctobj)
 ztobj = ATL_itlaenv.o ATL_zgelq2.o ATL_zgeql2.o ATL_zgeqr2.o ATL_zgerq2.o \
         ATL_zgetf2.o ATL_zgetrfR.o ATL_zgetri.o ATL_zgetriC.o ATL_zgetriR.o \
-        ATL_zgetrs.o ATL_zlacgv.o ATL_zladiv.o ATL_zlapy2.o ATL_zlapy3.o \
-        ATL_zlarf.o ATL_zlarfb.o ATL_zlarfg.o ATL_zlarft.o ATL_zlascl.o \
-        ATL_zlaswp.o ATL_zlauum.o ATL_zlauumCL.o ATL_zlauumCU.o \
+        ATL_zgetrs.o ATL_zlaGetB.o ATL_zlacgv.o ATL_zladiv.o ATL_zlapy2.o \
+        ATL_zlapy3.o ATL_zlarf.o ATL_zlarfb.o ATL_zlarfg.o ATL_zlarft.o \
+        ATL_zlascl.o ATL_zlaswp.o ATL_zlauum.o ATL_zlauumCL.o ATL_zlauumCU.o \
         ATL_zlauumRL.o ATL_zlauumRU.o ATL_zormlq.o ATL_zormql.o ATL_zormqr.o \
         ATL_zormrq.o ATL_zpotrf.o ATL_zpotrfL.o ATL_zpotrfRL.o ATL_zpotrfRU.o \
         ATL_zpotrfU.o ATL_zpotrs.o ATL_ztgelqf.o ATL_ztgelqr.o ATL_ztgels.o \
@@ -679,6 +697,12 @@ ATL_ztgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_ztgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(ZKC) $(zKCFLAGS) -c -o ATL_ztgeqr2.o -DDCPLX \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_geqr2.c
+ATL_ztlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_ztlaGetB.o -DDCPLX \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_laGetB.c
+ATL_ztgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_ztgetrf_amm.o -DDCPLX \
+              -DATL_USEPTHREADS $(mySRCdir)/ATL_getrf_amm.c
 ATL_ztpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(ZKC) $(zKCFLAGS) -c -o ATL_ztpotrfL.o -DDCPLX \
               -DATL_USEPTHREADS $(mySRCdir)/ATL_potrfL.c
@@ -779,9 +803,9 @@ sobj = ATL_ilaenv.o ATL_sgelq2.o ATL_sgelqf.o ATL_sgelqr.o ATL_sgels.o \
        ATL_sgeql2.o ATL_sgeqlf.o ATL_sgeqlr.o ATL_sgeqr2.o ATL_sgeqrf.o \
        ATL_sgeqrr.o ATL_sgerq2.o ATL_sgerqf.o ATL_sgerqr.o ATL_sgetf2.o \
        ATL_sgetrf.o ATL_sgetrfC.o ATL_sgetrfR.o ATL_sgetri.o ATL_sgetriC.o \
-       ATL_sgetriR.o ATL_sgetrs.o ATL_slamch.o ATL_slapy2.o ATL_slarf.o \
-       ATL_slarfb.o ATL_slarfg.o ATL_slarft.o ATL_slascl.o ATL_slaswp.o \
-       ATL_slauum.o ATL_slauumCL.o ATL_slauumCU.o ATL_slauumRL.o \
+       ATL_sgetriR.o ATL_sgetrs.o ATL_slaGetB.o ATL_slamch.o ATL_slapy2.o \
+       ATL_slarf.o ATL_slarfb.o ATL_slarfg.o ATL_slarft.o ATL_slascl.o \
+       ATL_slaswp.o ATL_slauum.o ATL_slauumCL.o ATL_slauumCU.o ATL_slauumRL.o \
        ATL_slauumRU.o ATL_sormlq.o ATL_sormql.o ATL_sormqr.o ATL_sormrq.o \
        ATL_spotrf.o ATL_spotrfL.o ATL_spotrfU.o ATL_spotrs.o ATL_strtri.o \
        ATL_strtriCL.o ATL_strtriCU.o ATL_strtriRL.o ATL_strtriRU.o \
@@ -860,6 +884,12 @@ ATL_sgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_sgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(SKC) $(sKCFLAGS) -c -o ATL_sgeqr2.o -DSREAL \
                $(mySRCdir)/ATL_geqr2.c
+ATL_slaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_slaGetB.o -DSREAL \
+               $(mySRCdir)/ATL_laGetB.c
+ATL_sgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sgetrf_amm.o -DSREAL \
+               $(mySRCdir)/ATL_getrf_amm.c
 ATL_spotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(SKC) $(sKCFLAGS) -c -o ATL_spotrfL.o -DSREAL \
                $(mySRCdir)/ATL_potrfL.c
@@ -959,12 +989,13 @@ dobj = ATL_dgelq2.o ATL_dgelqf.o ATL_dgelqr.o ATL_dgels.o ATL_dgeql2.o \
        ATL_dgeqlf.o ATL_dgeqlr.o ATL_dgeqr2.o ATL_dgeqrf.o ATL_dgeqrr.o \
        ATL_dgerq2.o ATL_dgerqf.o ATL_dgerqr.o ATL_dgetf2.o ATL_dgetrf.o \
        ATL_dgetrfC.o ATL_dgetrfR.o ATL_dgetri.o ATL_dgetriC.o ATL_dgetriR.o \
-       ATL_dgetrs.o ATL_dlamch.o ATL_dlapy2.o ATL_dlarf.o ATL_dlarfb.o \
-       ATL_dlarfg.o ATL_dlarft.o ATL_dlascl.o ATL_dlaswp.o ATL_dlauum.o \
-       ATL_dlauumCL.o ATL_dlauumCU.o ATL_dlauumRL.o ATL_dlauumRU.o \
-       ATL_dormlq.o ATL_dormql.o ATL_dormqr.o ATL_dormrq.o ATL_dpotrf.o \
-       ATL_dpotrfL.o ATL_dpotrfU.o ATL_dpotrs.o ATL_dtrtri.o ATL_dtrtriCL.o \
-       ATL_dtrtriCU.o ATL_dtrtriRL.o ATL_dtrtriRU.o ATL_dtrtrs.o ATL_ilaenv.o
+       ATL_dgetrs.o ATL_dlaGetB.o ATL_dlamch.o ATL_dlapy2.o ATL_dlarf.o \
+       ATL_dlarfb.o ATL_dlarfg.o ATL_dlarft.o ATL_dlascl.o ATL_dlaswp.o \
+       ATL_dlauum.o ATL_dlauumCL.o ATL_dlauumCU.o ATL_dlauumRL.o \
+       ATL_dlauumRU.o ATL_dormlq.o ATL_dormql.o ATL_dormqr.o ATL_dormrq.o \
+       ATL_dpotrf.o ATL_dpotrfL.o ATL_dpotrfU.o ATL_dpotrs.o ATL_dtrtri.o \
+       ATL_dtrtriCL.o ATL_dtrtriCU.o ATL_dtrtriRL.o ATL_dtrtriRU.o \
+       ATL_dtrtrs.o ATL_ilaenv.o
 
 incdep = $(INCSdir)/atlas_lapack.h
 dlib.grd : $(dobj)
@@ -1039,6 +1070,12 @@ ATL_dgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_dgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(DKC) $(dKCFLAGS) -c -o ATL_dgeqr2.o -DDREAL \
                $(mySRCdir)/ATL_geqr2.c
+ATL_dlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dlaGetB.o -DDREAL \
+               $(mySRCdir)/ATL_laGetB.c
+ATL_dgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dgetrf_amm.o -DDREAL \
+               $(mySRCdir)/ATL_getrf_amm.c
 ATL_dpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(DKC) $(dKCFLAGS) -c -o ATL_dpotrfL.o -DDREAL \
                $(mySRCdir)/ATL_potrfL.c
@@ -1138,13 +1175,13 @@ cobj = ATL_cgelq2.o ATL_cgelqf.o ATL_cgelqr.o ATL_cgels.o ATL_cgeql2.o \
        ATL_cgeqlf.o ATL_cgeqlr.o ATL_cgeqr2.o ATL_cgeqrf.o ATL_cgeqrr.o \
        ATL_cgerq2.o ATL_cgerqf.o ATL_cgerqr.o ATL_cgetf2.o ATL_cgetrf.o \
        ATL_cgetrfC.o ATL_cgetrfR.o ATL_cgetri.o ATL_cgetriC.o ATL_cgetriR.o \
-       ATL_cgetrs.o ATL_clacgv.o ATL_cladiv.o ATL_clapy2.o ATL_clapy3.o \
-       ATL_clarf.o ATL_clarfb.o ATL_clarfg.o ATL_clarft.o ATL_clascl.o \
-       ATL_claswp.o ATL_clauum.o ATL_clauumCL.o ATL_clauumCU.o ATL_clauumRL.o \
-       ATL_clauumRU.o ATL_cormlq.o ATL_cormql.o ATL_cormqr.o ATL_cormrq.o \
-       ATL_cpotrf.o ATL_cpotrfL.o ATL_cpotrfRL.o ATL_cpotrfRU.o ATL_cpotrfU.o \
-       ATL_cpotrs.o ATL_ctrtri.o ATL_ctrtriCL.o ATL_ctrtriCU.o ATL_ctrtriRL.o \
-       ATL_ctrtriRU.o ATL_ctrtrs.o ATL_ilaenv.o
+       ATL_cgetrs.o ATL_claGetB.o ATL_clacgv.o ATL_cladiv.o ATL_clapy2.o \
+       ATL_clapy3.o ATL_clarf.o ATL_clarfb.o ATL_clarfg.o ATL_clarft.o \
+       ATL_clascl.o ATL_claswp.o ATL_clauum.o ATL_clauumCL.o ATL_clauumCU.o \
+       ATL_clauumRL.o ATL_clauumRU.o ATL_cormlq.o ATL_cormql.o ATL_cormqr.o \
+       ATL_cormrq.o ATL_cpotrf.o ATL_cpotrfL.o ATL_cpotrfRL.o ATL_cpotrfRU.o \
+       ATL_cpotrfU.o ATL_cpotrs.o ATL_ctrtri.o ATL_ctrtriCL.o ATL_ctrtriCU.o \
+       ATL_ctrtriRL.o ATL_ctrtriRU.o ATL_ctrtrs.o ATL_ilaenv.o
 
 incdep = $(INCSdir)/atlas_lapack.h
 clib.grd : $(cobj)
@@ -1231,6 +1268,12 @@ ATL_cgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_cgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(CKC) $(cKCFLAGS) -c -o ATL_cgeqr2.o -DSCPLX \
                $(mySRCdir)/ATL_geqr2.c
+ATL_claGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_claGetB.o -DSCPLX \
+               $(mySRCdir)/ATL_laGetB.c
+ATL_cgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cgetrf_amm.o -DSCPLX \
+               $(mySRCdir)/ATL_getrf_amm.c
 ATL_cpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(CKC) $(cKCFLAGS) -c -o ATL_cpotrfL.o -DSCPLX \
                $(mySRCdir)/ATL_potrfL.c
@@ -1330,13 +1373,13 @@ zobj = ATL_ilaenv.o ATL_zgelq2.o ATL_zgelqf.o ATL_zgelqr.o ATL_zgels.o \
        ATL_zgeql2.o ATL_zgeqlf.o ATL_zgeqlr.o ATL_zgeqr2.o ATL_zgeqrf.o \
        ATL_zgeqrr.o ATL_zgerq2.o ATL_zgerqf.o ATL_zgerqr.o ATL_zgetf2.o \
        ATL_zgetrf.o ATL_zgetrfC.o ATL_zgetrfR.o ATL_zgetri.o ATL_zgetriC.o \
-       ATL_zgetriR.o ATL_zgetrs.o ATL_zlacgv.o ATL_zladiv.o ATL_zlapy2.o \
-       ATL_zlapy3.o ATL_zlarf.o ATL_zlarfb.o ATL_zlarfg.o ATL_zlarft.o \
-       ATL_zlascl.o ATL_zlaswp.o ATL_zlauum.o ATL_zlauumCL.o ATL_zlauumCU.o \
-       ATL_zlauumRL.o ATL_zlauumRU.o ATL_zormlq.o ATL_zormql.o ATL_zormqr.o \
-       ATL_zormrq.o ATL_zpotrf.o ATL_zpotrfL.o ATL_zpotrfRL.o ATL_zpotrfRU.o \
-       ATL_zpotrfU.o ATL_zpotrs.o ATL_ztrtri.o ATL_ztrtriCL.o ATL_ztrtriCU.o \
-       ATL_ztrtriRL.o ATL_ztrtriRU.o ATL_ztrtrs.o
+       ATL_zgetriR.o ATL_zgetrs.o ATL_zlaGetB.o ATL_zlacgv.o ATL_zladiv.o \
+       ATL_zlapy2.o ATL_zlapy3.o ATL_zlarf.o ATL_zlarfb.o ATL_zlarfg.o \
+       ATL_zlarft.o ATL_zlascl.o ATL_zlaswp.o ATL_zlauum.o ATL_zlauumCL.o \
+       ATL_zlauumCU.o ATL_zlauumRL.o ATL_zlauumRU.o ATL_zormlq.o ATL_zormql.o \
+       ATL_zormqr.o ATL_zormrq.o ATL_zpotrf.o ATL_zpotrfL.o ATL_zpotrfRL.o \
+       ATL_zpotrfRU.o ATL_zpotrfU.o ATL_zpotrs.o ATL_ztrtri.o ATL_ztrtriCL.o \
+       ATL_ztrtriCU.o ATL_ztrtriRL.o ATL_ztrtriRU.o ATL_ztrtrs.o
 
 incdep = $(INCSdir)/atlas_lapack.h
 zlib.grd : $(zobj)
@@ -1423,6 +1466,12 @@ ATL_zgeqrf.o : $(mySRCdir)/ATL_geqrf.c $(incdep)
 ATL_zgeqr2.o : $(mySRCdir)/ATL_geqr2.c $(incdep)
 	$(ZKC) $(zKCFLAGS) -c -o ATL_zgeqr2.o -DDCPLX \
                $(mySRCdir)/ATL_geqr2.c
+ATL_zlaGetB.o : $(mySRCdir)/ATL_laGetB.c $(incdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zlaGetB.o -DDCPLX \
+               $(mySRCdir)/ATL_laGetB.c
+ATL_zgetrf_amm.o : $(mySRCdir)/ATL_getrf_amm.c $(incdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zgetrf_amm.o -DDCPLX \
+               $(mySRCdir)/ATL_getrf_amm.c
 ATL_zpotrfL.o : $(mySRCdir)/ATL_potrfL.c $(incdep)
 	$(ZKC) $(zKCFLAGS) -c -o ATL_zpotrfL.o -DDCPLX \
                $(mySRCdir)/ATL_potrfL.c

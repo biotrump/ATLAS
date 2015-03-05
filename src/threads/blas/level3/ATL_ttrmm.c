@@ -42,7 +42,7 @@ void Mjoin(PATL,ttrmm)(const enum ATLAS_SIDE side, const enum ATLAS_UPLO uplo,
 /*
  * Distribute RHS over the processors
  */
-   if (!nb) nb = Mjoin(PATL,GetNB)();
+   if (!nb) nb = ATL_AMM_66KB;
    if (side == AtlasLeft)
    {
       nblks = N/nb;

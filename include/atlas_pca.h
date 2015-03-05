@@ -1,6 +1,9 @@
 #ifndef ATLAS_PCA_H
    #define ATLAS_PCA_H
-   #define ATL_membarrier
+
+#include "atlas_misc.h"
+#include "atlas_lapack.h"
+
 /*
  * OpenMP provides horrible performance in general, but it is worse than serial
  * for PCA panel factorizations, so turn it off if the user has demanded OpenMP

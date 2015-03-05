@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -181,7 +181,7 @@ void GetInstInfo()
 
 void PrintInstInfo(FILE *fpout)
 {
-   char *vstr="3.11.31", *sp, *vs;
+   char *vstr="3.11.32", *sp, *vs;
    int i, maj=0, min=0, pat=0;
    fprintf(fpout, "#define ATL_ARCH \"%s\"\n", ARCH);
    fprintf(fpout, "#define ATL_INSTFLAGS \"%s\"\n", INSTFLAGS);
@@ -208,7 +208,7 @@ void PrintInstInfo(FILE *fpout)
    fprintf(fpout, "#define ATL_SYSINFO \"%s\"\n", SYS);
    fprintf(fpout, "#define ATL_DATE    \"%s\"\n", DATE);
    fprintf(fpout, "#define ATL_UNAM    \"%s\"\n", UNAM);
-   fprintf(fpout, "#define ATL_VERS    \"3.11.31\"\n");
+   fprintf(fpout, "#define ATL_VERS    \"3.11.32\"\n");
 /*
  * Find major release number by parsing version string, which is of form
  *  XX.YY.ZZ, XX=Major release number, YY=Minor release number, ZZ=patch

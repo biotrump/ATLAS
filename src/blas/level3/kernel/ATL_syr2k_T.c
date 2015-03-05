@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -56,7 +56,7 @@
    if (i <= ATL_MaxMalloc) vc = malloc(ATL_Cachelen+i);
    if (vc == NULL) return(1);
    c = ATL_AlignPtr(vc);
-   ATL_ammm(AtlasTrans, AtlasNoTrans, N, N, K, alpha, A, lda, B, ldb,
+   ATL_gemm(AtlasTrans, AtlasNoTrans, N, N, K, alpha, A, lda, B, ldb,
             zero, c, N);
    if ( SCALAR_IS_ONE(beta) ) Mjoin(syr2k_put,_b1)(N, c, beta, C, ldc);
    else if ( SCALAR_IS_ZERO(beta) ) Mjoin(syr2k_put,_b0)(N, c, beta, C, ldc);

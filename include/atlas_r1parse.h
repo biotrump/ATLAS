@@ -880,7 +880,7 @@ static ATL_r1node_t *ReadR1File(char *file)
    nq = p = GetR1Node();
    while (ln = GetJoinedLines(fpin))
    {
-      if (ln[0] != '#')
+      if (ln[0] != '#' && ln[0] != '\0')
       {
          p->next = ParseR1Line(ln);
          p = p->next;

@@ -51,28 +51,28 @@ itclean :
 	rm -f $(itlaobj) ieeeck.o
 stclean :
 	rm -f $(stobj) stlib.grd reflapack.grd
-stlib : stlib.grd
+stlib : stlib.grd 
 stlib.grd : $(stobj)
 	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(stobj)
 	$(RANLIB) $(PTLAPACKlib)
 	touch stlib.grd
 dtclean :
 	rm -f $(dtobj) dtlib.grd reflapack.grd
-dtlib : dtlib.grd
+dtlib : dtlib.grd 
 dtlib.grd : $(dtobj)
 	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(dtobj)
 	$(RANLIB) $(PTLAPACKlib)
 	touch dtlib.grd
 ctclean :
 	rm -f $(ctobj) ctlib.grd reflapack.grd
-ctlib : ctlib.grd
+ctlib : ctlib.grd 
 ctlib.grd : $(ctobj)
 	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(ctobj)
 	$(RANLIB) $(PTLAPACKlib)
 	touch ctlib.grd
 ztclean :
 	rm -f $(ztobj) ztlib.grd reflapack.grd
-ztlib : ztlib.grd
+ztlib : ztlib.grd 
 ztlib.grd : $(ztobj)
 	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(ztobj)
 	$(RANLIB) $(PTLAPACKlib)
@@ -359,13 +359,13 @@ ATL_f77wrap_itlaenv.o : $(mySRCdir)/f77wrap/ATL_f77wrap_ilaenv.c
 treflarebuild :    # force rebuild of netlib lapack
 	rm -f $(FLAdir)/lapack_$(ARCH).a
 	$(MAKE) treflabuild
-treflapack.grd :
+treflapack.grd : 
 	if [ -d "$(FLAdir)" ]; then \
            $(MAKE) treflabuild ; \
         fi
 	touch reflapack.grd
 treflabuild : $(FLAdir)/lapack_$(ARCH).a
-	mkdir flapack
+	mkdir flapack 
 	cd flapack ; $(ARCHIVER) x $(FLAdir)/lapack_$(ARCH).a
 	cd flapack ; rm -f ?posv.o ?potrf.o ?potrs.o ?gesv.o ?getrf.o ?getrs.o \
            ?potri.o ?lauum.o ?getri.o ?trtri.o ieeeck.o ilaenv.o [s,d]lamch.o \
@@ -418,28 +418,28 @@ iclean :
 	rm -f $(ilaobj) ieeeck.o
 sclean :
 	rm -f $(sobj) slib.grd reflapack.grd
-slib : slib.grd
+slib : slib.grd 
 slib.grd : $(sobj)
 	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(sobj)
 	$(RANLIB) $(LAPACKlib)
 	touch slib.grd
 dclean :
 	rm -f $(dobj) dlib.grd reflapack.grd
-dlib : dlib.grd
+dlib : dlib.grd 
 dlib.grd : $(dobj)
 	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(dobj)
 	$(RANLIB) $(LAPACKlib)
 	touch dlib.grd
 cclean :
 	rm -f $(cobj) clib.grd reflapack.grd
-clib : clib.grd
+clib : clib.grd 
 clib.grd : $(cobj)
 	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(cobj)
 	$(RANLIB) $(LAPACKlib)
 	touch clib.grd
 zclean :
 	rm -f $(zobj) zlib.grd reflapack.grd
-zlib : zlib.grd
+zlib : zlib.grd 
 zlib.grd : $(zobj)
 	$(ARCHIVER) $(ARFLAGS) $(LAPACKlib) $(zobj)
 	$(RANLIB) $(LAPACKlib)
@@ -726,13 +726,13 @@ ATL_f77wrap_ilaenv.o : $(mySRCdir)/f77wrap/ATL_f77wrap_ilaenv.c
 reflarebuild :    # force rebuild of netlib lapack
 	rm -f $(FLAdir)/lapack_$(ARCH).a
 	$(MAKE) reflabuild
-reflapack.grd :
+reflapack.grd : 
 	if [ -d "$(FLAdir)" ]; then \
            $(MAKE) reflabuild ; \
         fi
 	touch reflapack.grd
 reflabuild : $(FLAdir)/lapack_$(ARCH).a
-	mkdir flapack
+	mkdir flapack 
 	cd flapack ; $(ARCHIVER) x $(FLAdir)/lapack_$(ARCH).a
 	cd flapack ; rm -f ?posv.o ?potrf.o ?potrs.o ?gesv.o ?getrf.o ?getrs.o \
            ?potri.o ?lauum.o ?getri.o ?trtri.o ieeeck.o ilaenv.o [s,d]lamch.o \

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -362,7 +362,7 @@ int ATL_strtriCL(const enum CBLAS_DIAG Diag, const int N, float *A,
 int ATL_slascl
    (const enum ATL_LAMATTYPE mtyp, ATL_CINT KL, ATL_CINT KU, const float den0,
     const float num0, ATL_CINT M, ATL_CINT N, float *A, ATL_CINT lda);
-
+int ATL_slaGetB(int M, int N, int K, int HINT);
 
 int ATL_dgetri(const enum CBLAS_ORDER Order, const int N, double *A, const int lda,
                const int *ipiv, double *wrk, int *lwrk);
@@ -533,7 +533,7 @@ int ATL_dtrtriCL(const enum CBLAS_DIAG Diag, const int N, double *A,
 int ATL_dlascl
    (const enum ATL_LAMATTYPE mtyp, ATL_CINT KL, ATL_CINT KU, const double den0,
     const double num0, ATL_CINT M, ATL_CINT N, double *A, ATL_CINT lda);
-
+int ATL_dlaGetB(int M, int N, int K, int HINT);
 
 int ATL_cgetri(const enum CBLAS_ORDER Order, const int N, float *A, const int lda,
                const int *ipiv, float *wrk, int *lwrk);
@@ -708,7 +708,7 @@ int ATL_ctrtriCL(const enum CBLAS_DIAG Diag, const int N, float *A,
 int ATL_clascl
    (const enum ATL_LAMATTYPE mtyp, ATL_CINT KL, ATL_CINT KU, const float den0,
     const float num0, ATL_CINT M, ATL_CINT N, float *A, ATL_CINT lda);
-
+int ATL_claGetB(int M, int N, int K, int HINT);
 
 int ATL_zgetri(const enum CBLAS_ORDER Order, const int N, double *A, const int lda,
                const int *ipiv, double *wrk, int *lwrk);
@@ -883,6 +883,6 @@ int ATL_ztrtriCL(const enum CBLAS_DIAG Diag, const int N, double *A,
 int ATL_zlascl
    (const enum ATL_LAMATTYPE mtyp, ATL_CINT KL, ATL_CINT KU, const double den0,
     const double num0, ATL_CINT M, ATL_CINT N, double *A, ATL_CINT lda);
-
+int ATL_zlaGetB(int M, int N, int K, int HINT);
 
 #endif

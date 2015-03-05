@@ -76,90 +76,205 @@ ATL_SINLINE void ATL_rk2(ATL_CINT M, const TYPE *pA0, ATL_CINT lda0,
  *    Do M=K=0 calcs
  */
       b = _mm256_unpacklo_pd(rB00, rB00);       /* rB00 rB00 rB00 rB00 */
-      m    = _mm256_mul_pd(A, b);
-      C00 = _mm256_add_pd(m, C00);  C20 = _mm256_load_pd(pC0+4);
+      #ifdef ATL_AVXMAC
+         C00 = _mm256_fmadd_pd(A, b, C00);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C00 = _mm256_add_pd(m, C00);
+      #endif
+      C20 = _mm256_load_pd(pC0+4);
       b = _mm256_unpacklo_pd(rB01, rB01);       /* rB01 rB01 rB01 rB01 */
-      m    = _mm256_mul_pd(A, b);
-      C01 = _mm256_add_pd(m, C01);  C21 = _mm256_load_pd(pC1+4);
+      #ifdef ATL_AVXMAC
+         C01 = _mm256_fmadd_pd(A, b, C01);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C01 = _mm256_add_pd(m, C01);
+      #endif
+      C21 = _mm256_load_pd(pC1+4);
       b = _mm256_unpacklo_pd(rB02, rB02);       /* rB02 rB02 rB02 rB02 */
-      m    = _mm256_mul_pd(A, b);
-      C02 = _mm256_add_pd(m, C02);  A = _mm256_load_pd(pA1);
+      #ifdef ATL_AVXMAC
+         C02 = _mm256_fmadd_pd(A, b, C02);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C02 = _mm256_add_pd(m, C02);
+      #endif
+      A = _mm256_load_pd(pA1);
 
       b = _mm256_unpacklo_pd(iB00, iB00);       /* iB00 iB00 iB00 iB00 */
-      m    = _mm256_mul_pd(a, b);
-      C00 = _mm256_addsub_pd(C00, m);  C22 = _mm256_load_pd(pC2+4);
+      #ifdef ATL_AVXMAC00
+         C00 = _mm_fmaddsub_pd(a, b, C00);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C00 = _mm256_addsub_pd(C00, m);
+      #endif
+      C22 = _mm256_load_pd(pC2+4);
       b = _mm256_unpacklo_pd(iB01, iB01);
-      m    = _mm256_mul_pd(a, b);
-      C01 = _mm256_addsub_pd(C01, m);
+      #ifdef ATL_AVXMAC00
+         C01 = _mm_fmaddsub_pd(a, b, C01);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C01 = _mm256_addsub_pd(C01, m);
+      #endif
       b = _mm256_unpacklo_pd(iB02, iB02);
-      m    = _mm256_mul_pd(a, b);
-      C02 = _mm256_addsub_pd(C02, m); a    = _mm256_shuffle_pd(A, A, 0x5);
+      #ifdef ATL_AVXMAC00
+         C02 = _mm_fmaddsub_pd(a, b, C02);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C02 = _mm256_addsub_pd(C02, m);
+      #endif
+      a    = _mm256_shuffle_pd(A, A, 0x5);
 /*
  *    Do M=0, K=1 calcs
  */
       b = _mm256_unpackhi_pd(rB00, rB00);       /* rB10 rB10 rB10 rB10 */
-      m    = _mm256_mul_pd(A, b);
-      C00 = _mm256_add_pd(m, C00);
+      #ifdef ATL_AVXMAC
+         C00 = _mm256_fmadd_pd(A, b, C00);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C00 = _mm256_add_pd(m, C00);
+      #endif
       b = _mm256_unpackhi_pd(rB01, rB01);       /* rB11 rB11 rB11 rB11 */
-      m    = _mm256_mul_pd(A, b);
-      C01 = _mm256_add_pd(m, C01);
+      #ifdef ATL_AVXMAC
+         C01 = _mm256_fmadd_pd(A, b, C01);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C01 = _mm256_add_pd(m, C01);
+      #endif
       b = _mm256_unpackhi_pd(rB02, rB02);       /* rB12 rB12 rB12 rB12 */
-      m    = _mm256_mul_pd(A, b);
-      C02 = _mm256_add_pd(m, C02);  A = _mm256_load_pd(pA0+4);
+      #ifdef ATL_AVXMAC
+         C02 = _mm256_fmadd_pd(A, b, C02);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C02 = _mm256_add_pd(m, C02);
+      #endif
+      A = _mm256_load_pd(pA0+4);
 
       b = _mm256_unpackhi_pd(iB00, iB00);       /* iB10 iB10 iB10 iB10 */
-      m    = _mm256_mul_pd(a, b);
-      C00 = _mm256_addsub_pd(C00, m); _mm256_store_pd(pC0, C00);
+      #ifdef ATL_AVXMAC00
+         C00 = _mm_fmaddsub_pd(a, b, C00);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C00 = _mm256_addsub_pd(C00, m);
+      #endif
+      _mm256_store_pd(pC0, C00);
       b = _mm256_unpackhi_pd(iB01, iB01);
-      m    = _mm256_mul_pd(a, b);
-      C01 = _mm256_addsub_pd(C01, m); _mm256_store_pd(pC1, C01);
+      #ifdef ATL_AVXMAC00
+         C01 = _mm_fmaddsub_pd(a, b, C01);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C01 = _mm256_addsub_pd(C01, m);
+      #endif
+      _mm256_store_pd(pC1, C01);
       b = _mm256_unpackhi_pd(iB02, iB02);
-      m    = _mm256_mul_pd(a, b);
-      C02 = _mm256_addsub_pd(C02, m); _mm256_store_pd(pC2, C02);
+      #ifdef ATL_AVXMAC00
+         C02 = _mm_fmaddsub_pd(a, b, C02);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C02 = _mm256_addsub_pd(C02, m);
+      #endif
+      _mm256_store_pd(pC2, C02);
 /*
  *    Do M=2, K=0 calcs
  */
       b = _mm256_unpacklo_pd(rB00, rB00);       /* rB00 rB00 rB00 rB00 */
-      m    = _mm256_mul_pd(A, b);
-      C20 = _mm256_add_pd(m, C20);  a    = _mm256_shuffle_pd(A, A, 0x5);
+      #ifdef ATL_AVXMAC
+         C20 = _mm256_fmadd_pd(A, b, C20);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C20 = _mm256_add_pd(m, C20);
+      #endif
+      a = _mm256_shuffle_pd(A, A, 0x5);
       b = _mm256_unpacklo_pd(rB01, rB01);
-      m    = _mm256_mul_pd(A, b);
-      C21 = _mm256_add_pd(m, C21);  C00 = _mm256_load_pd(pC0+8);
+      #ifdef ATL_AVXMAC
+         C21 = _mm256_fmadd_pd(A, b, C21);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C21 = _mm256_add_pd(m, C21);
+      #endif
+      C00 = _mm256_load_pd(pC0+8);
       b = _mm256_unpacklo_pd(rB02, rB02);
-      m    = _mm256_mul_pd(A, b);
-      C22 = _mm256_add_pd(m, C22);  A = _mm256_load_pd(pA1+4);
+      #ifdef ATL_AVXMAC
+         C22 = _mm256_fmadd_pd(A, b, C22);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C22 = _mm256_add_pd(m, C22);
+      #endif
+      A = _mm256_load_pd(pA1+4);
 
       b = _mm256_unpacklo_pd(iB00, iB00);       /* iB00 iB00 iB00 iB00 */
-      m    = _mm256_mul_pd(a, b);
-      C20 = _mm256_addsub_pd(C20, m);  C01 = _mm256_load_pd(pC1+8);
+      #ifdef ATL_AVXMAC00
+         C20 = _mm_fmaddsub_pd(a, b, C20);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C20 = _mm256_addsub_pd(C20, m);
+      #endif
+      C01 = _mm256_load_pd(pC1+8);
       b = _mm256_unpacklo_pd(iB01, iB01);
-      m    = _mm256_mul_pd(a, b);
-      C21 = _mm256_addsub_pd(C21, m);  C02 = _mm256_load_pd(pC2+8);
+      #ifdef ATL_AVXMAC00
+         C21 = _mm_fmaddsub_pd(a, b, C21);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C21 = _mm256_addsub_pd(C21, m);
+      #endif
+      C02 = _mm256_load_pd(pC2+8);
       b = _mm256_unpacklo_pd(iB02, iB02);
-      m    = _mm256_mul_pd(a, b);
-      C22 = _mm256_addsub_pd(C22, m);   a    = _mm256_shuffle_pd(A, A, 0x5);
+      #ifdef ATL_AVXMAC00
+         C22 = _mm_fmaddsub_pd(a, b, C22);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C22 = _mm256_addsub_pd(C22, m);
+      #endif
+      a = _mm256_shuffle_pd(A, A, 0x5);
 /*
  *    M=2, K=1 calcs
  */
       b = _mm256_unpackhi_pd(rB00, rB00);       /* rB10 rB10 rB10 rB10 */
-      m    = _mm256_mul_pd(A, b);
-      C20 = _mm256_add_pd(m, C20);
+      #ifdef ATL_AVXMAC
+         C20 = _mm256_fmadd_pd(A, b, C20);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C20 = _mm256_add_pd(m, C20);
+      #endif
       b = _mm256_unpackhi_pd(rB01, rB01);
-      m    = _mm256_mul_pd(A, b);
-      C21 = _mm256_add_pd(m, C21);
+      #ifdef ATL_AVXMAC
+         C21 = _mm256_fmadd_pd(A, b, C21);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C21 = _mm256_add_pd(m, C21);
+      #endif
       b = _mm256_unpackhi_pd(rB02, rB02);
-      m    = _mm256_mul_pd(A, b);
-      C22 = _mm256_add_pd(m, C22);   A = _mm256_load_pd(pA0+8);
+      #ifdef ATL_AVXMAC
+         C22 = _mm256_fmadd_pd(A, b, C22);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C22 = _mm256_add_pd(m, C22);
+      #endif
+      A = _mm256_load_pd(pA0+8);
 
       b = _mm256_unpackhi_pd(iB00, iB00);       /* iB10 iB10 iB10 iB10 */
-      m    = _mm256_mul_pd(a, b);
-      C20 = _mm256_addsub_pd(C20, m); _mm256_store_pd(pC0+4, C20);
+      #ifdef ATL_AVXMAC00
+         C20 = _mm_fmaddsub_pd(a, b, C20);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C20 = _mm256_addsub_pd(C20, m);
+      #endif
+      _mm256_store_pd(pC0+4, C20);
       b = _mm256_unpackhi_pd(iB01, iB01);
-      m    = _mm256_mul_pd(a, b);
-      C21 = _mm256_addsub_pd(C21, m); _mm256_store_pd(pC1+4, C21);
+      #ifdef ATL_AVXMAC00
+         C21 = _mm_fmaddsub_pd(a, b, C21);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C21 = _mm256_addsub_pd(C21, m);
+      #endif
+      _mm256_store_pd(pC1+4, C21);
       b = _mm256_unpackhi_pd(iB02, iB02);
-      m    = _mm256_mul_pd(a, b);
-      C22 = _mm256_addsub_pd(C22, m); _mm256_store_pd(pC2+4, C22);
+      #ifdef ATL_AVXMAC00
+         C21 = _mm_fmaddsub_pd(a, b, C22);
+      #else
+         m    = _mm256_mul_pd(a, b);
+         C22 = _mm256_addsub_pd(C22, m);
+      #endif
+      _mm256_store_pd(pC2+4, C22);
       a    = _mm256_shuffle_pd(A, A, 0x5);
    }
 /*
@@ -171,15 +286,27 @@ ATL_SINLINE void ATL_rk2(ATL_CINT M, const TYPE *pA0, ATL_CINT lda0,
  *    Do M=K=0 calcs
  */
       b = _mm256_unpacklo_pd(rB00, rB00);       /* rB00 rB00 rB00 rB00 */
-      m    = _mm256_mul_pd(A, b);
-      C00 = _mm256_add_pd(m, C00);
+      #ifdef ATL_AVXMAC
+         C00 = _mm256_fmadd_pd(A, b, C00);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C00 = _mm256_add_pd(m, C00);
+      #endif
       b = _mm256_unpacklo_pd(rB01, rB01);       /* rB01 rB01 rB01 rB01 */
-      m    = _mm256_mul_pd(A, b);
-      C01 = _mm256_add_pd(m, C01);
+      #ifdef ATL_AVXMAC
+         C01 = _mm256_fmadd_pd(A, b, C01);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C01 = _mm256_add_pd(m, C01);
+      #endif
       b = _mm256_unpacklo_pd(rB02, rB02);       /* rB02 rB02 rB02 rB02 */
-      m    = _mm256_mul_pd(A, b);
-      C02 = _mm256_add_pd(m, C02);  A = _mm256_load_pd(pA1);
-
+      #ifdef ATL_AVXMAC
+         C02 = _mm256_fmadd_pd(A, b, C02);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C02 = _mm256_add_pd(m, C02);
+      #endif
+      A = _mm256_load_pd(pA1);
       b = _mm256_unpacklo_pd(iB00, iB00);       /* iB00 iB00 iB00 iB00 */
       m    = _mm256_mul_pd(a, b);
       C00 = _mm256_addsub_pd(C00, m);
@@ -193,14 +320,26 @@ ATL_SINLINE void ATL_rk2(ATL_CINT M, const TYPE *pA0, ATL_CINT lda0,
  *    Do M=0, K=1 calcs
  */
       b = _mm256_unpackhi_pd(rB00, rB00);       /* rB10 rB10 rB10 rB10 */
-      m    = _mm256_mul_pd(A, b);
-      C00 = _mm256_add_pd(m, C00);
+      #ifdef ATL_AVXMAC
+         C00 = _mm256_fmadd_pd(A, b, C00);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C00 = _mm256_add_pd(m, C00);
+      #endif
       b = _mm256_unpackhi_pd(rB01, rB01);       /* rB11 rB11 rB11 rB11 */
-      m    = _mm256_mul_pd(A, b);
-      C01 = _mm256_add_pd(m, C01);
+      #ifdef ATL_AVXMAC
+         C01 = _mm256_fmadd_pd(A, b, C01);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C01 = _mm256_add_pd(m, C01);
+      #endif
       b = _mm256_unpackhi_pd(rB02, rB02);       /* rB12 rB12 rB12 rB12 */
-      m    = _mm256_mul_pd(A, b);
-      C02 = _mm256_add_pd(m, C02);
+      #ifdef ATL_AVXMAC
+         C02 = _mm256_fmadd_pd(A, b, C02);
+      #else
+         m    = _mm256_mul_pd(A, b);
+         C02 = _mm256_add_pd(m, C02);
+      #endif
 
       b = _mm256_unpackhi_pd(iB00, iB00);       /* iB10 iB10 iB10 iB10 */
       m    = _mm256_mul_pd(a, b);

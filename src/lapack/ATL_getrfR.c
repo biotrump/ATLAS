@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -91,8 +91,8 @@ int ATL_getrfR(const int M, const int N, TYPE *A, const int lda, int *ipiv)
    if (MN > 1)
    {
       Nup = MN >> 1;
-      #ifdef NB
-         if (Nup > NB) Nup = ATL_MulByNB(ATL_DivByNB(Nup));
+      #ifdef ATL_AMM_98LCMMN
+         if (Nup > ATL_AMM_98LCMMN) Nup = (Nup/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
       #endif
       Ndown = M - Nup;
       i = ATL_getrfR(Nup, N, A, lda, ipiv);

@@ -68,46 +68,20 @@ skern: xnegflt xnegr1 xnegmv
 	./xnegr1 $(adefd)/kern/$(skc)/[s,c]R?K.sum
 	- cp $(L1Tdir)/res/[s,c]*_SUMM $(adefd)/kern/$(skc)/.
 sgemm_put:
-	- cp $(adefd)/gemm/$(smc)/[s,c]*AMM*.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]ARANKK.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(smc)/[s,c]WORKING.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]MMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]gMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]guMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]eMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]MMKSSE.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]Clean[M,N,K] $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]best[N,T][N,T]_* $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]uMMRES $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]uClean[M,N,K] $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]uClean[M,N,K]F $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]nreg $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(smc)/[s,c]AMMFRCLST.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(smc)/[s,c]AMMEXBLKS.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(smc)/[s,c]fpuMM $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]NCNB $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]Xover.h $(INCAdir)/.
-	- cp $(adefd)/gemm/$(smc)/[s,c]Xover.h $(MMTdir)/res/.
 sgemm: xnegflt xnegmm
 	rm -f $(adefd)/gemm/$(smc)/[s,c]*
-	- cp $(MMTdir)/res/[s,c]*AMM*.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]ARANKK.sum $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]WORKING.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]Clean[M,N,K] $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]best[N,T][N,T]_* $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]uMMRES $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]uClean[M,N,K] $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]uClean[M,N,K]F $(adefd)/gemm/$(smc)/.
+	- cp $(MMTdir)/res/[s,c]AMMFRCLST.sum $(adefd)/gemm/$(smc)/.
+	- cp $(MMTdir)/res/[s,c]AMMEXBLKS.sum $(adefd)/gemm/$(smc)/.
 	./xnegflt $(adefd)/gemm/$(smc)/*
-	- cp $(MMTdir)/res/[s,c]MMRES.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]gMMRES.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]guMMRES.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]eMMRES.sum $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]MMKSSE.sum $(adefd)/gemm/$(smc)/.
 	- ./xnegmm $(adefd)/gemm/$(smc)/[s,c]*MM*.sum \
                    $(adefd)/gemm/$(smc)/[s,c]ARANKK.sum
 	- cp $(MMTdir)/res/[s,c]nreg $(adefd)/gemm/$(smc)/.
 	- cp $(MMTdir)/res/[s,c]fpuMM $(adefd)/gemm/$(smc)/.
-	- cp $(MMTdir)/res/[s,c]NCNB $(adefd)/gemm/$(smc)/.
-	- cp $(INCAdir)/[s,c]Xover.h $(adefd)/gemm/$(smc)/.
 sla_get:
 	rm -f $(adefd)/lapack/$(smc)/atlas_[s,c]GetNB_*.h
 	for file in $(INCAdir)/atlas_[s,c]GetNB_*.h ; do \
@@ -146,46 +120,20 @@ dkern: xnegflt xnegr1 xnegmv
 	./xnegr1 $(adefd)/kern/$(dkc)/[d,z]R?K.sum
 	- cp $(L1Tdir)/res/[d,z]*_SUMM $(adefd)/kern/$(dkc)/.
 dgemm_put:
-	- cp $(adefd)/gemm/$(dmc)/[d,z]*AMM*.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]ARANKK.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(dmc)/[d,z]WORKING.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]MMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]gMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]guMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]eMMRES.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]MMKSSE.sum $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]Clean[M,N,K] $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]best[N,T][N,T]_* $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]uMMRES $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]uClean[M,N,K] $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]uClean[M,N,K]F $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]nreg $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(dmc)/[d,z]AMMFRCLST.sum $(MMTdir)/res/.
+	- cp $(adefd)/gemm/$(dmc)/[d,z]AMMEXBLKS.sum $(MMTdir)/res/.
 	- cp $(adefd)/gemm/$(dmc)/[d,z]fpuMM $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]NCNB $(MMTdir)/res/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]Xover.h $(INCAdir)/.
-	- cp $(adefd)/gemm/$(dmc)/[d,z]Xover.h $(MMTdir)/res/.
 dgemm: xnegflt xnegmm
 	rm -f $(adefd)/gemm/$(dmc)/[d,z]*
-	- cp $(MMTdir)/res/[d,z]*AMM*.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]ARANKK.sum $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]WORKING.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]Clean[M,N,K] $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]best[N,T][N,T]_* $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]uMMRES $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]uClean[M,N,K] $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]uClean[M,N,K]F $(adefd)/gemm/$(dmc)/.
+	- cp $(MMTdir)/res/[d,z]AMMFRCLST.sum $(adefd)/gemm/$(dmc)/.
+	- cp $(MMTdir)/res/[d,z]AMMEXBLKS.sum $(adefd)/gemm/$(dmc)/.
 	./xnegflt $(adefd)/gemm/$(dmc)/*
-	- cp $(MMTdir)/res/[d,z]MMRES.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]gMMRES.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]guMMRES.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]eMMRES.sum $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]MMKSSE.sum $(adefd)/gemm/$(dmc)/.
 	- ./xnegmm $(adefd)/gemm/$(dmc)/[d,z]*MM*.sum \
                    $(adefd)/gemm/$(dmc)/[d,z]ARANKK.sum
 	- cp $(MMTdir)/res/[d,z]nreg $(adefd)/gemm/$(dmc)/.
 	- cp $(MMTdir)/res/[d,z]fpuMM $(adefd)/gemm/$(dmc)/.
-	- cp $(MMTdir)/res/[d,z]NCNB $(adefd)/gemm/$(dmc)/.
-	- cp $(INCAdir)/[d,z]Xover.h $(adefd)/gemm/$(dmc)/.
 dla_get:
 	rm -f $(adefd)/lapack/$(dmc)/atlas_[d,z]GetNB_*.h
 	for file in $(INCAdir)/atlas_[d,z]GetNB_*.h ; do \
@@ -212,14 +160,11 @@ gemm_put : sgemm_put dgemm_put
 	- cp $(adefd)/gemm/atlas_cacheedge.h $(MMTdir)/res/.
 	- cp $(adefd)/gemm/atlas_tcacheedge.h $(INCAdir)/.
 	- cp $(adefd)/gemm/atlas_tcacheedge.h $(MMTdir)/res/.
-	- cp $(adefd)/gemm/atlas_??NKB.h $(INCAdir)/.
-	- cp $(adefd)/gemm/atlas_??NKB.h $(MMTdir)/res/.
 sys : ssys dsys
 kern : skern dkern
 gemm : sgemm dgemm
 	- cp $(INCAdir)/atlas_cacheedge.h $(adefd)/gemm/
 	- cp $(INCAdir)/atlas_tcacheedge.h $(adefd)/gemm/
-	- cp $(INCAdir)/atlas_??NKB.h $(adefd)/gemm/
 ArchNew : $(mach) xnegflt
 	$(MAKE) sys kern gemm la_get
 	- cp $(BLDdir)/bin/INSTALL_LOG/?PerfSumm.txt $(adefd)/.

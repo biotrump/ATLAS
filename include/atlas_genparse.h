@@ -83,6 +83,51 @@ static int GetL1CacheElts(char pre)
 }
 
 /* procedure 4 */
+static char *ExtendString(char *str, int len)
+/*
+ * Given already-allocated str, allocate a new string of total length len,
+ * copy str to it (strlen(str)<= len)
+ */
+{
+   char *sp;
+   sp = realloc(str, len);
+   assert(sp);
+   return(sp);
+}
+
+/* procedure 5 */
+static char *GetStrForSprintf
+(
+   char *form,  /* format string that will be passed to printf */
+   int extra,   /* extra chars over format length to allocate */
+   char *old    /* original ptr to pass to realloc */
+)
+{
+   old = realloc(old, strlen(form)+extra);
+   assert(old);
+   return(old);
+}
+/* procedure 6 */
+static int NumDecDigits(int num)
+/*
+ * RETURNS: number of decimal digits required to hold num, wt sign of neg #s
+ *          counted as a digit
+ */
+{
+   int bound, nd;
+   if (num < 0)
+   {
+      nd = 2;
+      num = -num;
+   }
+   else
+      nd = 1;
+   for (bound=9; num > bound; nd++)
+      bound = bound*10 + 9;
+   return(nd);
+}
+
+/* procedure 7 */
 static char *DupString(char *str)
 {
    int i,n;
@@ -98,7 +143,7 @@ static char *DupString(char *str)
    return(s);
 }
 
-/* procedure 5 */
+/* procedure 8 */
 static char *GetSingleQuoteString(char *str)
 {
    char *sp;
@@ -114,7 +159,7 @@ static char *GetSingleQuoteString(char *str)
    return(sp);
 }
 
-/* procedure 6 */
+/* procedure 9 */
 static int asmNames2bitfield(char *str)
 /*
  * Takes str containing an assembly name list.  The list is ended by the first
@@ -148,7 +193,7 @@ static int asmNames2bitfield(char *str)
    return(bits);
 }
 
-/* procedure 7 */
+/* procedure 10 */
 static int GetDoubleArr(char *str, int N, double *d)
 /*
  * Reads in a list with form "%le,%le...,%le"; N-length d recieves doubles.
@@ -169,7 +214,7 @@ static int GetDoubleArr(char *str, int N, double *d)
    return(i);
 }
 
-/* procedure 8 */
+/* procedure 11 */
 static char *GetLongerString(char *shrt, int newlen)
 /*
  * Allocates new string of size newlen, copies shrt into it, and frees shrt.
@@ -189,7 +234,7 @@ static char *GetLongerString(char *shrt, int newlen)
    return(sp);
 }
 
-/* procedure 9 */
+/* procedure 12 */
 static char *GetOneLine(FILE *fpin)
 /*
  * RETURNS: string of one line from stream fpin,  NULL if stream exhausted.
@@ -222,7 +267,7 @@ static char *GetOneLine(FILE *fpin)
    return(ln);
 }
 
-/* procedure 10 */
+/* procedure 13 */
 static char *GetJoinedLines(FILE *fpin)
 /*
  * Gets lines from file fpin; if last non-whitespace char is '\', joins lines
@@ -279,7 +324,7 @@ static char *GetJoinedLines(FILE *fpin)
    return(sp);
 }
 
-/* procedure 11 */
+/* procedure 14 */
 static char *GetGoodGcc()
 /*
  * Gets gcc path and name along with mandatory flags (-g/-m64/-pg,etc) by
@@ -300,7 +345,7 @@ static char *GetGoodGcc()
    return(gcc);
 }
 
-/* procedure 12 */
+/* procedure 15 */
 static char *GetKCFlags(char pre)
 /*
  * Gets flags being used for <pre>KCFLAGS
@@ -331,7 +376,7 @@ static char *GetKCFlags(char pre)
    return(DupString(ln+i));
 }
 
-/* procedure 13 */
+/* procedure 16 */
 static int *GF_GetIntList1(int ival)
 /*
  * returns integer array with iarr[0] = 1, iarr[1] = ival
@@ -345,7 +390,7 @@ static int *GF_GetIntList1(int ival)
    return(iarr);
 }
 
-/* procedure 14 */
+/* procedure 17 */
 static int *GF_GetIntList2(int ival1, int ival2)
 /*
  * returns integer array with iarr[0] = 1, iarr[1] = ival1, ival[2] = ival2
@@ -354,14 +399,82 @@ static int *GF_GetIntList2(int ival1, int ival2)
    int *iarr;
    iarr = malloc(3*sizeof(int));
    assert(iarr);
-   iarr[0] = 1;
+   iarr[0] = 2;
    iarr[1] = ival1;
    iarr[2] = ival2;
    return(iarr);
 }
 
-/* procedure 15 */
+/* procedure 18 */
+static int *GF_DupIntList(int *L)
+/*
+ * dups a list of integers L, whose data length is given by L[0];
+ * list is this length+1, since 0'th location gets data length.
+ */
+{
+   int *ip, n;
+   if (!L)
+      return(NULL);
+   n = L[0] + 1;
+   ip = malloc(n*sizeof(int));
+   assert(ip);
+   memcpy(ip, L, n*sizeof(int));
+   return(ip);
+}
 #ifdef ATL_GETFLAGS
+/* procedure 19 */
+static double *GF_GetNDoubleArgs(int nargs, char **args, int i, int n)
+/*
+ * Reads in n doubles from commandline args to produce n-len double array.
+ */
+{
+   int k;
+   double *darr;
+   void PrintUsage(char*, int, char*);
+
+   if (n < 1)
+      return(NULL);
+   darr = malloc(sizeof(double)*n);
+   assert(darr);
+
+   for (k=0; k < n; k++)
+   {
+      if (++i >= nargs)
+         PrintUsage(args[0], i, NULL);
+      darr[k] = atof(args[i]);
+   }
+   return(darr);
+}
+
+/* procedure 20 */
+static double *GF_GetDoubleList(int nargs, char **args, int i, int nmul)
+/*
+ * Gets a list of doubles, whose length is given by atoi(args[i])*nmul
+ * list is this length+1, since 0'th location gets atoi(args[i])
+ */
+{
+   int n, k;
+   double *darr;
+   void PrintUsage(char*, int, char*);
+
+   if (++i >= nargs)
+      PrintUsage(args[0], i, NULL);
+   n = atoi(args[i]) * nmul;
+   assert(n > 0);
+   darr = malloc(sizeof(double)*(n+1));
+   assert(darr);
+
+   darr[0] = n / nmul;
+   for (k=0; k < n; k++)
+   {
+      if (++i >= nargs)
+         PrintUsage(args[0], i, NULL);
+      darr[k+1] = atof(args[i]);
+   }
+   return(darr);
+}
+
+/* procedure 21 */
 static int *GF_GetIntList(int nargs, char **args, int i, int nmul)
 /*
  * Gets a list of integers, whose length is given by atoi(args[i])*nmul
@@ -389,7 +502,7 @@ static int *GF_GetIntList(int nargs, char **args, int i, int nmul)
 }
 #endif
 
-/* procedure 16 */
+/* procedure 22 */
 static int *GF_IntRange2IntList(int N0, int NN, int incN)
 {
    int i, n;

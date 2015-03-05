@@ -9,12 +9,10 @@ RUN_ormtst.sh : $(mySRCdir)/RUN_ormtst.sh
 	cp $(mySRCdir)/RUN_ormtst.sh .
 xstmmnantest : stmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  stmmnantest.o \
-           $(GMMdir)/ATL_ssmall_mm.o $(GMMdir)/ATL_sbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 xssmmnantest : ssmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  ssmmnantest.o \
-           $(GMMdir)/ATL_ssmall_mm.o $(GMMdir)/ATL_sbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 ssmmnantest.o : $(SBINdir)/gemmtst.c ssmmlib
 	$(KC) $(KCFLAGS) -DSREAL=1 -DATL_NANC -DTEST_BIG -DTRUST_SMALL \
                -o $@ -c $(SBINdir)/gemmtst.c
@@ -55,12 +53,10 @@ ssl2lib :
 	cd $(BINdir) ; $(MAKE) sl2lib
 xdtmmnantest : dtmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  dtmmnantest.o \
-           $(GMMdir)/ATL_dsmall_mm.o $(GMMdir)/ATL_dbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 xdsmmnantest : dsmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  dsmmnantest.o \
-           $(GMMdir)/ATL_dsmall_mm.o $(GMMdir)/ATL_dbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 dsmmnantest.o : $(SBINdir)/gemmtst.c dsmmlib
 	$(KC) $(KCFLAGS) -DDREAL=1 -DATL_NANC -DTEST_BIG -DTRUST_SMALL \
                -o $@ -c $(SBINdir)/gemmtst.c
@@ -101,12 +97,10 @@ dsl2lib :
 	cd $(BINdir) ; $(MAKE) dl2lib
 xctmmnantest : ctmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  ctmmnantest.o \
-           $(GMMdir)/ATL_csmall_mm.o $(GMMdir)/ATL_cbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 xcsmmnantest : csmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  csmmnantest.o \
-           $(GMMdir)/ATL_csmall_mm.o $(GMMdir)/ATL_cbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 csmmnantest.o : $(SBINdir)/gemmtst.c csmmlib
 	$(KC) $(KCFLAGS) -DSCPLX=1 -DATL_NANC -DTEST_BIG -DTRUST_SMALL \
                -o $@ -c $(SBINdir)/gemmtst.c
@@ -147,12 +141,10 @@ csl2lib :
 	cd $(BINdir) ; $(MAKE) cl2lib
 xztmmnantest : ztmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  ztmmnantest.o \
-           $(GMMdir)/ATL_zsmall_mm.o $(GMMdir)/ATL_zbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 xzsmmnantest : zsmmnantest.o 
 	$(FLINKER) $(FCLINKFLAGS) -o $@  zsmmnantest.o \
-           $(GMMdir)/ATL_zsmall_mm.o $(GMMdir)/ATL_zbig_mm.o \
-           $(TESTlib) $(ATLASlib) $(LIBS)
+        $(TESTlib) $(ATLASlib) $(LIBS)
 zsmmnantest.o : $(SBINdir)/gemmtst.c zsmmlib
 	$(KC) $(KCFLAGS) -DDCPLX=1 -DATL_NANC -DTEST_BIG -DTRUST_SMALL \
                -o $@ -c $(SBINdir)/gemmtst.c

@@ -63,20 +63,20 @@ static void SortDoubles(int N, double *d)
 }
 
 /* procedure 4 */
-static void *ReadResultsFile(int FULL, int nsample, char *resfile)
+static void *ReadResultsFile(int ACTION, int nsample, char *resfile)
 /*
  * Reads an ATLAS results file, which has the following form:
  *    <N> <walltime>   -> walltime of 0 means CPU timing was used
  *    sample1
  *    ....
  *    sampleN
- * RETURNS: NULL on error or if nsample > N, else if (FULL) it returns
- *          an array of form:  <N> <wall> <sample1> .... <sampleN>
- *          where samples have been sorted from least-to-greatest.
- *          where <N> is the number of samples.
- *          If (!FULL) then a pointer to the max value is returned for
- *          walltime, and a pointer to the median value is returned for
- *          for cputime.
+ * RETURNs NULL on error, otherwise it depends on ACTION:
+ * ACTION    RETURNS
+ * 0         ptr to max value for walltime, median for CPU (serial timing)
+ * 1         entire list of results is returned in N+2 array, of form
+ *              <N> <wall> <sample1> .... <sampleN>
+ *           DRET[0] = N; DRET[1] = 1 if walltime else 0.
+ * 2         ptr to the average (parallel timing)
  */
 {
    static double dret;
@@ -103,6 +103,7 @@ static void *ReadResultsFile(int FULL, int nsample, char *resfile)
    assert(dres);
    dres[0] = n;
    dres[1] = wall;
+   dret = 0.0;
    for (i=0; i < n; i++)
    {
       ierr = (fgets(ln, 1024, fpin) == NULL);
@@ -111,12 +112,16 @@ static void *ReadResultsFile(int FULL, int nsample, char *resfile)
          fclose(fpin);
          return(NULL);
       }
+      dret += dres[i+2];
    }
    fclose(fpin);
    SortDoubles(n, dres+2);
-   if (FULL)
+   if (ACTION == 1)
       return(dres);
-   dret = (wall) ? dres[n+1] : dres[2+n/2];
+   else if (ACTION == 0)
+      dret = (wall) ? dres[n+1] : dres[2+n/2];
+   else /* if (ACTION == 2) */
+      dret /=  dres[0];
    free(dres);
    return(&dret);
 }

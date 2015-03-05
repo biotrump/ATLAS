@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2008 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -82,6 +82,10 @@ static int Side_LA2ATL(int i)
    #define Cgetrf Mjoin(Mjoin(clapack_,PRE),getrf)
    #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
       ATL_assert(Cgetrf(Major_, M_, N_, A_, lda_, ipiv_) == 0)
+#elif defined(TimeBCAMM)
+   #include "atlas_bcamm.h"
+   #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
+      ATL_assert(Mjoin(PATL,tgetrf_bcAmm)(Major_, M_, N_, A_, lda_, ipiv_) == 0)
 #else
    #define test_getrf(Major_, M_, N_, A_, lda_, ipiv_) \
       ATL_assert(ATL_getrf(Major_, M_, N_, A_, lda_, ipiv_) == 0)

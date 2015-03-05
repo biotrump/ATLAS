@@ -350,6 +350,9 @@ enum MACHTYPE Chip2Mach(enum CHIP chip, int model, int x8664)
       case 0x3C:
          iret = IntCorei3;
          break;
+      case 0x3F:  /* 63 */
+         iret = IntCorei3EP;
+         break;
       default:
          iret = MACHOther;
       }

@@ -3,7 +3,7 @@
  * R. Clint Whaley's original ATL_damm5x5x2_arm.S
  */
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2014 Clint Whaley
  *
  * Code contributers : Clint Whaley, Dave Nuechterlein

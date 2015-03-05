@@ -46,13 +46,13 @@ AINCLUDES = \
    $(INCSdir)/atlas_rblas3.h   $(INCSdir)/atlas_kernel3.h \
    $(INCSdir)/atlas_lvl3.h     $(INCSdir)/atlas_level3.h
 SINCLUDES = \
-   $(AINCLUDES) $(INCAdir)/smm.h
+   $(AINCLUDES) $(INCAdir)/atlas_samm_sum.h
 DINCLUDES = \
-   $(AINCLUDES) $(INCAdir)/dmm.h
+   $(AINCLUDES) $(INCAdir)/atlas_damm_sum.h
 CINCLUDES = \
-   $(AINCLUDES) $(INCAdir)/cmm.h
+   $(AINCLUDES) $(INCAdir)/atlas_camm_sum.h
 ZINCLUDES = \
-   $(AINCLUDES) $(INCAdir)/zmm.h
+   $(AINCLUDES) $(INCAdir)/atlas_zamm_sum.h
 #
 ## Object files ########################################################
 #

@@ -68,6 +68,8 @@ static int ATL_ComputeB           /* RETURNS: selected blocking */
    *NT = nblks;
    return(nb);
 }
+ #include Mstr(Mjoin(Mjoin(atlas_,PRE),sysinfo.h))
+
 /*
  * This routine called when 2 < K <= MAXK
  */
@@ -113,9 +115,22 @@ int Mjoin(PATL,ammm_rkK)
    mu = mminfo.mu;
    nu = mminfo.nu;
    ku = mminfo.ku;
-   MB = ATL_ComputeB(M, mu, ATL_MAXM_RKK, &nsmblks, &nmblks);
+/*
+ * If 4 operands (C, wC, A, B) all fit in L1, use small, near-square shapes.
+ * otherwise, use MB/NB from largest KB, which we know fits in some level
+ * of cache.  Using larger M/N will tend to minimize function call overhead,
+ * and shouldn't have much negative effect when in-cache.
+ */
+   MB = mminfo.mb+mu;
+   NB = mminfo.nb+nu;
+   if ((((MB*NB)<<1) + (MB+NB)*K) >= ATL_L1elts)
+   {
+      MB = ATL_MAXM_RKK;
+      NB = ATL_MAXN_RKK;
+   }
+   MB = ATL_ComputeB(M, mu, MB, &nsmblks, &nmblks);
    NMU = MB / mu;
-   NB = ATL_ComputeB(N, nu, ATL_MAXN_RKK, &nsnblks, &nnblks);
+   NB = ATL_ComputeB(N, nu, NB, &nsnblks, &nnblks);
    NNU = NB / nu;
    A_1TRIP = (nnblks < 2);
    #if ATL_MAXKMAJ_RKK > 1
@@ -313,8 +328,7 @@ int Mjoin(PATL,ammm_aliased_rkK)
             ldB = 1;
          }
       }
-      ATL_assert(!Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, a, ldA, b, ldB,
-                                   beta, C, ldc));
+      Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, a, ldA, b, ldB, beta, C, ldc);
       if (xp)
          free(xp);
       if (yp)

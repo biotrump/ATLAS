@@ -1,4 +1,4 @@
-9
+10
 1 2 0 0 axpy1_x0y0.c       "R. Clint Whaley"
 2 2 1 1 axpy1_x1y1.c       "R. Clint Whaley"
 3 2 1 1 axpy32_x1y1.c      "R. Clint Whaley"
@@ -10,6 +10,7 @@
 9 2 1 1 saxpy_sse.c         "R. Clint Whaley" \
 gcc
 -x assembler-with-cpp
+10 2 1 1 axpy_simd_x1y1.c   "R. Clint Whaley"
 
 <ID> <alpha> <incX> <incY> <rout> <author> [\
  <CC>

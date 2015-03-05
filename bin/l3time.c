@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2014 R. Clint Whaley
  *
  * Code contributers : R. Clint Whaley, Jeff Horner, Antoine Petitet
@@ -1922,7 +1922,7 @@ void RunAllTimings(int nreps, int flszKB, int MFF, int ldaG, int ldbG, int ldcG,
                   int iu;
 
                   if (HAS_SD)
-                     cSD = (AtlasRight) ? 'R' : 'L';
+                     cSD = (SD == AtlasRight) ? 'R' : 'L';
                   for (iu=1; iu <= nu; iu++)
                   {
                      const int UP=UPs[iu];
@@ -1930,7 +1930,7 @@ void RunAllTimings(int nreps, int flszKB, int MFF, int ldaG, int ldbG, int ldcG,
                      int id;
 
                      if (HAS_UP)
-                        cUP = (AtlasLower) ? 'L' : 'U';
+                        cUP = (UP == AtlasLower) ? 'L' : 'U';
                      for (id=1; id <= nd; id++)
                      {
                         const int DI=DIs[id];
@@ -1938,7 +1938,7 @@ void RunAllTimings(int nreps, int flszKB, int MFF, int ldaG, int ldbG, int ldcG,
                         int ita;
 
                         if (HAS_DI)
-                           cDI = (AtlasUnit) ? 'U' : 'N';
+                           cDI = (DI == AtlasUnit) ? 'U' : 'N';
                         for (ita=1; ita <= nta; ita++)
                         {
                            const int TA=TAs[ita];
@@ -2304,10 +2304,10 @@ void GetFlags(int nargs, char **args, int *nreps, int *flsizeKB, int *mflop,
             {
             case 'U':
             case 'u':
-               sds[k+1] = AtlasUnit;
+               dis[k+1] = AtlasUnit;
                break;
             default:
-               sds[k+1] = AtlasNonUnit;
+               dis[k+1] = AtlasNonUnit;
                break;
             }
          }

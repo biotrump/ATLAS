@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -39,6 +39,6 @@ int ATL_getri(const enum CBLAS_ORDER Order, const int N, TYPE *A, const int lda,
          ierr = ATL_getriR(N, A, lda, ipiv, wrk, *lwrk);
       else ierr = ATL_getriC(N, A, lda, ipiv, wrk, *lwrk);
    }
-   else *lwrk = ATL_MulByNB(N);
+   else *wrk = N*ATL_AMM_98KB;
    return(ierr);
 }

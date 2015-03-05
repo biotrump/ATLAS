@@ -1,6 +1,6 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
- *                    (C) Copyright 1998 R. Clint Whaley
+ *             Automatically Tuned Linear Algebra Software v3.11.32
+ * Copyright (C) 1998, 2015 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +27,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  *
  */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
@@ -516,97 +515,6 @@ void GetMMRES(char pre, int *muladd, int *lat, int *nb, int *pref,
    fclose(fp);
 }
 
-/*
- *             Automatically Tuned Linear Algebra Software v3.11.31
- *                    (C) Copyright 1999 R. Clint Whaley
- *
- * Code contributers : R. Clint Whaley, Antoine P. Petitet
- *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
- *   1. Redistributions of source code must retain the above copyright
- *      notice, this list of conditions and the following disclaimer.
- *   2. Redistributions in binary form must reproduce the above copyright
- *      notice, this list of conditions, and the following disclaimer in the
- *      documentation and/or other materials provided with the distribution.
- *   3. The name of the ATLAS group or the names of its contributers may
- *      not be used to endorse or promote products derived from this
- *      software without specific written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
- * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
- * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE ATLAS GROUP OR ITS CONTRIBUTORS
- * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
- * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
- * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
- * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
- * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
- * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-int ATL_lcm(const int M, const int N)
-/*
- * Returns least common multiple (LCM) of two positive integers M & N by
- * computing greatest common divisor (GCD) and using the property that
- * M*N = GCD*LCM.
- */
-{
-   register int tmp, max, min, gcd=0;
-
-   if (M != N)
-   {
-      if (M > N) { max = M; min = N; }
-      else { max = N; min = M; }
-      if (min > 0)  /* undefined for negative numbers */
-      {
-         do  /* while (min) */
-         {
-            if ( !(min & 1) ) /* min is even */
-            {
-               if ( !(max & 1) ) /* max is also even */
-               {
-                  do
-                  {
-                     min >>= 1;
-                     max >>= 1;
-                     gcd++;
-                     if (min & 1) goto MinIsOdd;
-                  }
-                  while ( !(max & 1) );
-               }
-               do min >>=1 ; while ( !(min & 1) );
-            }
-/*
- *          Once min is odd, halve max until it too is odd.  Then, use
- *          property that gcd(max, min) = gcd(max, (max-min)/2)
- *          for odd max & min
- */
-MinIsOdd:
-            if (min != 1)
-            {
-               do  /* while (max >= min */
-               {
-                  max -= (max & 1) ? min : 0;
-                  max >>= 1;
-               }
-               while (max >= min);
-            }
-            else return( (M*N) / (1<<gcd) );
-            tmp = max;
-            max = min;
-            min = tmp;
-         }
-         while(tmp);
-      }
-      return( (M*N) / (max<<gcd) );
-   }
-   else return(M);
-}
-
 void GoToTown(int ARCHDEF, int L1DEF, int TuneLA, int NREG)
 {
    const char TR[2] = {'N','T'};
@@ -710,34 +618,6 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA, int NREG)
          upre = 'd';
          break;
       }
-
-      sprintf(ln, "TUNING PREC=\'%c\' (precision %d of %d)", pre, ip+1, nprec);
-      PrintStartStop(stdout, fpsum, 0, 1, 2, ip+1, 0, ln);
-      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 1,
-                     "BUILDING BLOCK MATMUL TUNE");
-/*
- *    If necessary, install matmul for this type
- */
-      sprintf(fnam, "INSTALL_LOG/%cMMRES.sum", pre);
-      if (!FileExists(fnam))  /* need to run search or make link */
-      {
-         sprintf(ln2, "INSTALL_LOG/%cMMSEARCH.LOG", pre);
-         PrintBanner(ln2, 1, 2, ip+1, 1);
-         if (DefInstall)
-         {
-            sprintf(ln, "%s IRunMMDef pre=%c nreg=%d %s %s\n",
-                    fmake, pre, NREG, redir, ln2);
-            fprintf(stdout, "%s", ln);
-            ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
-         }
-         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 1);
-      }
-      mmp = ReadMMFileWithPath(pre, "INSTALL_LOG", "MMRES.sum");
-      assert(mmp);
-      nb = (mmp->next) ? mmp->next->nbB : mmp->nbB;
       #ifdef ATL_CPUMHZ
          fprintf(fpabr, "Clock_rate=%d Mhz\n", ATL_CPUMHZ);
          mfp = ATL_CPUMHZ;
@@ -752,208 +632,197 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA, int NREG)
       #endif
       fprintf(fpabr, "%% clock      MFLOP  ROUTINE/PROBLEM\n");
       fprintf(fpabr, "=======  =========  ===============\n");
-      if (mmp->next && mmp->next->mflop[0] > mmp->mflop[0])
-      {
-         ATL_mprintf(2, fpsum, stdout,
-            "      The best matmul kernel was %s, NB=%d, written by %s\n",
-                    mmp->next->rout, nb,
-                    mmp->next->auth ? mmp->next->auth : "R. Clint Whaley");
-         ATL_mprintf(2, fpsum, stdout,
-            "      Performance: %.2fMFLOPS (%5.2f percent of %s)\n",
-                     mmp->next->mflop[0], (mmp->next->mflop[0]/mfp)*100.0,
-                     peakstr);
-         ATL_mprintf(2, fpsum, stdout,
-                     "        (Gen case got %.2fMFLOPS)\n", mmp->mflop[0]);
-         mmmf = mmp->next->mflop[0];
-      }
-      else
-      {
-         mmmf = mmp->mflop[0];
-         ATL_mprintf(2, fpsum, stdout,
-"      %cL1MATMUL: lat=%d, nb=%d, pf=%d, mu=%d, nu=%d, ku=%d, if=%d, nf=%d;\n",
-                 pre, mmp->lat, nb, mmp->pref, mmp->mu, mmp->nu, mmp->ku,
-                 mmp->iftch, mmp->nftch);
-         ATL_mprintf(2, fpsum, stdout,
-            "                 Performance: %.2f (%5.2f percent of %s)\n",
-                     mmmf, (mmmf/mfp)*100.0, peakstr);
-      }
-      fprintf(fpabr, "%7.1f %10.1f  %s\n", (mmmf/mfp)*100.0, mmmf,
-              "Chosen kgemm");
-      fprintf(fpabr, "%7.1f %10.1f  %s\n", (mmp->mflop[0]/mfp)*100.0,
-              mmp->mflop[0], "Generated kgemm");
-      KillAllMMNodes(mmp);
 
-      sprintf(fnam, "INSTALL_LOG/%cNCNB", pre);
+      sprintf(ln, "TUNING PREC=\'%c\' (precision %d of %d)",
+               pre, ip+1, nprec);
+      PrintStartStop(stdout, fpsum, 0, 1, 2, ip+1, 0, ln);
+      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 1, "GEMVN TUNE");
+      sprintf(fnam, "INSTALL_LOG/%cMVNK.sum", pre);
       if (!FileExists(fnam))
       {
-         sprintf(ln, "%s %s pre=%c %s %s", fmake, fnam, pre, redir, ln2);
+         sprintf(ln2, "INSTALL_LOG/%cMVNTUNE.LOG", pre);
+         PrintBanner(ln2, 1, 2, ip+1, 1);
+         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
          fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
+         ATL_Cassert(system(ln)==0, "MVNTUNE", ln2);
+         ATL_Cassert(FileIsThere(fnam), "MVNTUNE", ln2);
+         PrintBanner(ln2, 0, 2, ip+1, 1);
       }
-      fp = fopen(fnam, "r");
-      ATL_Cassert(fp, "OPENING NCNB", NULL);
-      ATL_Cassert(fscanf(fp, " %d", &ncnb) == 1, "READING NCNB", NULL);
-      fclose(fp);
-
-      for (ia=0; ia < 2; ia++)
       {
-         for (ib=0; ib < 2; ib++)
-         {
-            sprintf(fnam, "INSTALL_LOG/%cbest%c%c_%dx%dx%d", pre, TR[ia], TR[ib],
-                    ncnb, ncnb, ncnb);
-            if (!FileExists(fnam))
-            {
-               sprintf(ln, "%s %s pre=%c nb=%d %s %s",
-                       fmake, fnam, pre, ncnb, redir, ln2);
-               fprintf(stdout, "%s", ln);
-               ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
-            }
-            GetInstLogFile(fnam, pre, &muladd, &pf, &lat, &nb, &mu, &nu, &ku,
-                           &ffetch, &ifetch, &nfetch, &mf);
-            fprintf(stdout,
-   "      NCgemm%c%c : muladd=%d, lat=%d, pf=%d, nb=%d, mu=%d, nu=%d ku=%d,\n",
-                    TR[ia], TR[ib], muladd, lat, pf, nb, mu, nu, ku);
-            fprintf(stdout,"                 ForceFetch=%d, ifetch=%d nfetch=%d\n",
-                    ffetch, ifetch, nfetch);
-            fprintf(stdout,
-"                 Performance = %.2f (%5.2f of copy matmul, %5.2f of %s)\n",
-                    mf, (mf/mmmf)*100.0, (mf / mfp)*100.0, peakstr2);
-            fprintf(fpsum,
-"      mm%c%c   : ma=%d, lat=%d, nb=%d, mu=%d, nu=%d ku=%d, ff=%d, if=%d, nf=%d\n",
-                    TR[ia], TR[ib], muladd, lat, nb, mu, nu, ku,
-                    ffetch, ifetch, nfetch);
-            fprintf(fpsum,
-"               Performance = %.2f (%5.2f of copy matmul, %5.2f of %s)\n",
-                    mf, (mf/mmmf)*100.0, (mf / mfp)*100.0, peakstr2);
-            if (ia != ib)
-               fprintf(fpabr, "%7.1f %10.1f  kgemm%c%c\n", (mf/mfp)*100.0, mf,
-                       TR[ia], TR[ib]);
-         }
+         ATL_mvnode_t *kb, *kp;
+
+         kb = ReadMVFile(fnam);
+         ATL_Cassert(kb, "MVNTUNE", NULL);
+         ATL_MVSplitContexts(kb, &kb, NULL, NULL, NULL);
+         kp = ATL_LastMVNode(kb);
+         ATL_mprintf(2, fpsum, stdout,
+              "      gemvN : main kernel %d:%s written by %s\n", kp->ID,
+                     kp->rout?kp->rout : "Generated",
+                     kp->auth?kp->auth : "R. Clint Whaley");
+         ATL_mprintf(2, fpsum, stdout,
+                     "            mu=%d, nu=%d, using %d Cache Elements\n",
+                     kp->MU, kp->NU, kp->CacheElts);
+         mf = Mmax(kp->mflop[0], kp->mflop[1]);
+         mf = Mmax(mf, kp->mflop[2]);
+         KillAllMVNodes(kb);
+         ATL_mprintf(2, fpsum, stdout,
+                     "              Performance = %.2f (%5.2f of %s)\n",
+                     mf, (mf / mfp)*100.0, peakstr2);
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kgemvN");
       }
+      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 1, "GEMVN TUNE");
+      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 2, "GEMVT TUNE");
+      sprintf(fnam, "INSTALL_LOG/%cMVTK.sum", pre);
+      if (!FileExists(fnam))
+      {
+         sprintf(ln2, "INSTALL_LOG/%cMVTTUNE.LOG", pre);
+         PrintBanner(ln2, 1, 2, ip+1, 2);
+         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
+         fprintf(stdout, "%s", ln);
+         ATL_Cassert(system(ln)==0, "MVTTUNE", ln2);
+         ATL_Cassert(FileIsThere(fnam), "MVTTUNE", ln2);
+         PrintBanner(ln2, 0, 2, ip+1, 2);
+      }
+      {
+         ATL_mvnode_t *kb, *kp;
 
-      sprintf(ln, "%s MMinstall pre=%c %s %s\n", fmake, pre, redir, ln2);
-      fprintf(stdout, "%s", ln);
-      ATL_Cassert(system(ln)==0, "BUILDING BLOCK MATMUL TUNE", ln2);
-
+         kb = ReadMVFile(fnam);
+         ATL_Cassert(kb, "MVTTUNE", NULL);
+         ATL_MVSplitContexts(kb, &kb, NULL, NULL, NULL);
+         kp = ATL_LastMVNode(kb);
+         ATL_mprintf(2, fpsum, stdout,
+              "      gemvT : main kernel %d:%s written by %s\n", kp->ID,
+                     kp->rout?kp->rout : "Generated",
+                     kp->auth?kp->auth : "R. Clint Whaley");
+         ATL_mprintf(2, fpsum, stdout,
+                     "            mu=%d, nu=%d, using %d Cache Elements\n",
+                     kp->MU, kp->NU, kp->CacheElts);
+         mf = Mmax(kp->mflop[0], kp->mflop[1]);
+         mf = Mmax(mf, kp->mflop[2]);
+         KillAllMVNodes(kb);
+         ATL_mprintf(2, fpsum, stdout,
+                     "              Performance = %.2f (%5.2f of %s)\n",
+                     mf, (mf / mfp)*100.0, peakstr2);
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kgemvT");
+      }
+      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 2, "GEMVT TUNE");
+      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 3, "GER  TUNE");
+      sprintf(fnam, "INSTALL_LOG/%cR2K.sum", pre);
+      if (!FileExists(fnam))
+      {
+         sprintf(ln2, "INSTALL_LOG/%cR1TUNE.LOG", pre);
+         PrintBanner(ln2, 1, 2, ip+1, 7);
+         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
+         fprintf(stdout, "%s", ln);
+         ATL_Cassert(system(ln)==0, "R1TUNE", ln2);
+         ATL_Cassert(FileIsThere(fnam), "R1TUNE", ln2);
+         PrintBanner(ln2, 0, 2, ip+1, 3);
+      }
+      {
+         ATL_r1node_t *r1b, *r1B;
+         fnam[14] = '1';
+         r1b = ReadR1File(fnam);
+         ATL_Cassert(r1b, "R1TUNE", NULL);
+         ATL_R1SplitContexts(r1b, &r1B, NULL, NULL, NULL);
+         r1b = r1B;
+         r1B = ATL_LastR1Node(r1B);
+         ATL_mprintf(2, fpsum, stdout,
+              "      ger1 : main kernel %d:%s written by %s\n", r1B->ID,
+                     r1B->rout?r1B->rout : "Generated",
+                     r1B->auth?r1B->auth : "R. Clint Whaley");
+         ATL_mprintf(2, fpsum, stdout,
+                     "            mu=%d, nu=%d, using %d Cache Elements\n",
+                     r1B->MU, r1B->NU, r1B->CacheElts);
+         mf = Mmax(r1B->mflop[0], r1B->mflop[1]);
+         mf = Mmax(mf, r1B->mflop[2]);
+         KillAllR1Nodes(r1b);
+         ATL_mprintf(2, fpsum, stdout,
+                     "              Performance = %.2f (%5.2f of %s)\n",
+                     mf, (mf / mfp)*100.0, peakstr2);
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kger1");
+         fnam[14] = '2';
+         r1b = ReadR1File(fnam);
+         ATL_Cassert(r1b, "R1TUNE", NULL);
+         ATL_R1SplitContexts(r1b, &r1B, NULL, NULL, NULL);
+         r1b = r1B;
+         r1B = ATL_LastR1Node(r1B);
+         ATL_mprintf(2, fpsum, stdout,
+              "      ger2 : main kernel %d:%s written by %s\n", r1B->ID,
+                     r1B->rout?r1B->rout : "Generated",
+                     r1B->auth?r1B->auth : "R. Clint Whaley");
+         ATL_mprintf(2, fpsum, stdout,
+                     "            mu=%d, nu=%d, using %d Cache Elements\n",
+                     r1B->MU, r1B->NU, r1B->CacheElts);
+         mf = Mmax(r1B->mflop[0], r1B->mflop[1]);
+         mf = Mmax(mf, r1B->mflop[2]);
+         KillAllR1Nodes(r1b);
+         ATL_mprintf(2, fpsum, stdout,
+                     "              Performance = %.2f (%5.2f of %s)\n",
+                     mf, (mf / mfp)*100.0, peakstr2);
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kger2");
+      }
+      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 3, "GER  TUNE");
+/*
+ *    Detection of CacheEdge currently missing
+ */
+/*
+ *    GEMM install
+ */
+      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 4, "GEMM TUNE");
       if (pre == 'd' || pre == 's')
       {
-
+         sprintf(ln2, "INSTALL_LOG/%cAMMTUNE.LOG", pre);
          sprintf(ln, "%s AMMinstall pre=%c %s %s\n", fmake, pre, redir, ln2);
          fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+         ATL_Cassert(system(ln)==0, "GEMM TUNE", ln2);
          mmb = ReadMMFileWithPath(pre, "INSTALL_LOG", "eAMMRES.sum");
          ATL_Cassert(mmb, "ACCESS-MAJOR MATMUL TUNE", ln2);
-         if (mmb)
-         {
-            for (mmp=mmb; mmp->next; mmp = mmp->next);
-            ATL_mprintf(2, fpsum, stdout,
+         for (mmp=mmb; mmp->next; mmp = mmp->next);
+         ATL_mprintf(2, fpsum, stdout,
     "\n      The best access-major matmul kernel was %s, MB=%d, NB=%d, KB=%d\n",
-                        mmp->rout, mmp->mbB, mmp->nbB, mmp->kbB);
-            ATL_mprintf(2, fpsum, stdout, "      written %s\n",
-                        mmp->auth ? mmp->auth : "R. Clint Whaley");
-            mf = mmp->mflop[0];
-            ATL_mprintf(2, fpsum, stdout,
-               "      Performance: %.2fMFLOPS (%.2f of block-major MM)\n",
-                        mf, (mf/mmmf)*100.0);
-            if (mf > mmmf)
-            {
-               sprintf(ln, "%s AMM_use pre=%c", fmake, pre);
-               ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
-            }
-            else
-            {
-               sprintf(ln, "%s AMM_disable pre=%c", fmake, pre);
-               ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
-            }
-            KillAllMMNodes(mmb);
-         }
-         else
-         {
-            ATL_mprintf(2, fpsum, stdout,
-                        "\n      Access-major matmul install FAILED!\n\n");
-            sprintf(ln, "%s AMM_disable pre=%c", fmake, pre);
-            ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
-         }
+                     mmp->rout, mmp->mbB, mmp->nbB, mmp->kbB);
+         ATL_mprintf(2, fpsum, stdout, "      written %s\n",
+                     mmp->auth ? mmp->auth : "R. Clint Whaley");
+         mf = mmp->mflop[0];
+         ATL_mprintf(2, fpsum, stdout,
+                     "      Performance: %.2fMFLOPS (%.2f of %s)\n",
+                     mf, (mf / mfp)*100.0, peakstr2);
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kgemm");
+         sprintf(ln, "%s AMM_use pre=%c", fmake, pre);
+         ATL_Cassert(system(ln)==0, "BUILDING BLOCK AMM TUNE", ln2);
+         KillAllMMNodes(mmb);
       }
+      else  /* complex types use real kernels, but must retune NBs */
+      {
+         sprintf(ln2, "INSTALL_LOG/atlas_%camm_sum.h", pre);
+         if (!FileExists(ln2))
+         {
+            sprintf(ln2, "INSTALL_LOG/%cAMMNBTUNE.LOG", pre);
+            sprintf(ln, "%s cAMMinstall pre=%c %s %s\n", fmake, pre, redir,ln2);
+            fprintf(stdout, "%s", ln);
+            ATL_Cassert(system(ln)==0, "COMPLEX AMM NB REFINEMENT", ln2);
+         }
+         sprintf(ln, "grep ATL_CAMM_APERF INSTALL_LOG/atlas_%camm_sum.h | "
+                 "sed -e \"s/#define //\" -e \"s/ATL_CAMM_APERF //\""
+                 ">! INSTALL_LOG/%cGEMM.MFLOP\n", pre, pre);
+         mf = 1.0;
+         if (system(ln))
+         {
+            sprintf(ln, "INSTALL_LOG/%cGEMM.MFLOP", pre);
+            fp = fopen(ln, "r");
+            if (fp)
+            {
+               if (fscanf(fp, " %le", &mf) != 1)
+                  mf = 1.0;
+               fclose(fp);
+            }
+         }
+         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "cgemm");
+      }
+      fclose(fpabr);
 
       fprintf(fpsum, "\n");
       PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 1, NULL);
-/*
- *    If necessary, find cacheedge
- */
-      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 2, "CacheEdge DETECTION");
-      sprintf(ln2, "INSTALL_LOG/%cMMCACHEEDGE.LOG", pre);
-      if (!FileExists("INSTALL_LOG/atlas_cacheedge.h"))
-      {
-         PrintBanner(ln2, 1, 2, ip+1, 2);
-         sprintf(ln, "%s INSTALL_LOG/atlas_cacheedge.h pre=%c %s %s\n",
-                 fmake, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "CACHEEDGE DETECTION", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 2);
-      }
-      fp = fopen("INSTALL_LOG/atlas_cacheedge.h", "r");
-      ATL_Cassert(fp, "CACHE EDGE DETECTION", NULL);
-      ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-      ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-      ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-      if (fgets(ln3, 256, fp))
-      {
-         ATL_Cassert(sscanf(ln+21, " %d", &i)==1, "CACHE EDGE DETECTION", NULL);
-      }
-      else i = 0;
-      fprintf(fpsum, "      CacheEdge set to %d bytes\n", i);
-      fclose(fp);
-/*
- *    Determine [ZD,CS]NKB, if necessary
- */
-      if (pre == 'z' || pre == 'c')
-      {
-         sprintf(ln3, "INSTALL_LOG/atlas_%c%cNKB.h", pre, upre);
-         if (!FileExists(ln3))
-         {
-            sprintf(ln, "%s %s pre=%c %s %s\n",
-                    fmake, ln3, pre, redir, ln2);
-            fprintf(stdout, "%s", ln);
-            ATL_Cassert(system(ln)==0, "CACHEEDGE DETECTION", ln2);
-         }
-         fp = fopen(ln3, "r");
-         ATL_Cassert(fp, "CACHE EDGE DETECTION", NULL);
-         ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-         ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-         ATL_Cassert(fgets(ln, 256, fp), "CACHE EDGE DETECTION", NULL);
-         if (fgets(ln3, 256, fp))
-         {
-            ATL_Cassert(sscanf(ln+21, " %d", &i)==1,
-                               "CACHE EDGE DETECTION", NULL);
-         }
-         else i = 0;
-         fprintf(fpsum, "      %c%cNKB set to %d bytes\n", pre, upre, i);
-         fclose(fp);
-      }
-      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 2, NULL);
-/*
- *    If necessary, determine Xover for this data type
- */
-      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 3, "SMALL/LARGE CROSSOVER");
-      sprintf(fnam, "INSTALL_LOG/%cXover.h", pre);
-      if (!FileExists(fnam))  /* need to run Xover tests */
-      {
-         sprintf(ln2, "INSTALL_LOG/%cMMCROSSOVER.LOG", pre);
-         PrintBanner(ln2, 1, 2, ip+1, 3);
-            fprintf(stdout,
-              "\n\n   STAGE 2-%d-3: COPY/NO-COPY CROSSOVER DETECTION\n", ip+1);
-         fprintf(fpsum,
-              "\n\n   STAGE 2-%d-3: COPY/NO-COPY CROSSOVER DETECTION\n", ip+1);
-
-         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "COPY/NO-COPY CROSSOVER DETECTION", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 3);
-         fprintf(stdout, "      done.\n");
-         fprintf(fpsum , "      done.\n");
-      }
-      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 3, NULL);
 
       sprintf(ln2, "INSTALL_LOG/%cL3TUNE.LOG", pre);
       PrintBanner(ln2, 1, 2, ip+1, 5);
@@ -977,113 +846,6 @@ void GoToTown(int ARCHDEF, int L1DEF, int TuneLA, int NREG)
       PrintBanner(ln2, 0, 2, ip+1, 5);
       PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 4, "L3BLAS TUNE");
 
-
-      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 5, "GEMV TUNE");
-      sprintf(fnam, "INSTALL_LOG/%cMVNK.sum", pre);
-      if (!FileExists(fnam))
-      {
-         sprintf(ln2, "INSTALL_LOG/%cMVNTUNE.LOG", pre);
-         PrintBanner(ln2, 1, 2, ip+1, 7);
-         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "MVNTUNE", ln2);
-         ATL_Cassert(FileIsThere(fnam), "MVNTUNE", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 7);
-      }
-      {
-         ATL_mvnode_t *kb, *kp;
-
-         kb = ReadMVFile(fnam);
-         ATL_Cassert(kb, "MVNTUNE", NULL);
-         ATL_MVSplitContexts(kb, &kb, NULL, NULL, NULL);
-         kp = ATL_LastMVNode(kb);
-         ATL_mprintf(2, fpsum, stdout,
-              "      gemvN : main kernel %d:%s written by %s\n", kp->ID,
-                     kp->rout?kp->rout : "Generated",
-                     kp->auth?kp->auth : "R. Clint Whaley");
-         ATL_mprintf(2, fpsum, stdout,
-                     "            mu=%d, nu=%d, using %d Cache Elements\n",
-                     kp->MU, kp->NU, kp->CacheElts);
-         mf = Mmax(kp->mflop[0], kp->mflop[1]);
-         mf = Mmax(mf, kp->mflop[2]);
-         KillAllMVNodes(kb);
-         ATL_mprintf(2, fpsum, stdout,
-"              Performance = %.2f (%5.2f of copy matmul, %5.2f of %s)\n",
-                 mf, (mf/mmmf)*100.0, (mf / mfp)*100.0, peakstr2);
-         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kgemvN");
-      }
-      sprintf(fnam, "INSTALL_LOG/%cMVTK.sum", pre);
-      if (!FileExists(fnam))
-      {
-         sprintf(ln2, "INSTALL_LOG/%cMVTTUNE.LOG", pre);
-         PrintBanner(ln2, 1, 2, ip+1, 7);
-         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "MVTTUNE", ln2);
-         ATL_Cassert(FileIsThere(fnam), "MVTTUNE", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 7);
-      }
-      {
-         ATL_mvnode_t *kb, *kp;
-
-         kb = ReadMVFile(fnam);
-         ATL_Cassert(kb, "MVTTUNE", NULL);
-         ATL_MVSplitContexts(kb, &kb, NULL, NULL, NULL);
-         kp = ATL_LastMVNode(kb);
-         ATL_mprintf(2, fpsum, stdout,
-              "      gemvT : main kernel %d:%s written by %s\n", kp->ID,
-                     kp->rout?kp->rout : "Generated",
-                     kp->auth?kp->auth : "R. Clint Whaley");
-         ATL_mprintf(2, fpsum, stdout,
-                     "            mu=%d, nu=%d, using %d Cache Elements\n",
-                     kp->MU, kp->NU, kp->CacheElts);
-         mf = Mmax(kp->mflop[0], kp->mflop[1]);
-         mf = Mmax(mf, kp->mflop[2]);
-         KillAllMVNodes(kb);
-         ATL_mprintf(2, fpsum, stdout,
-"              Performance = %.2f (%5.2f of copy matmul, %5.2f of %s)\n",
-                 mf, (mf/mmmf)*100.0, (mf / mfp)*100.0, peakstr2);
-         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kgemvT");
-      }
-      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 5, "GEMV TUNE");
-      PrintStartStop(stdout, fpsum, 3, 1, 2, ip+1, 6, "GER TUNE");
-      sprintf(fnam, "INSTALL_LOG/%cR2K.sum", pre);
-      if (!FileExists(fnam))
-      {
-         sprintf(ln2, "INSTALL_LOG/%cR1TUNE.LOG", pre);
-         PrintBanner(ln2, 1, 2, ip+1, 7);
-         sprintf(ln, "%s %s pre=%c %s %s\n", fmake, fnam, pre, redir, ln2);
-         fprintf(stdout, "%s", ln);
-         ATL_Cassert(system(ln)==0, "R1TUNE", ln2);
-         ATL_Cassert(FileIsThere(fnam), "R1TUNE", ln2);
-         PrintBanner(ln2, 0, 2, ip+1, 7);
-         fnam[14] = '1';
-      }
-      {
-         ATL_r1node_t *r1b, *r1B;
-         r1b = ReadR1File(fnam);
-         ATL_Cassert(r1b, "R1TUNE", NULL);
-         ATL_R1SplitContexts(r1b, &r1B, NULL, NULL, NULL);
-         r1b = r1B;
-         r1B = ATL_LastR1Node(r1B);
-         ATL_mprintf(2, fpsum, stdout,
-              "      ger : main kernel %d:%s written by %s\n", r1B->ID,
-                     r1B->rout?r1B->rout : "Generated",
-                     r1B->auth?r1B->auth : "R. Clint Whaley");
-         ATL_mprintf(2, fpsum, stdout,
-                     "            mu=%d, nu=%d, using %d Cache Elements\n",
-                     r1B->MU, r1B->NU, r1B->CacheElts);
-         mf = Mmax(r1B->mflop[0], r1B->mflop[1]);
-         mf = Mmax(mf, r1B->mflop[2]);
-         KillAllR1Nodes(r1b);
-         ATL_mprintf(2, fpsum, stdout,
-"              Performance = %.2f (%5.2f of copy matmul, %5.2f of %s)\n",
-                 mf, (mf/mmmf)*100.0, (mf / mfp)*100.0, peakstr2);
-         fprintf(fpabr, "%7.1f %10.1f  %s\n", (mf/mfp)*100.0, mf, "kger");
-         fclose(fpabr);
-      }
-      PrintStartStop(stdout, fpsum, 3, 0, 2, ip+1, 6, "GER TUNE");
-      PrintStartStop(stdout, fpsum, 0, 0, 2, 0, 0, "TYPE-DEPENDENT TUNING");
    }
    PrintStartStop(stdout, fpsum, 0, 0, 2, 0, 0, "TYPE-DEPENDENT TUNING");
    PrintStartStop(stdout, fpsum, 0, 1, 3, 0, 0, "GENERAL LIBRARY BUILD");

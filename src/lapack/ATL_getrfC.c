@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1999 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -302,8 +302,9 @@ int ATL_getrfC(const int M, const int N, TYPE *A, const int lda, int *ipiv)
    if (MN > ATL_luMmin)
    {
       Nleft = MN >> 1;
-      #ifdef NB
-         if (Nleft > NB) Nleft = ATL_MulByNB(ATL_DivByNB(Nleft));
+      #ifdef ATL_AMM_98LCMMN
+         if (Nleft > ATL_AMM_98LCMMN)
+            Nleft = (Nleft/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
       #endif
       Nright = N - Nleft;
       i = ATL_getrfC(M, Nleft, A, lda, ipiv);  /* factor left to L & U */

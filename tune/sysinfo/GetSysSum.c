@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -49,7 +49,7 @@ int GetL1CacheSize(int MaxL1Size)
    }
    L1f = fopen("res/L1CacheSize", "r");
    assert(L1f != NULL);
-   fscanf(L1f, "%d", &L1Size);
+   assert(fscanf(L1f, "%d", &L1Size) == 1);
    fclose(L1f);
    fprintf(stderr, "\n      Read in L1 Cache size as = %dKB.\n",L1Size);
    return(L1Size);
@@ -156,7 +156,7 @@ int getmmnreg(char pre)
    }
    fp = fopen(fnam, "r");
    assert(fp);
-   fscanf(fp, " %d", &mmnregs);
+   assert(fscanf(fp, " %d", &mmnregs) == 1);
    fclose(fp);
    return(mmnregs);
 }

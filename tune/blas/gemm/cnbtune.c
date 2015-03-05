@@ -270,8 +270,8 @@ double GetMflops(ATL_CINT M, ATL_CINT N, ATL_CINT K, TYPE *A, TYPE *B, TYPE *C)
    return(Time2Mflops(M, N, K, t0));
 }
 
-void TuneBlocking(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C,
-              int *MB_, int *NB_, int *KB_)
+double TuneBlocking(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C,
+                    int *MB_, int *NB_, int *KB_)
 {
    int mbB=ATL_AMM_MBs[IK], nbB=ATL_AMM_NBs[IK], kbB=ATL_AMM_KBs[IK];
    int mb=mbB, nb=nbB, kb=kbB, m, n, k;
@@ -285,7 +285,7 @@ void TuneBlocking(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C,
    k = (K/kbB)*kbB;
    mf0 = mf = mfB = GetMflops(m, n, k, A, B, C);
    printf("  %7d %7d %7d %4d %4d %4d %4d %14.2f\n",
-          m, n, k, IK, mb, nb, kb, mf);
+          m, n, k, IK, mb, nb, kb, 4.0*mf);
    while(FindLowerBlock(&mb, &nb, &kb))
    {
       MB = mb;
@@ -296,7 +296,7 @@ void TuneBlocking(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C,
       k = (K/kb)*kb;
       mf = GetMflops(m, n, k, A, B, C);
       printf("  %7d %7d %7d %4d %4d %4d %4d %14.2f\n",
-             m, n, k, IK, mb, nb, kb, mf);
+             m, n, k, IK, mb, nb, kb, 4.0*mf);
       if (mf > mfB)
       {
          mbB = mb;
@@ -312,6 +312,7 @@ void TuneBlocking(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C,
    *MB_ = mbB;
    *NB_ = nbB;
    *KB_ = kbB;
+   return(mfB);
 }
 
 int TuneIndx(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C)
@@ -329,7 +330,7 @@ int TuneIndx(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C)
       IK = ik;
       mf = GetMflops(m, n, k, A, B, C);
       printf("  %7d %7d %7d %4d %4d %4d %4d %14.2f\n",
-             m, n, k, ik, mb, nb, kb, mf);
+             m, n, k, ik, mb, nb, kb, 4.0*mf);
       if (mf > mfB)
       {
          iB = ik;
@@ -345,15 +346,17 @@ int TuneIndx(int M, int N, int K, TYPE *A, TYPE *B, TYPE *C)
 void TuneCplxNB(FILE *fpout, int M, int N, int K, TYPE *A, TYPE *B, TYPE *C)
 {
    int ik, mb, nb, kb;
+   double mfB;
    ik = TuneIndx(M, N, K, A, B, C);
    IK = ik;
-   TuneBlocking(M, N, K, A, B, C, &mb, &nb, &kb);
+   mfB = TuneBlocking(M, N, K, A, B, C, &mb, &nb, &kb);
    fprintf(fpout, "#ifndef ATL_%cAMM_SUM_H\n   #define ATLAS_%cAMM_SUM_H\n\n",
            MY_PRE2, MY_PRE2);
    fprintf(fpout, "   #define ATL_CAMM_MAXINDX %d\n", IK);
    fprintf(fpout, "   #define ATL_CAMM_MAXMB %d\n", mb);
    fprintf(fpout, "   #define ATL_CAMM_MAXNB %d\n", nb);
    fprintf(fpout, "   #define ATL_CAMM_MAXKB %d\n", kb);
+   fprintf(fpout, "   #define ATL_CAMM_APERF %e\n", 4.0*mfB);
    fprintf(fpout, "\n#endif\n");
    fclose(fpout);
 }

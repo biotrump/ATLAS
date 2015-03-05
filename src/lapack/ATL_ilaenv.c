@@ -572,21 +572,19 @@ int ATL_ilaenv(enum ATL_ISPEC ISPEC, enum ATL_LAROUT ROUT, unsigned int OPTS,
             }
          }
 /*
- *       For ORMQR, do not except really small nb, since it doesn't have
+ *       For ORMQR, do not accept really small nb, since it doesn't have
  *       cost of QR2 dragging it down
  */
          if (ROUT & LAormqr)
          {
             if (OPTS & LADreal)
-               ns = ATL_dGetNB();
+               nb = ATL_dlaGetB(mindim, mindim, 0, 2);
             else if (OPTS & LASreal)
-               ns = ATL_sGetNB();
+               nb = ATL_slaGetB(mindim, mindim, 0, 2);
             else if (OPTS & LAScplx)
-               ns = ATL_cGetNB();
+               nb = ATL_claGetB(mindim, mindim, 0, 2);
             else
-               ns = ATL_zGetNB();
-            if (nb < ns)
-               nb = 0;
+               nb = ATL_zlaGetB(mindim, mindim, 0, 2);
          }
       }
 /*
@@ -595,43 +593,22 @@ int ATL_ilaenv(enum ATL_ISPEC ISPEC, enum ATL_LAROUT ROUT, unsigned int OPTS,
  */
       if (!nb)
       {
-         if (OPTS & LADreal)
-            nb = ATL_dGetNB();
-         else if (OPTS & LASreal)
-            nb = ATL_sGetNB();
-         else if (OPTS & LADcplx)
-            nb = ATL_zGetNB();
-         else
-            nb = ATL_cGetNB();
-         if (mindim < 8)
-            nb = 1;
-         else if (nb < (mindim>>1))
-            nb = (mindim>>1);
-/*
- *       Routines that do extra flops based on NB need to constrain NB
- */
+
+         int hint = 1;
          if ((LAgeqrf | LAormqr | LAgehrd | LAgebrd |
               LAsytrd | LAhetrd | LArorgen | LAcungen) & ROUT)
-         {
-            if (OPTS & LADreal)
-            {
-               if (nb > 64)
-                 nb = 60;
-            }
-            else if (OPTS & LASreal)
-            {
-               if (nb > 80)
-                  nb = 80;
-            }
-            else
-            {
-               if (nb > 64)
-                  nb = 40;
-            }
-         }
+            hint = 2;
+         if (ROUT & LAstebz)
+            nb = 1;
+         else if (OPTS & LADreal)
+            nb = ATL_dlaGetB(mindim, mindim, 0, hint);
+         else if (OPTS & LASreal)
+            nb = ATL_slaGetB(mindim, mindim, 0, hint);
+         else if (OPTS & LAScplx)
+            nb = ATL_claGetB(mindim, mindim, 0, hint);
+         else
+            nb = ATL_zlaGetB(mindim, mindim, 0, hint);
       }
-      else if (ROUT & LAstebz)
-         nb = 1;
       return(nb);
    case LAIS_MIN_NB:  /* changed from LAPACK to require 4 rather than 2 cols */
       nb = 4;    /* most GEMMs need at least one MU/NU of 4 */

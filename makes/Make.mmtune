@@ -76,7 +76,8 @@ betan=$(beta)
 loopO = JIK
 F0 = 16
 FN = 0
-moves = -DMoveA -DMoveB
+moves = -DMoveA -DMoveB             # serial timer takes this form
+kmoves = -DATL_MOVEA -DATL_MOVEB    # ammm kernels take this form
 cleanup = 0
 casnam =
 bnb = 28
@@ -88,6 +89,12 @@ flagfile=ignore
 srchflags=
 nreg=0
 kmaj=0
+mvA=1
+mvB=1
+mvC=0
+outF=
+FMF=750.0
+NRF=-1  # change to -2 to get unconstrained MB
 casarg = pre=$(pre) ta=$(ta) tb=$(tb) muladd=$(muladd) lat=$(lat) \
          loopO=$(loopO) M=$(M) N=$(N) K=$(K) mb=$(mb) nb=$(nb) kb=$(kb) \
          mu=$(mu) nu=$(nu) ku=$(ku) lda=$(lda) ldb=$(ldb) ldc=$(ldc) \
@@ -165,6 +172,14 @@ ATL_ccm2am_a$(al)_$(UR).c : $(basf) force_build
 	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
                 -def dupB "${dupB}" -def kmaj "${kmaj}" \
                 -o ATL_ccm2am_a$(al)_$(UR).c rout=ATL_ccm2am
+ATL_cam2rm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_cam2rm_a$(al)_$(UR).c rout=ATL_cam2rm
+ATL_cam2cm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_cam2cm_a$(al)_$(UR).c rout=ATL_cam2cm
 ATL_cablk2cmat_${mu}x${nu}_a$(al)_b$(be).c : $(basf) force_build
 	$(extC) -def mu "${mu}" -def nu "${nu}" -def alpha "${alpha}" \
                 -def beta "${beta}" rout=ATL_cablk2cmat \
@@ -181,6 +196,14 @@ ATL_zcm2am_a$(al)_$(UR).c : $(basf) force_build
 	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
                 -def dupB "${dupB}" -def kmaj "${kmaj}" \
                 -o ATL_zcm2am_a$(al)_$(UR).c rout=ATL_ccm2am
+ATL_zam2rm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_zam2rm_a$(al)_$(UR).c rout=ATL_cam2rm
+ATL_zam2cm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_zam2cm_a$(al)_$(UR).c rout=ATL_cam2cm
 ATL_zablk2cmat_${mu}x${nu}_a$(al)_b$(be).c : $(basf) force_build
 	$(extC) -def mu "${mu}" -def nu "${nu}" -def alpha "${alpha}" \
                 -def beta "${beta}" rout=ATL_cablk2cmat \
@@ -197,6 +220,14 @@ ATL_scm2am_a$(al)_$(UR).c : $(basf) force_build
 	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
                 -def dupB "${dupB}" -def kmaj "${kmaj}" \
                 -o ATL_scm2am_a$(al)_$(UR).c rout=ATL_cm2am
+ATL_sam2rm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_sam2rm_a$(al)_$(UR).c rout=ATL_am2rm
+ATL_sam2cm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_sam2cm_a$(al)_$(UR).c rout=ATL_am2cm
 ATL_sablk2cmat_${mu}x${nu}_a$(al)_b$(be).c : $(basf) force_build
 	$(extC) -def mu "${mu}" -def nu "${nu}" -def alpha "${alpha}" \
                 -def beta "${beta}" rout=ATL_ablk2cmat \
@@ -213,6 +244,14 @@ ATL_dcm2am_a$(al)_$(UR).c : $(basf) force_build
 	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
                 -def dupB "${dupB}" -def kmaj "${kmaj}" \
                 -o ATL_dcm2am_a$(al)_$(UR).c rout=ATL_cm2am
+ATL_dam2rm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_dam2rm_a$(al)_$(UR).c rout=ATL_am2rm
+ATL_dam2cm_a$(al)_$(UR).c : $(basf) force_build
+	$(extC) -def mu "${UR}" -def nu "${UR}" -def alpha "${alpha}" \
+                -def dupB "${dupB}" -def kmaj "${kmaj}" \
+                -o ATL_dam2cm_a$(al)_$(UR).c rout=ATL_am2cm
 ATL_dablk2cmat_${mu}x${nu}_a$(al)_b$(be).c : $(basf) force_build
 	$(extC) -def mu "${mu}" -def nu "${nu}" -def alpha "${alpha}" \
                 -def beta "${beta}" rout=ATL_ablk2cmat \
@@ -351,6 +390,9 @@ xemit_fmm : emit_fmm.o
 xhcsearch : hcsearch.o
 	$(XCC) $(XCCFLAGS) -o xhcsearch hcsearch.o
 
+$(BLDdir)/src/threads/lapack/amm/sumd :
+	mkdir $(BLDdir)/src/threads/lapack/amm/sumd
+
 RunHCtest : xhcsearch
 	rm -f $(INCAdir)/$(pre)mmcase.h
 	touch $(INCAdir)/$(pre)mmcase.h
@@ -381,7 +423,7 @@ scases.dsc: xuserindex $(mySRCdir)/CASES/scases.0 $(mySRCdir)/CASES/scases.SSE \
                  $(mySRCdir)/CASES/scases.3DN $(mySRCdir)/CASES/scases.flg 
 	./xuserindex -p s
 res/snreg : xgmmsearch
-	./xgmmsearch -p s -r $(nreg)
+	./xgmmsearch -p s -r -1
 sRun_tfc : stfc
 	$(ATLRUN) $(MMTdir) xstfc
 	cp -f $(INCAdir)/sXover.h res/.
@@ -398,22 +440,40 @@ res/sAMMKCLEAN.sum : xammsearch
 	./xammsearch -p s
 res/seAMMRES.sum : xammsearch
 	./xammsearch -p s
+ssave_uamm : $(usaved)
+	cp res/suAMMFRC.sum $(usaved)/.
+	cp res/sUMMKCLEAN.sum $(usaved)/.
+	cp res/sUMMKCLEANBYNB.sum $(usaved)/.
+srestore_uamm : $(usaved)
+	cp $(usaved)/suAMMFRC.sum res/.
+	cp $(usaved)/sUMMKCLEAN.sum res/.
+	cp $(usaved)/sUMMKCLEANBYNB.sum res/.
+suamm_getrf : xuammsearch $(BLDdir)/src/threads/lapack/amm/sumd
+	./xuammsearch -p s -b $(NRF) -M 2 a c -T 1.01 -K 0
+	make sinstall_uamm_noclean ID=0
+	cp res/suAMMFRC.sum $(BLDdir)/src/threads/lapack/amm/sumd/.
+
 sinstall_uamm: res/suAMMFRC.sum res/sUMMKCLEAN.sum \
               res/sUMMKCLEANBYNB.sum xemit_uamm
-	./xemit_uamm -p s -I $(ID) -d $(GMMdir)/../ammm/UKERNEL \
+	./xemit_uamm -p s -I $(ID) -d $(AMMdir)/UKERNEL \
             -i res/suAMMFRC.sum \
             -k res/sUMMKCLEAN.sum -K res/sUMMKCLEANBYNB.sum
-	mv $(GMMdir)/../ammm/UKERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm/UKERNEL ; $(PMAKE) -f sMake_amm
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f sMake_amm
+sinstall_uamm_noclean: res/suAMMFRC.sum xemit_uamm
+	./xemit_uamm -p s -I $(ID) -d $(AMMdir)/UKERNEL \
+            -i res/suAMMFRC.sum 
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f sMake_amm
 sinstall_ammm: sinstall_amm
 sinstall_amm: res/seAMMRES.sum res/sAMMKCLEAN.sum \
               res/sAMMKCLEANBYNB.sum res/sARANKK.sum xemit_amm
-	- cd $(GMMdir)/../ammm/KERNEL ; $(PMAKE) -f sMake_amm skillall
-	./xemit_amm -p s -d $(GMMdir)/../ammm/KERNEL -i res/seAMMRES.sum \
+	- cd $(AMMdir)/KERNEL ; $(PMAKE) -f sMake_amm skillall
+	./xemit_amm -p s -d $(AMMdir)/KERNEL -i res/seAMMRES.sum \
                     -k res/sAMMKCLEAN.sum -K res/sAMMKCLEANBYNB.sum \
                     -r res/sARANKK.sum
-	mv $(GMMdir)/../ammm/KERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm ; $(PMAKE) slib
+	mv $(AMMdir)/KERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir) ; $(PMAKE) slib
 sinstall : xemit_mm res/sMMRES.sum $(BINdir)/xccobj \
                 res/sCleanM res/sCleanN res/sCleanK \
                 res/suCleanMF res/suCleanNF res/suCleanKF 
@@ -495,7 +555,7 @@ dcases.dsc: xuserindex $(mySRCdir)/CASES/dcases.0 $(mySRCdir)/CASES/dcases.SSE \
                  $(mySRCdir)/CASES/dcases.3DN $(mySRCdir)/CASES/dcases.flg 
 	./xuserindex -p d
 res/dnreg : xgmmsearch
-	./xgmmsearch -p d -r $(nreg)
+	./xgmmsearch -p d -r -1
 dRun_tfc : dtfc
 	$(ATLRUN) $(MMTdir) xdtfc
 	cp -f $(INCAdir)/dXover.h res/.
@@ -512,22 +572,40 @@ res/dAMMKCLEAN.sum : xammsearch
 	./xammsearch -p d
 res/deAMMRES.sum : xammsearch
 	./xammsearch -p d
+dsave_uamm : $(usaved)
+	cp res/duAMMFRC.sum $(usaved)/.
+	cp res/dUMMKCLEAN.sum $(usaved)/.
+	cp res/dUMMKCLEANBYNB.sum $(usaved)/.
+drestore_uamm : $(usaved)
+	cp $(usaved)/duAMMFRC.sum res/.
+	cp $(usaved)/dUMMKCLEAN.sum res/.
+	cp $(usaved)/dUMMKCLEANBYNB.sum res/.
+duamm_getrf : xuammsearch $(BLDdir)/src/threads/lapack/amm/sumd
+	./xuammsearch -p d -b $(NRF) -M 2 a c -T 1.01 -K 0
+	make dinstall_uamm_noclean ID=0
+	cp res/duAMMFRC.sum $(BLDdir)/src/threads/lapack/amm/sumd/.
+
 dinstall_uamm: res/duAMMFRC.sum res/dUMMKCLEAN.sum \
               res/dUMMKCLEANBYNB.sum xemit_uamm
-	./xemit_uamm -p d -I $(ID) -d $(GMMdir)/../ammm/UKERNEL \
+	./xemit_uamm -p d -I $(ID) -d $(AMMdir)/UKERNEL \
             -i res/duAMMFRC.sum \
             -k res/dUMMKCLEAN.sum -K res/dUMMKCLEANBYNB.sum
-	mv $(GMMdir)/../ammm/UKERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm/UKERNEL ; $(PMAKE) -f dMake_amm
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f dMake_amm
+dinstall_uamm_noclean: res/duAMMFRC.sum xemit_uamm
+	./xemit_uamm -p d -I $(ID) -d $(AMMdir)/UKERNEL \
+            -i res/duAMMFRC.sum 
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f dMake_amm
 dinstall_ammm: dinstall_amm
 dinstall_amm: res/deAMMRES.sum res/dAMMKCLEAN.sum \
               res/dAMMKCLEANBYNB.sum res/dARANKK.sum xemit_amm
-	- cd $(GMMdir)/../ammm/KERNEL ; $(PMAKE) -f dMake_amm dkillall
-	./xemit_amm -p d -d $(GMMdir)/../ammm/KERNEL -i res/deAMMRES.sum \
+	- cd $(AMMdir)/KERNEL ; $(PMAKE) -f dMake_amm dkillall
+	./xemit_amm -p d -d $(AMMdir)/KERNEL -i res/deAMMRES.sum \
                     -k res/dAMMKCLEAN.sum -K res/dAMMKCLEANBYNB.sum \
                     -r res/dARANKK.sum
-	mv $(GMMdir)/../ammm/KERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm ; $(PMAKE) dlib
+	mv $(AMMdir)/KERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir) ; $(PMAKE) dlib
 dinstall : xemit_mm res/dMMRES.sum $(BINdir)/xccobj \
                 res/dCleanM res/dCleanN res/dCleanK \
                 res/duCleanMF res/duCleanNF res/duCleanKF 
@@ -606,7 +684,7 @@ qcases.dsc: xuserindex $(mySRCdir)/CASES/qcases.0 $(mySRCdir)/CASES/qcases.SSE \
                  $(mySRCdir)/CASES/qcases.3DN $(mySRCdir)/CASES/qcases.flg 
 	./xuserindex -p q
 res/qnreg : xgmmsearch
-	./xgmmsearch -p q -r $(nreg)
+	./xgmmsearch -p q -r -1
 qRun_tfc : qtfc
 	$(ATLRUN) $(MMTdir) xqtfc
 	cp -f $(INCAdir)/qXover.h res/.
@@ -623,13 +701,31 @@ res/qAMMKCLEAN.sum : xammsearch
 	./xammsearch -p q
 res/qeAMMRES.sum : xammsearch
 	./xammsearch -p q
+qsave_uamm : $(usaved)
+	cp res/quAMMFRC.sum $(usaved)/.
+	cp res/qUMMKCLEAN.sum $(usaved)/.
+	cp res/qUMMKCLEANBYNB.sum $(usaved)/.
+qrestore_uamm : $(usaved)
+	cp $(usaved)/quAMMFRC.sum res/.
+	cp $(usaved)/qUMMKCLEAN.sum res/.
+	cp $(usaved)/qUMMKCLEANBYNB.sum res/.
+quamm_getrf : xuammsearch $(BLDdir)/src/threads/lapack/amm/sumd
+	./xuammsearch -p q -b $(NRF) -M 2 a c -T 1.01 -K 0
+	make qinstall_uamm_noclean ID=0
+	cp res/quAMMFRC.sum $(BLDdir)/src/threads/lapack/amm/sumd/.
+
 qinstall_uamm: res/quAMMFRC.sum res/qUMMKCLEAN.sum \
               res/qUMMKCLEANBYNB.sum xemit_uamm
-	./xemit_uamm -p q -I $(ID) -d $(GMMdir)/../ammm/UKERNEL \
+	./xemit_uamm -p q -I $(ID) -d $(AMMdir)/UKERNEL \
             -i res/quAMMFRC.sum \
             -k res/qUMMKCLEAN.sum -K res/qUMMKCLEANBYNB.sum
-	mv $(GMMdir)/../ammm/UKERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm/UKERNEL ; $(PMAKE) -f qMake_amm
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f qMake_amm
+qinstall_uamm_noclean: res/quAMMFRC.sum xemit_uamm
+	./xemit_uamm -p q -I $(ID) -d $(AMMdir)/UKERNEL \
+            -i res/quAMMFRC.sum 
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f qMake_amm
 qinstall_ammm: qinstall_amm
 qinstall : xemit_mm res/qMMRES.sum $(BINdir)/xccobj \
                 res/qCleanM res/qCleanN res/qCleanK \
@@ -709,7 +805,7 @@ ccases.dsc: xuserindex $(mySRCdir)/CASES/ccases.0 $(mySRCdir)/CASES/ccases.SSE \
                  $(mySRCdir)/CASES/ccases.3DN $(mySRCdir)/CASES/ccases.flg 
 	./xuserindex -p c
 res/cnreg : xgmmsearch
-	./xgmmsearch -p c -r $(nreg)
+	./xgmmsearch -p c -r -1
 cRun_tfc : ctfc
 	$(ATLRUN) $(MMTdir) xctfc
 	cp -f $(INCAdir)/cXover.h res/.
@@ -726,13 +822,31 @@ res/cAMMKCLEAN.sum : xammsearch
 	./xammsearch -p c
 res/ceAMMRES.sum : xammsearch
 	./xammsearch -p c
+csave_uamm : $(usaved)
+	cp res/cuAMMFRC.sum $(usaved)/.
+	cp res/cUMMKCLEAN.sum $(usaved)/.
+	cp res/cUMMKCLEANBYNB.sum $(usaved)/.
+crestore_uamm : $(usaved)
+	cp $(usaved)/cuAMMFRC.sum res/.
+	cp $(usaved)/cUMMKCLEAN.sum res/.
+	cp $(usaved)/cUMMKCLEANBYNB.sum res/.
+cuamm_getrf : xuammsearch $(BLDdir)/src/threads/lapack/amm/sumd
+	./xuammsearch -p c -b $(NRF) -M 2 a c -T 1.01 -K 0
+	make cinstall_uamm_noclean ID=0
+	cp res/cuAMMFRC.sum $(BLDdir)/src/threads/lapack/amm/sumd/.
+
 cinstall_uamm: res/cuAMMFRC.sum res/cUMMKCLEAN.sum \
               res/cUMMKCLEANBYNB.sum xemit_uamm
-	./xemit_uamm -p c -I $(ID) -d $(GMMdir)/../ammm/UKERNEL \
+	./xemit_uamm -p c -I $(ID) -d $(AMMdir)/UKERNEL \
             -i res/cuAMMFRC.sum \
             -k res/cUMMKCLEAN.sum -K res/cUMMKCLEANBYNB.sum
-	mv $(GMMdir)/../ammm/UKERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm/UKERNEL ; $(PMAKE) -f cMake_amm
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f cMake_amm
+cinstall_uamm_noclean: res/cuAMMFRC.sum xemit_uamm
+	./xemit_uamm -p c -I $(ID) -d $(AMMdir)/UKERNEL \
+            -i res/cuAMMFRC.sum 
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f cMake_amm
 cinstall_ammm: cinstall_amm
 $(INCAdir)/atlas_camm_sum.h : res/atlas_camm_sum.h
 	cp res/atlas_camm_sum.h $(INCAdir)/atlas_camm_sum.h
@@ -818,7 +932,7 @@ zcases.dsc: xuserindex $(mySRCdir)/CASES/zcases.0 $(mySRCdir)/CASES/zcases.SSE \
                  $(mySRCdir)/CASES/zcases.3DN $(mySRCdir)/CASES/zcases.flg 
 	./xuserindex -p z
 res/znreg : xgmmsearch
-	./xgmmsearch -p z -r $(nreg)
+	./xgmmsearch -p z -r -1
 zRun_tfc : ztfc
 	$(ATLRUN) $(MMTdir) xztfc
 	cp -f $(INCAdir)/zXover.h res/.
@@ -835,13 +949,31 @@ res/zAMMKCLEAN.sum : xammsearch
 	./xammsearch -p z
 res/zeAMMRES.sum : xammsearch
 	./xammsearch -p z
+zsave_uamm : $(usaved)
+	cp res/zuAMMFRC.sum $(usaved)/.
+	cp res/zUMMKCLEAN.sum $(usaved)/.
+	cp res/zUMMKCLEANBYNB.sum $(usaved)/.
+zrestore_uamm : $(usaved)
+	cp $(usaved)/zuAMMFRC.sum res/.
+	cp $(usaved)/zUMMKCLEAN.sum res/.
+	cp $(usaved)/zUMMKCLEANBYNB.sum res/.
+zuamm_getrf : xuammsearch $(BLDdir)/src/threads/lapack/amm/sumd
+	./xuammsearch -p z -b $(NRF) -M 2 a c -T 1.01 -K 0
+	make zinstall_uamm_noclean ID=0
+	cp res/zuAMMFRC.sum $(BLDdir)/src/threads/lapack/amm/sumd/.
+
 zinstall_uamm: res/zuAMMFRC.sum res/zUMMKCLEAN.sum \
               res/zUMMKCLEANBYNB.sum xemit_uamm
-	./xemit_uamm -p z -I $(ID) -d $(GMMdir)/../ammm/UKERNEL \
+	./xemit_uamm -p z -I $(ID) -d $(AMMdir)/UKERNEL \
             -i res/zuAMMFRC.sum \
             -k res/zUMMKCLEAN.sum -K res/zUMMKCLEANBYNB.sum
-	mv $(GMMdir)/../ammm/UKERNEL/*.h $(INCAdir)/.
-	cd $(GMMdir)/../ammm/UKERNEL ; $(PMAKE) -f zMake_amm
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f zMake_amm
+zinstall_uamm_noclean: res/zuAMMFRC.sum xemit_uamm
+	./xemit_uamm -p z -I $(ID) -d $(AMMdir)/UKERNEL \
+            -i res/zuAMMFRC.sum 
+	mv $(AMMdir)/UKERNEL/*.h $(INCAdir)/.
+	cd $(AMMdir)/UKERNEL ; $(PMAKE) -f zMake_amm
 zinstall_ammm: zinstall_amm
 $(INCAdir)/atlas_zamm_sum.h : res/atlas_zamm_sum.h
 	cp res/atlas_zamm_sum.h $(INCAdir)/atlas_zamm_sum.h
@@ -952,7 +1084,7 @@ peaktime: peaktim.o
 peaktim.o : $(mySRCdir)/peaktim.c
 	$(KC) $(KCFLAGS) -c -o peaktim.o $(mySRCdir)/peaktim.c
 smmlib:
-	cd $(GMMdir) ; $(MAKE) slib
+	cd $(AMMdir) ; $(MAKE) slib
 
 sstandard : force_build
 	$(MAKE) sready $(sATLres)
@@ -1014,21 +1146,20 @@ srbob : $(SYSdir)/time.o xemit_reg $(INCAdir)/atlas_type.h \
                                     $(SYSdir)/time.o
 	$(ATLRUN) $(MMTdir) xsfc
 
-sammtime_pt.o : $(mySRCdir)/mmtime_pt.c
-	$(KC) $(KCFLAGS) -c -DSREAL -o sammtime_pt.o -DATL_NEWTIME \
-               $(mySRCdir)/mmtime_pt.c
+bn = _b${betan}
+sammtime_pt${bn}.o : $(mySRCdir)/mmtime_pt.c
+	$(KC) $(KCFLAGS) -c -DBETA${betan}=1 -DSREAL=1 \
+              -o sammtime_pt${bn}.o $(mySRCdir)/mmtime_pt.c
 xsammtime_pt : force_build
-	rm -f $(pre)mm.c
-	$(MAKE) sammtime_pt.o xemit_mm
-	./xemit_mm -p s -ta t -tb n -muladd $(muladd) -l $(lat) \
-           -L $(loopO) -M $(mb) -N $(nb) -K $(kb) -m $(mu) -n $(nu) -k $(ku) \
-           -lda $(lda) -ldb $(ldb) -ldc $(ldc) -csA $(csA) -csB $(csB) \
-           -csC $(csC) -F0 $(if) -FN $(nf) -FF $(ff) -b $(beta) -a $(alpha) \
-           -Z 1 -C $(cleanup) -R -3 | fgrep -v "define ATL_USERMM" > smm.c
-	cat $(mmrout) >> smm.c
-	$(SMC) $(CDEFS) $(SMCFLAGS) -DATL_BETA=$(beta) -c smm.c 
-	$(CLINKER) $(CLINKFLAGS) -o xsammtime_pt sammtime_pt.o \
-           smm.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	rm -f smm.c
+	$(MAKE) sammtime_pt${bn}.o xemit_mm
+	$(SMC) $(CDEFS) $(SMCFLAGS) -DBETA$(betan)=1 -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DSREAL=1 $(kmoves) -o sammmKT.o -c $(mmrout)
+	$(CLINKER) $(CLINKFLAGS) -o xsammtime_pt sammtime_pt${bn}.o \
+           sammmKT.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	$(ATLRUN) $(MMTdir) xsammtime_pt -p $(NPROC) -m $(mb) -n $(nb) \
+           -k $(kb) -um $(mu) -un $(nu) -uk $(ku) -R $(FMF) \
+           -Ma $(mvA) -Mb $(mvB) -Mc $(mvC) $(outF)
 smmtime_pt.o : $(mySRCdir)/mmtime_pt.c
 	$(KC) $(KCFLAGS) -c -DSREAL -o smmtime_pt.o \
                $(mySRCdir)/mmtime_pt.c
@@ -1084,7 +1215,7 @@ smmcase0: $(SYSdir)/time.o $(INCAdir)/atlas_type.h xccobj \
 	$(ATLRUN) $(MMTdir) xsfc $(casnam)
 
 dmmlib:
-	cd $(GMMdir) ; $(MAKE) dlib
+	cd $(AMMdir) ; $(MAKE) dlib
 
 dstandard : force_build
 	$(MAKE) dready $(dATLres)
@@ -1146,21 +1277,20 @@ drbob : $(SYSdir)/time.o xemit_reg $(INCAdir)/atlas_type.h \
                                     $(SYSdir)/time.o
 	$(ATLRUN) $(MMTdir) xdfc
 
-dammtime_pt.o : $(mySRCdir)/mmtime_pt.c
-	$(KC) $(KCFLAGS) -c -DDREAL -o dammtime_pt.o -DATL_NEWTIME \
-               $(mySRCdir)/mmtime_pt.c
+bn = _b${betan}
+dammtime_pt${bn}.o : $(mySRCdir)/mmtime_pt.c
+	$(KC) $(KCFLAGS) -c -DBETA${betan}=1 -DDREAL=1 \
+              -o dammtime_pt${bn}.o $(mySRCdir)/mmtime_pt.c
 xdammtime_pt : force_build
-	rm -f $(pre)mm.c
-	$(MAKE) dammtime_pt.o xemit_mm
-	./xemit_mm -p d -ta t -tb n -muladd $(muladd) -l $(lat) \
-           -L $(loopO) -M $(mb) -N $(nb) -K $(kb) -m $(mu) -n $(nu) -k $(ku) \
-           -lda $(lda) -ldb $(ldb) -ldc $(ldc) -csA $(csA) -csB $(csB) \
-           -csC $(csC) -F0 $(if) -FN $(nf) -FF $(ff) -b $(beta) -a $(alpha) \
-           -Z 1 -C $(cleanup) -R -3 | fgrep -v "define ATL_USERMM" > dmm.c
-	cat $(mmrout) >> dmm.c
-	$(DMC) $(CDEFS) $(DMCFLAGS) -DATL_BETA=$(beta) -c dmm.c 
-	$(CLINKER) $(CLINKFLAGS) -o xdammtime_pt dammtime_pt.o \
-           dmm.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	rm -f dmm.c
+	$(MAKE) dammtime_pt${bn}.o xemit_mm
+	$(DMC) $(CDEFS) $(DMCFLAGS) -DBETA$(betan)=1 -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DDREAL=1 $(kmoves) -o dammmKT.o -c $(mmrout)
+	$(CLINKER) $(CLINKFLAGS) -o xdammtime_pt dammtime_pt${bn}.o \
+           dammmKT.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	$(ATLRUN) $(MMTdir) xdammtime_pt -p $(NPROC) -m $(mb) -n $(nb) \
+           -k $(kb) -um $(mu) -un $(nu) -uk $(ku) -R $(FMF) \
+           -Ma $(mvA) -Mb $(mvB) -Mc $(mvC) $(outF)
 dmmtime_pt.o : $(mySRCdir)/mmtime_pt.c
 	$(KC) $(KCFLAGS) -c -DDREAL -o dmmtime_pt.o \
                $(mySRCdir)/mmtime_pt.c
@@ -1216,7 +1346,7 @@ dmmcase0: $(SYSdir)/time.o $(INCAdir)/atlas_type.h xccobj \
 	$(ATLRUN) $(MMTdir) xdfc $(casnam)
 
 cmmlib:
-	cd $(GMMdir) ; $(MAKE) clib
+	cd $(AMMdir) ; $(MAKE) clib
 
 cstandard : force_build
 	$(MAKE) cready $(cATLres)
@@ -1267,7 +1397,7 @@ xctfc : $(INCAdir)/atlas_type.h $(L3INCdep) \
 
 cammlib:
 	cd $(AMMdir) ; make clib
-cnbtune.o : $(mySRCdir)/cnbtune.c
+cnbtune.o : $(mySRCdir)/cnbtune.c atlas_samm_sum.h
 	$(SKC) $(CDEFS) $(SKCFLAGS) -DSCPLX=1 -c \
            -o cnbtune.o $(mySRCdir)/cnbtune.c
 xcnbtune : cnbtune.o cammlib
@@ -1286,21 +1416,28 @@ crbob : $(SYSdir)/time.o xemit_reg $(INCAdir)/atlas_type.h \
                                     $(SYSdir)/time.o
 	$(ATLRUN) $(MMTdir) xcfc
 
-cammtime_pt.o : $(mySRCdir)/mmtime_pt.c
-	$(KC) $(KCFLAGS) -c -DSCPLX -o cammtime_pt.o -DATL_NEWTIME \
-               $(mySRCdir)/mmtime_pt.c
+bn = _b${betan}
+cammtime_pt${bn}.o : $(mySRCdir)/mmtime_pt.c
+	$(KC) $(KCFLAGS) -c -DBETA${betan}=1 -DSCPLX=1 \
+              -o cammtime_pt${bn}.o $(mySRCdir)/mmtime_pt.c
 xcammtime_pt : force_build
-	rm -f $(pre)mm.c
-	$(MAKE) cammtime_pt.o xemit_mm
-	./xemit_mm -p c -ta t -tb n -muladd $(muladd) -l $(lat) \
-           -L $(loopO) -M $(mb) -N $(nb) -K $(kb) -m $(mu) -n $(nu) -k $(ku) \
-           -lda $(lda) -ldb $(ldb) -ldc $(ldc) -csA $(csA) -csB $(csB) \
-           -csC $(csC) -F0 $(if) -FN $(nf) -FF $(ff) -b $(beta) -a $(alpha) \
-           -Z 1 -C $(cleanup) -R -3 | fgrep -v "define ATL_USERMM" > cmm.c
-	cat $(mmrout) >> cmm.c
-	$(SMC) $(CDEFS) $(SMCFLAGS) -DATL_BETA=$(beta) -c cmm.c 
-	$(CLINKER) $(CLINKFLAGS) -o xcammtime_pt cammtime_pt.o \
-           cmm.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	rm -f cmm.c
+	$(MAKE) cammtime_pt${bn}.o xemit_mm
+	$(SMC) $(CDEFS) $(SMCFLAGS) -DBETA0=1 -DATL_USERMM=CAMM_b0 \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DSREAL=1 $(kmoves) -o cCAMM_b0.o -c $(mmrout)
+	$(SMC) $(CDEFS) $(SMCFLAGS) -DBETA1=1 -DATL_USERMM=CAMM_b1 \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DSREAL=1 $(kmoves) -o cCAMM_b1.o -c $(mmrout)
+	$(SMC) $(CDEFS) $(SMCFLAGS) -DBETAN1=1 -DATL_USERMM=CAMM_bn \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DSREAL=1 $(kmoves) -o cCAMM_bn.o -c $(mmrout)
+	$(CLINKER) $(CLINKFLAGS) -o xcammtime_pt cammtime_pt${bn}.o \
+           cCAMM_b0.o cCAMM_b1.o cCAMM_bn.o \
+           $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	$(ATLRUN) $(MMTdir) xcammtime_pt -p $(NPROC) -m $(mb) -n $(nb) \
+           -k $(kb) -um $(mu) -un $(nu) -uk $(ku) -R $(FMF) \
+           -Ma $(mvA) -Mb $(mvB) -Mc $(mvC) $(outF)
 cmmtime_pt.o : $(mySRCdir)/mmtime_pt.c
 	$(KC) $(KCFLAGS) -c -DSCPLX -o cmmtime_pt.o \
                $(mySRCdir)/mmtime_pt.c
@@ -1356,7 +1493,7 @@ cmmcase0: $(SYSdir)/time.o $(INCAdir)/atlas_type.h xccobj \
 	$(ATLRUN) $(MMTdir) xcfc $(casnam)
 
 zmmlib:
-	cd $(GMMdir) ; $(MAKE) zlib
+	cd $(AMMdir) ; $(MAKE) zlib
 
 zstandard : force_build
 	$(MAKE) zready $(zATLres)
@@ -1407,7 +1544,7 @@ xztfc : $(INCAdir)/atlas_type.h $(L3INCdep) \
 
 zammlib:
 	cd $(AMMdir) ; make zlib
-znbtune.o : $(mySRCdir)/cnbtune.c
+znbtune.o : $(mySRCdir)/cnbtune.c atlas_damm_sum.h
 	$(DKC) $(CDEFS) $(DKCFLAGS) -DDCPLX=1 -c \
            -o znbtune.o $(mySRCdir)/cnbtune.c
 xznbtune : znbtune.o zammlib
@@ -1426,21 +1563,28 @@ zrbob : $(SYSdir)/time.o xemit_reg $(INCAdir)/atlas_type.h \
                                     $(SYSdir)/time.o
 	$(ATLRUN) $(MMTdir) xzfc
 
-zammtime_pt.o : $(mySRCdir)/mmtime_pt.c
-	$(KC) $(KCFLAGS) -c -DDCPLX -o zammtime_pt.o -DATL_NEWTIME \
-               $(mySRCdir)/mmtime_pt.c
+bn = _b${betan}
+zammtime_pt${bn}.o : $(mySRCdir)/mmtime_pt.c
+	$(KC) $(KCFLAGS) -c -DBETA${betan}=1 -DDCPLX=1 \
+              -o zammtime_pt${bn}.o $(mySRCdir)/mmtime_pt.c
 xzammtime_pt : force_build
-	rm -f $(pre)mm.c
-	$(MAKE) zammtime_pt.o xemit_mm
-	./xemit_mm -p z -ta t -tb n -muladd $(muladd) -l $(lat) \
-           -L $(loopO) -M $(mb) -N $(nb) -K $(kb) -m $(mu) -n $(nu) -k $(ku) \
-           -lda $(lda) -ldb $(ldb) -ldc $(ldc) -csA $(csA) -csB $(csB) \
-           -csC $(csC) -F0 $(if) -FN $(nf) -FF $(ff) -b $(beta) -a $(alpha) \
-           -Z 1 -C $(cleanup) -R -3 | fgrep -v "define ATL_USERMM" > zmm.c
-	cat $(mmrout) >> zmm.c
-	$(DMC) $(CDEFS) $(DMCFLAGS) -DATL_BETA=$(beta) -c zmm.c 
-	$(CLINKER) $(CLINKFLAGS) -o xzammtime_pt zammtime_pt.o \
-           zmm.o $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	rm -f zmm.c
+	$(MAKE) zammtime_pt${bn}.o xemit_mm
+	$(DMC) $(CDEFS) $(DMCFLAGS) -DBETA0=1 -DATL_USERMM=CAMM_b0 \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DDREAL=1 $(kmoves) -o zCAMM_b0.o -c $(mmrout)
+	$(DMC) $(CDEFS) $(DMCFLAGS) -DBETA1=1 -DATL_USERMM=CAMM_b1 \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DDREAL=1 $(kmoves) -o zCAMM_b1.o -c $(mmrout)
+	$(DMC) $(CDEFS) $(DMCFLAGS) -DBETAN1=1 -DATL_USERMM=CAMM_bn \
+               -DMB=$(mb) -DNB=$(nb) -DKB=$(kb) \
+               -DDREAL=1 $(kmoves) -o zCAMM_bn.o -c $(mmrout)
+	$(CLINKER) $(CLINKFLAGS) -o xzammtime_pt zammtime_pt${bn}.o \
+           zCAMM_b0.o zCAMM_b1.o zCAMM_bn.o \
+           $(SYSdir)/time.o $(ATLASlib) $(LIBS)
+	$(ATLRUN) $(MMTdir) xzammtime_pt -p $(NPROC) -m $(mb) -n $(nb) \
+           -k $(kb) -um $(mu) -un $(nu) -uk $(ku) -R $(FMF) \
+           -Ma $(mvA) -Mb $(mvB) -Mc $(mvC) $(outF)
 zmmtime_pt.o : $(mySRCdir)/mmtime_pt.c
 	$(KC) $(KCFLAGS) -c -DDCPLX -o zmmtime_pt.o \
                $(mySRCdir)/mmtime_pt.c
@@ -1859,7 +2003,7 @@ gemmtst.o : $(mySRCdir)/gemmtst.c $(INCSdir)/atlas_misc.h \
 clean :
 	rm -f *.o *.grd
 
-$(pre)tfc.o : $(mySRCdir)/tfc.c $(INCSdir)/atlas_misc.h $(INCAdir)/$(pre)mm.h \
+$(pre)tfc.o : $(mySRCdir)/tfc.c $(INCSdir)/atlas_misc.h \
               $(INCAdir)/atlas_$(pre)sysinfo.h
 	$(KC) -o $@ -c $(KCFLAGS) -D$(typ) $(mySRCdir)/tfc.c \
                  -DSM_FOUT=$(INCAdir)/$(pre)Xover.h

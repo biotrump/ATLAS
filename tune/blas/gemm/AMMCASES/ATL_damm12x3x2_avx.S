@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2012 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -43,12 +43,23 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
  */
 
 #define FSIZE 6*8
+
+#if defined(SREAL) || defined(SCPLX)
+   #define vmovapd vmovaps
+   #define vsubpd vsubps
+   #define vaddpd vaddps
+   #define vmulpd vmulps
+   #define vbroadcastsd vbroadcastss
+   #define SZ 4
+#else
+   #define vmovapd vmovaps
+   #define SZ 8
+#endif
 #ifdef BETAN1
    #define VCOP vsubpd
 #else
    #define VCOP vaddpd
 #endif
-#define vmovapd vmovaps
 /*
  * floating point registers
  */
@@ -92,7 +103,8 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
 /*
  * Prefetch definitions
  */
-#define PFADIST 384
+#define PFADIST 448
+#define PFBDIST 128
 #define prefA(pA_) prefetcht0 pA_
 #define prefB(pB_) prefetcht0 pB_
 #define prefC(pC_) prefetcht0 pC_
@@ -147,10 +159,7 @@ ATL_asmdecor(ATL_USERMM):
    neg KK                       /* KK = -NU*sizeof*K */
    mov KK, KK0
    vbroadcastsd (pB), rB0
-#if 0
-   MLOOP:
-      NLOOP:
-#endif
+   ALIGN32
    MNLOOP:
 /*
  *          First peeled K=0 iteration gets to preloading next iter's data for
@@ -165,13 +174,13 @@ ATL_asmdecor(ATL_USERMM):
             vmovapd 64(pA,KK), rA2
             vmulpd rB0, rA2, rC20
 
-            vbroadcastsd 8(pB), rB1
+            vbroadcastsd SZ(pB), rB1
             vmulpd rB1, rA0, rC01
-            vbroadcastsd 16(pB), rB2
+            vbroadcastsd 2*SZ(pB), rB2
             vmulpd rB1, rA1, rC11
-               vbroadcastsd 24(pB), rB0
+               vbroadcastsd 3*SZ(pB), rB0
             vmulpd rB1, rA2, rC21
-               vbroadcastsd 32(pB), rB1
+               vbroadcastsd 4*SZ(pB), rB1
 
             vmulpd rB2, rA0, rC02
                vmovapd 96(pA,KK), rA0
@@ -185,13 +194,13 @@ ATL_asmdecor(ATL_USERMM):
  */
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
-            vbroadcastsd 40(pB), rB2
+            vbroadcastsd 5*SZ(pB), rB2
             vmulpd rB0, rA1, m0
             vaddpd rC10, m0, rC10
                prefC((pC))
             vmulpd rB0, rA2, m0
             vaddpd rC20, m0, rC20
-               vbroadcastsd 48(pB), rB0
+               vbroadcastsd 6*SZ(pB), rB0
 
             vmulpd rB1, rA0, m0
             vaddpd rC01, m0, rC01
@@ -200,8 +209,8 @@ ATL_asmdecor(ATL_USERMM):
             vaddpd rC11, m0, rC11
             vmulpd rB1, rA2, m0
             vaddpd rC21, m0, rC21
-               vbroadcastsd 56(pB), rB1
-            add $48, pB
+               vbroadcastsd 7*SZ(pB), rB1
+            add $6*SZ, pB
             add $96, KK
 
             vmulpd rB2, rA0, m0
@@ -216,17 +225,18 @@ ATL_asmdecor(ATL_USERMM):
 /*
  *        Finally, start actual loop
  */
+          ALIGN32
           KLOOP:
-               prefB(128(pB))
+               prefB(PFBDIST(pB))
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
-            vbroadcastsd 16(pB), rB2
+            vbroadcastsd 2*SZ(pB), rB2
             vmulpd rB0, rA1, m0
             vaddpd rC10, m0, rC10
                prefA(PFADIST(pA,KK))
             vmulpd rB0, rA2, m0
             vaddpd rC20, m0, rC20
-               vbroadcastsd 24(pB), rB0
+               vbroadcastsd 3*SZ(pB), rB0
 
             vmulpd rB1, rA0, m0
             vaddpd rC01, m0, rC01
@@ -236,7 +246,7 @@ ATL_asmdecor(ATL_USERMM):
                add $96, KK
             vmulpd rB1, rA2, m0
             vaddpd rC21, m0, rC21
-               vbroadcastsd 32(pB), rB1
+               vbroadcastsd 4*SZ(pB), rB1
 
             vmulpd rB2, rA0, m0
             vaddpd rC02, m0, rC02
@@ -252,13 +262,13 @@ ATL_asmdecor(ATL_USERMM):
  */
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
-            vbroadcastsd 40(pB), rB2
+            vbroadcastsd 5*SZ(pB), rB2
             vmulpd rB0, rA1, m0
             vaddpd rC10, m0, rC10
                prefA(PFADIST+128(pA,KK))
             vmulpd rB0, rA2, m0
             vaddpd rC20, m0, rC20
-               vbroadcastsd 48(pB), rB0
+               vbroadcastsd 6*SZ(pB), rB0
 
             vmulpd rB1, rA0, m0
             vaddpd rC01, m0, rC01
@@ -267,8 +277,8 @@ ATL_asmdecor(ATL_USERMM):
             vaddpd rC11, m0, rC11
             vmulpd rB1, rA2, m0
             vaddpd rC21, m0, rC21
-               vbroadcastsd 56(pB), rB1
-            add $48, pB
+               vbroadcastsd 7*SZ(pB), rB1
+            add $6*SZ, pB
 
             vmulpd rB2, rA0, m0
             vaddpd rC02, m0, rC02
@@ -288,13 +298,13 @@ ATL_asmdecor(ATL_USERMM):
  */
          vmulpd rB0, rA0, m0
          vaddpd rC00, m0, rC00
-         vbroadcastsd 16(pB), rB2
+         vbroadcastsd 2*SZ(pB), rB2
          vmulpd rB0, rA1, m0
          vaddpd rC10, m0, rC10
             prefA(PFADIST(pA))
          vmulpd rB0, rA2, m0
          vaddpd rC20, m0, rC20
-            vbroadcastsd 24(pB), rB0
+            vbroadcastsd 3*SZ(pB), rB0
 
          vmulpd rB1, rA0, m0
          vaddpd rC01, m0, rC01
@@ -303,7 +313,7 @@ ATL_asmdecor(ATL_USERMM):
          vaddpd rC11, m0, rC11
          vmulpd rB1, rA2, m0
          vaddpd rC21, m0, rC21
-            vbroadcastsd 32(pB), rB1
+            vbroadcastsd 4*SZ(pB), rB1
 
          vmulpd rB2, rA0, m0
          vaddpd rC02, m0, rC02
@@ -323,7 +333,7 @@ ATL_asmdecor(ATL_USERMM):
             VCOP -128(pC), rC00, rC00
          #endif
          vmovapd rC00, -128(pC)
-         vbroadcastsd 40(pB), rB2
+         vbroadcastsd 5*SZ(pB), rB2
          vmulpd rB0, rA1, m0
          vaddpd rC10, m0, rC10
          #ifndef BETA0
@@ -337,7 +347,7 @@ ATL_asmdecor(ATL_USERMM):
             VCOP -64(pC), rC20, rC20
          #endif
          vmovapd rC20, -64(pC)
-            vbroadcastsd 48(pB), rB0
+            vbroadcastsd 6*SZ(pB), rB0
 
          vmulpd rB1, rA0, m0
          vaddpd rC01, m0, rC01
@@ -358,7 +368,7 @@ ATL_asmdecor(ATL_USERMM):
             VCOP 32(pC), rC21, rC21
          #endif
          vmovapd rC21, 32(pC)
-         add $48, pB
+         add $6*SZ, pB
 
          vmulpd rB2, rA0, m0
          vaddpd rC02, m0, rC02

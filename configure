@@ -9,19 +9,8 @@ cflags="-g -w"
 prefix=/usr/local/atlas
 incinstdir=ATL_NoOverride
 libinstdir=ATL_NoOverride
-#flapack=/home/thomas/build/lapack/liblapack.a
-#this is removed afte 3.8.
 flapack=ATL_NoOverride
-#I think ATLAS can copy lapack directly instead of .tar
-#flapacktar : copy lapack.tar to $blddir/src/lapack/reftmp
 flapacktar=ATL_NoOverride
-#lapack git repo
-#git clone --depth=1 git://someserver/somerepo dirformynewrepo
-#rm -rf dirformynewrepo/.git
-flapackgit=ATL_NoOverride
-flapackbranch=ATL_NoOverride
-flapackrbranch=ATL_NoOverride
-#
 f77=1
 fulllapack=0
 #
@@ -72,7 +61,7 @@ rm $blddir/TstBld973.txt
 
 #
 # grab --cc=<c comp> and --cflags=<flags> to be used to build ATLAS's ANSI C
-# config.c, and save the rest of the arguments to by passed to the
+# config.c, and save the rest of the arguments to by passed to the 
 # soon-to-be-built xconfig
 #
 #echo other args=$*
@@ -111,7 +100,6 @@ do
       echo "             this will disallow building the F77 interface, and"
       echo "             some of the tests (eg, standard BLAS testers)"
       echo "  --with-netlib-lapack-tarfile=<path to lapack tarfile>"
-      echo "  --with-netlib-lapack-git=<git_repo>"
       echo "  --gcc3pass=<gcc for frontend>,<assembler>:<linker>"
       echo "     Provide full paths for all compilers/assemblers"
       echo "Attempting to build xconfig to get probe flags:"
@@ -243,26 +231,7 @@ do
       cflags="$cflags -DATL_GCCCLANG"
       handled=1
    fi
-
 #
-   flag=`echo "$arg" | sed -e "s/--with-netlib-lapack-git=//"`
-
-   if test "$flag" != "$arg"
-   then
-	  flapackgit=`echo "$flag" | sed -e "s/,.*//"`
-	  flapackbranch=`echo "$flag" | sed -e "s/.*,//" -e "s/:.*//"`
-	  flapackrbranch=`echo "$flag" | sed -e "s/.*://"`
-	  echo flapackgit=$flapackgit
-	  echo flapackbranch=$flapackbranch
-	  echo flapackrbranch=$flapackrbranch
-#     flapackgit="$flag"
-      pass="$pass -Si lapackref 1"
-      handled=1
-      fulllapack=1
-   fi
-#
-  echo flapackgit=$flapackgit
-######
    flag=`echo "$arg" | sed -e "s/--with-netlib-lapack-tarfile=//"`
    if test "$flag" != "$arg"
    then
@@ -272,20 +241,7 @@ do
       fulllapack=1
    fi
 #
-  echo flapacktar=$flapacktar
-####
-
-   flag=`echo "$arg" | sed -e "s/--with-netlib-lapack=//"`
-   if test "$flag" != "$arg"
-   then
-      flapack="$flag"
-      pass="$pass -Ss flapack $flapack"
-      handled=1
-   fi
 #
-  echo flapack=$flapack
-#
-
    flag=`echo "$arg" | sed -e "s/--nof77//"`
    if test "$flag" != "$arg"
    then
@@ -320,7 +276,7 @@ do
 #
       arg=`echo "$arg" | sed -e "s/^ +//"`
       arg=`echo "$arg" | sed -e "s/ +$//"`
-#
+# 
 #     If flag have internal spaces, surround it with ''
 #
       flag=`echo "$arg" | sed -e "s/ //"`
@@ -458,7 +414,7 @@ then
             LIBTOOL=/usr/bin/libtool
          else
             echo "Cannot find Apple libtool for making shared libraries!"
-            exit 10
+            exit 10 
          fi
       fi
    fi
@@ -492,7 +448,6 @@ then
    echo xconfig exited with $ierr
    exit $ierr
 fi
-
 #
 # Build subdirectory structure and copy all makefiles
 #
@@ -503,28 +458,16 @@ make -f Makefile startup
 if test $flapacktar != "ATL_NoOverride"
 then
     chk=`echo "$flapacktar" | sed -e "s/^\.\.\///"`
-#
-  echo chk=$chk
-  echo flapacktar=$flapacktar
-#
     if test "$chk" = "$flapacktar"
     then
        flatar="$flapacktar"
     else
        flatar="$blddir"/"$flapacktar"
     fi
-
-#
-echo flatar=$flatar
-#
-
     if [ -f "$flatar" ]
     then
 #
 #      Unpack the LAPACK tarfile into $blddir/src/lapack/reftmp
-#
-# The lapack can be copied from a lapack source folder directly instead of tar it.
-# that's quite stupid actions.
 #
        mkdir $blddir/src/lapack/reftmp
        cd  $blddir/src/lapack/reftmp
@@ -556,10 +499,8 @@ echo flatar=$flatar
 #
        for file in *
        do
-		echo file=$file
           if [ -d "$file" ]
           then
-			echo file=$file
              mv $file ../reference
           fi
        done
@@ -570,34 +511,6 @@ echo flatar=$flatar
        exit -1
     fi
 fi
-#
-#ls reference
-#exit 1
-
-#
-#
-#      git clone into $blddir/src/lapack/reference
-#
-#
-echo flapackgit=$flapackgit
-#git clone and remove .git
-    if test $flapackgit != "ATL_NoOverride"
-    then
-	  pwd
-#	  mkdir $blddir/src/lapack/
-	  ls $blddir/src
-	  cd  $blddir/src/lapack
-	  rm -rf reference
-#	  git clone --depth=1 $flapackgit reference
-	  git clone $flapackgit reference
-	  cd reference
-	  git checkout -b $flapackbranch $flapackrbranch
-	  git branch -a
-#	  rm -rf reference/.git
-	  ls
-	fi
-#
-
 cd $blddir
 if test $flapack != "ATL_NoOverride"
 then

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2008 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
  *
  */
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 2001 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -71,12 +71,12 @@
 #define f77getri Mjoin(PATL,f77getri)
 
 int f77getri(const enum ATLAS_ORDER Order, const int N, TYPE *A, const int lda,
-             int *ipiv, TYPE *work, int *lwork)
+             int *ipiv, TYPE *work, int lwork)
 {
    int i;
    const int MN=N;
    #ifdef ATL_FunkyInts
-      const F77_INTEGER F77N=N, F77lda=lda, F77lwork=(*lwork);
+      const F77_INTEGER F77N=N, F77lda=lda, F77lwork=lwork;
       F77_INTEGER info, *F77ipiv;
    #else
       int info;
@@ -85,7 +85,6 @@ int f77getri(const enum ATLAS_ORDER Order, const int N, TYPE *A, const int lda,
       #define F77lda lda
       #define F77ipiv ipiv
       #define F77lwork lwork
-      #define F77lwork (*lwork)
    #endif
    ATL_assert(Order == AtlasColMajor);
    #ifdef ATL_FunkyInts
@@ -96,9 +95,8 @@ int f77getri(const enum ATLAS_ORDER Order, const int N, TYPE *A, const int lda,
    #endif
 
    #ifdef ATL_FunkyInts
-      *lwork = F77lwork;
-      for (i=0; i < MN; i++) ipiv[i] = F77ipiv[i] + 1;
-      free(F77ipiv);
+      F77lwork = lwork;
+      for (i=0; i < MN; i++) F77ipiv[i] = ipiv[i] + 1;
    #else
       for (i=0; i < MN; i++) ipiv[i]++;
    #endif

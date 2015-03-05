@@ -1,10 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#if defined(PentiumCPS) || defined(WALL)
-   #define time00 ATL_walltime
-#else
+#if defined(CPUTIME)
    #define time00 ATL_cputime
+#else
+   #define time00 ATL_walltime
 #endif
 double time00();
 

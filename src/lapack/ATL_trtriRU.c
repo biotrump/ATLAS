@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                   (C) Copyright 2001 Peter Soendergaard
  *
  * Redistribution and use in source and binary forms, with or without
@@ -152,8 +152,9 @@ int ATL_trtriRU(const enum ATLAS_DIAG Diag, const int N, TYPE *A, const int lda)
 #endif
    {
       Nleft = N >> 1;
-      #ifdef NB
-         if (Nleft > NB) Nleft = ATL_MulByNB(ATL_DivByNB(Nleft));
+      #ifdef ATL_AMM_98LCMMN
+         if (Nleft > ATL_AMM_98LCMMN)
+            Nleft = (Nleft/ATL_AMM_98LCMMN)*ATL_AMM_98LCMMN;
       #endif
       Nright = N - Nleft;
 

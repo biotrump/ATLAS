@@ -11,10 +11,10 @@
 #ifndef NTIM
    #define NTIM 3
 #endif
-#if defined(PentiumCPS) || defined(WALL)
-   #define time00 ATL_walltime
-#else
+#ifdef CPUTIME
    #define time00 ATL_cputime
+#else
+   #define time00 ATL_walltime
 #endif
 double time00();
 double macase(int nrep, volatile TYPE *dum);

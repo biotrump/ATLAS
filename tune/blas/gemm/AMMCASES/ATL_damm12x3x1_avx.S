@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2012 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,6 +36,8 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
  */
 
 #define FSIZE 6*8
+#define PFADIST 448
+#define PFBDIST 448
 #ifndef prefA
    #define prefA prefetcht0
 #endif
@@ -49,12 +51,22 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
       #define prefC prefetcht0
    #endif
 #endif
+#if defined(SREAL) || defined(SCPLX)
+   #define vmovapd vmovaps
+   #define vsubpd vsubps
+   #define vaddpd vaddps
+   #define vmulpd vmulps
+   #define vbroadcastsd vbroadcastss
+   #define SZ 4
+#else
+   #define vmovapd vmovaps
+   #define SZ 8
+#endif
 #ifdef BETAN1
    #define BETCOP vsubpd
 #else
    #define BETCOP vaddpd
 #endif
-#define vmovapd vmovaps
 /*
  * floating point registers
  */
@@ -81,7 +93,6 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
 #define KK      %rdx  /* API reg */
 #define pA      %rcx  /* API reg */
 #define pB      %rax  /* comes in as r9 */
-#define incAk   %r9   /* set after mov r9 to pC () */
 #define incBk   %r8   /* set after mov r8 to pB (rax) */
 /*
  * Then N-loop variables much less important, so use any orig regs left
@@ -89,7 +100,7 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
 #define pC      %rsi  /* set after mov rsi to nnu () */
 #define nnu     %r10  /* comes in as rsi */
 #define pfA     %rbx
-#define pfB     %rbp
+#define r96     %rbp
 #define incPF   %r12
 #define KK0     %rdi
 /*
@@ -97,8 +108,8 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
  */
 #define nmu     %r11  /* comes in as rdi */
 #define incAm   %r13
-#define nnu0    %r14
-#define pB0     %r15
+#define nnu0    %r9 /* %r14 */
+#define pB0     %r14
 /*
                     rdi      rsi    rdx        rcx         r8        r9
 void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
@@ -118,42 +129,47 @@ ATL_asmdecor(ATL_USERMM):
    movq %r12, 16(%rsp)
    movq %r13, 24(%rsp)
    movq %r14, 32(%rsp)
-   movq %r15, 40(%rsp)
 /*
  * Load paramaters
  */
    mov %rdi, nmu
+      prefetcht0 (pA)
    mov %rsi, nnu
    mov %r8, pB
+      prefetcht0 64(pA)
    mov %r9, pC
    mov nnu, nnu0
-   movq FSIZE+8(%rsp), pfB      /* pfB = pAn */
-   movq FSIZE+16(%rsp), pfA     /* pf = pBn */
-   cmp pfA, pB
-   CMOVE pfB, pfA
-   CMOVEq FSIZE+24(%rsp), pfB
+   mov $96, r96
+      prefetcht0 128(pA)
+   movq FSIZE+16(%rsp), pfA     /* pfA = pBn */
+   cmp pfA, pB                  /* if (pBn == pB) */
+   CMOVEq FSIZE+8(%rsp), pfA    /*    pfA = pAn */
+   cmp pfA, pA                  /* if (pAn == pA) */
+   CMOVEq FSIZE+24(%rsp), pfA   /*    pfA = pCn */
    sub $-128, pfA
-   sub $-128, pfB
    sub $-128, pC                 /* extend range of 1-byte offsets */
+      prefetcht0 192(pA)
 /*
  * Set constants
  */
    mov $12*3*8, incPF           /* incPF = mu*nu*sizeof */
-   mov $24, incBk               /* 24 = NU*sizeof = 3*8 = 24 */
-   mov $96, incAk               /* 96 = MU*sizeof = 12*8 = 96 */
+   mov $3*SZ, incBk             /* 24 = NU*sizeof = 3*8 = 24 */
+      prefetcht0 256(pA)
    mov pB, pB0
 /*
  * incAm = MU*sizeof*K = 12*8*K = 3*32*K
  */
    lea (KK, KK, 2), KK          /* KK = 3*K */
+      prefetcht0 (pB)
    shl $5, KK                   /* KK = 3*32*K = 12*8*K = MU*sizeof*K */
    mov KK, incAm                /* incAm = MU*sizeof*K */
+      prefetcht0 64(pB)
    add KK, pA                   /* pA[-kk] will access A */
    neg KK                       /* KK = -NU*sizeof*K */
    mov KK, KK0
    vbroadcastsd (pB), rB0
-   MLOOP:
-      NLOOP:
+   ALIGN32
+   MNLOOP:
 /*
  *          First peeled iteration gets us to preloading next iter's data for
  *          loop while only doing 1 load/flop.  It does no adds to avoid
@@ -167,13 +183,14 @@ ATL_asmdecor(ATL_USERMM):
             vmovapd 64(pA,KK), rA2
             vmulpd rB0, rA2, rC20
 
-            vbroadcastsd 8(pB), rB1
+            vbroadcastsd SZ(pB), rB1
             vmulpd rB1, rA0, rC01
-            vbroadcastsd 16(pB), rB2
+            vbroadcastsd 2*SZ(pB), rB2
             vmulpd rB1, rA1, rC11
-               vbroadcastsd 24(pB), rB0
+               vbroadcastsd 3*SZ(pB), rB0
             vmulpd rB1, rA2, rC21
-               vbroadcastsd 32(pB), rB1
+               vbroadcastsd 4*SZ(pB), rB1
+            add incBk, pB
 
             vmulpd rB2, rA0, rC02
                vmovapd 96(pA,KK), rA0
@@ -181,15 +198,16 @@ ATL_asmdecor(ATL_USERMM):
                vmovapd 128(pA,KK), rA1
             vmulpd rB2, rA2, rC22
                vmovapd 160(pA,KK), rA2
-            add $24, pB
-            add $96, KK
+            add r96, KK
             jz KDONE_NOFINALPEEL
 /*
  *          Stop loop on iteration early to set up for C, so 2nd peel is
  *          from end (bottom) of loop
  */
-            add $24, pB
-            add $96, KK
+               prefC -128(pC)
+            add incBk, pB
+               prefC -64(pC)
+            add r96, KK
             jz KLOOPDRAIN
 /*
  *          Now peel a 3rd iteration (already peeled one from top and bottom)
@@ -198,7 +216,7 @@ ATL_asmdecor(ATL_USERMM):
  */
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
-            vbroadcastsd -8(pB), rB2
+            vbroadcastsd -SZ(pB), rB2
             vmulpd rB0, rA1, m0
             vaddpd rC10, m0, rC10
                prefA -128(pfA)
@@ -211,46 +229,51 @@ ATL_asmdecor(ATL_USERMM):
                prefA (pfA)
             vmulpd rB1, rA1, m0
             vaddpd rC11, m0, rC11
+               prefC (pC)
+               prefC 64(pC)
             vmulpd rB1, rA2, m0
             vaddpd rC21, m0, rC21
-               vbroadcastsd 8(pB), rB1
+               vbroadcastsd SZ(pB), rB1
+            add incBk, pB
 
             vmulpd rB2, rA0, m0
             vaddpd rC02, m0, rC02
                vmovapd (pA,KK), rA0
+               add incPF, pfA
             vmulpd rB2, rA1, m0
             vaddpd rC12, m0, rC12
                vmovapd 32(pA,KK), rA1
             vmulpd rB2, rA2, m0
             vaddpd rC22, m0, rC22
                vmovapd 64(pA,KK), rA2
-            add incPF, pfA
-            add incPF, pfB
-            add $24, pB
-            add $96, KK
+            add r96, KK
             jz KLOOPDRAIN
+               prefC 32(pC,r96)
 /*
  *        Finally, start actual loop
  */
+          ALIGN32
           KLOOP:
+               prefetcht0 PFBDIST(pB)
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
-            vbroadcastsd -8(pB), rB2
+            vbroadcastsd -SZ(pB), rB2
             vmulpd rB0, rA1, m0
             vaddpd rC10, m0, rC10
-               prefetcht0 64(pB)
+               prefetcht0 PFADIST(pA,KK)
             vmulpd rB0, rA2, m0
             vaddpd rC20, m0, rC20
                vbroadcastsd (pB), rB0
 
             vmulpd rB1, rA0, m0
             vaddpd rC01, m0, rC01
-               prefetcht0 128(pA)
+               prefetcht0 PFADIST+64(pA,KK)
             vmulpd rB1, rA1, m0
             vaddpd rC11, m0, rC11
             vmulpd rB1, rA2, m0
             vaddpd rC21, m0, rC21
-               vbroadcastsd 8(pB), rB1
+               vbroadcastsd SZ(pB), rB1
+            add incBk, pB
 
             vmulpd rB2, rA0, m0
             vaddpd rC02, m0, rC02
@@ -261,8 +284,7 @@ ATL_asmdecor(ATL_USERMM):
             vmulpd rB2, rA2, m0
             vaddpd rC22, m0, rC22
                vmovapd 64(pA,KK), rA2
-            add $24, pB
-            add $96, KK
+            add r96, KK
          jnz KLOOP
 /*
  *       Last iteration peeled off bottom to allow store of C; this should
@@ -276,7 +298,7 @@ KLOOPDRAIN:
 #else
    #define VCOP vaddpd
 #endif
-            vbroadcastsd -8(pB), rB2
+            vbroadcastsd -SZ(pB), rB2
             vmulpd rB0, rA0, m0
             vaddpd rC00, m0, rC00
             #ifndef BETA0
@@ -330,29 +352,28 @@ KLOOPDRAIN:
             vmulpd rB2, rA2, m0
             vaddpd rC22, m0, rC22
             #ifndef BETA0
-               VCOP  128(pC), rC22, rC22
+               VCOP  32(pC,r96), rC22, rC22
             #endif
-            vmovapd rC22, 128(pC)
+            vmovapd rC22, 32(pC,r96)
 .local KLOOPDONE
 KLOOPDONE:
          mov KK0, KK
          vbroadcastsd (pB), rB0
-         add $12*3*8, pC                /* pC += MU*NU*sizeof */
+         add incPF, pC                /* pC += MU*NU*sizeof */
       sub $1, nnu
-      jnz NLOOP
+      jnz MNLOOP
       vbroadcastsd (pB0), rB0
       mov nnu0, nnu
       mov pB0, pB
       add incAm, pA                     /* pA += MU*sizeof*K */
    sub $1, nmu
-   jnz MLOOP
+   jnz MNLOOP
 /* DONE: */
    movq (%rsp), %rbp
    movq 8(%rsp), %rbx
    movq 16(%rsp), %r12
    movq 24(%rsp), %r13
    movq 32(%rsp), %r14
-   movq 40(%rsp), %r15
    add  $FSIZE, %rsp
    ret
 /*

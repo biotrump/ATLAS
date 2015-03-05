@@ -1,4 +1,5 @@
 #include "atlas_misc.h"
+#include Mstr(Mjoin(AMM_UPR,_sum.h))
 #include "atlas_threads.h"
 #include "atlas_tlvl3.h"
 int Mjoin(PATL,StructIsInitHEMM)(void *vp)
@@ -200,7 +201,7 @@ void Mjoin(PATL,themm)
          Mjoin(PATL,gescal)(M, N, beta, C, ldc);
       return;
    }
-   if (!nb) nb = Mjoin(PATL,GetNB());
+   if (!nb) nb = ATL_AMM_66KB;
    if (Side == AtlasLeft)
    {
       nblks = N / nb;

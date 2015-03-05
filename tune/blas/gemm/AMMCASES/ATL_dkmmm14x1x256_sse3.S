@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2013 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -113,12 +113,12 @@ ATL_asmdecor(ATL_USERMM):
    movq %r14, 32(%rsp)
    movq %r15, 40(%rsp)
 
+   movq FSIZE+16(%rsp), pfB
    mov %r8, pB
+   movq FSIZE+8(%rsp), pfA
    sub $-128, pA
    sub $-128, pB
    mov pB, pB0
-   movq FSIZE+16(%rsp), pfB
-   movq FSIZE+8(%rsp), pfA
    mov $14*KB*8, incA   /* incA = 14*K*sizeof */
    mov NNU, NNU0
    mov $112, r112

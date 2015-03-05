@@ -58,9 +58,11 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
    #endif
    #define prefB(m_) prefetcht2 m_
 #endif
-//#define prefC(m_) prefetcht0 m_
-#define prefC(m_) prefetchw m_
-#define FMAC vfmadd231pd   /* FMAC m256/r256, rs1, rd */
+#ifdef ATL_3DNow
+   #define prefC(m_) prefetchw m_
+#else
+   #define prefC(m_) prefetcht0 m_
+#endif
 #if defined(BETAN) || defined(BETAn)
    #define BETAN1
 #endif
@@ -69,7 +71,7 @@ void ATL_USERMM(SZT nmu, SZT nnu, SZT K, CTYPE *pA, CTYPE *pB, TYPE *pC,
 #else
    #define VCOP addpd
 #endif
-#define movapd movaps
+/* #define movapd movaps */
 .text
 .global ATL_asmdecor(ATL_USERMM)
 ALIGN16
@@ -91,10 +93,19 @@ ATL_asmdecor(ATL_USERMM):
    mov %r8, pB
    mov %r9, pC
    mov nnu, nnu0
-   movq 8(%rsp), pfA       /* pfA = pAn */
-   movq 16(%rsp), pfB      /* pfB = pBn */
-   cmp pfB, pB
-   CMOVE pfA, pfB
+   #if KB > 78  /* only pfB is prefetched, so put most imp mat in it */
+      #if defined(ATL_MOVEB)
+         lea KB*6*8(pB), pfB
+      #else
+         lea KB*12*8(pA), pfB
+      #endif
+   #else
+      movq 8(%rsp), pfA       /* pfA = pAn */
+      movq 16(%rsp), pfB      /* pfB = pBn */
+      cmp pfB, pB
+      CMOVE pfA, pfB
+      CMOVE pA, pfA
+   #endif
    mov KK, KK0
    sub $-128, pC
    sub $-128, pA
@@ -164,10 +175,16 @@ ATL_asmdecor(ATL_USERMM):
             movapd rA0, rm0
             mulpd rB0, rm0
             addpd rm0, rC00
+            #if defined(ATL_MOVEC)
+               prefC(128-192(pC,r24))
+            #endif
 
             movapd rA1, rm0
             mulpd rB0, rm0
             addpd rm0, rC10
+            #if defined(ATL_MOVEC)
+               prefC((pC,r24))
+            #endif
 
             mulpd -48(pA), rB0
             addpd rB0, rC20

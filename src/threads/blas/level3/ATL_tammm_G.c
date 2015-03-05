@@ -465,8 +465,10 @@ int Mjoin(PATL,tammm_G)
  * Quick exit for problems too small to thread
  */
    if (ncblks < 8)
-      return(Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb,
-                              beta, C, ldc));
+   {
+      Mjoin(PATL,ammm)(TA, TB, M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+      return(0);
+   }
    mb = Mjoin(PATL,tGetAmmmInfo)(&mminfo, Mmin(ncblks, ATL_NTHREADS), TA,
                                  TB, M, N, K, alpha, beta);
    pd.alpA = pd.alpB = pd.alpC = ATL_rone;
@@ -570,7 +572,7 @@ int Mjoin(PATL,tammm_G)
       if (pd.ncntxts > 1)
          sz += ATL_Cachelen*(pd.ncores+1);
    #endif
-   if ((sz>>20) > ATL_PTMAXMALLOC_MB)
+   if (sz > ATL_PTMAXMALLOC)
       return(2);
    vp = malloc(sz);
    if (!vp)

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1997 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -34,7 +34,7 @@
 #define REPS 4096
 
 #ifndef time00
-   #define time00 ATL_cputime
+   #define time00 ATL_walltime
 #endif
 double time00();
 

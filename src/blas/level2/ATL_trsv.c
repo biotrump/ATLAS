@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2010, 2012 R. Clint Whaley
  *
  * Code contributers : R. Clint Whaley, Antoine P. Petitet
@@ -64,7 +64,8 @@ static int ATL_trsvUN_k
    void (*gemv)(ATL_CINT, ATL_CINT, const SCALAR, const TYPE*, ATL_CINT,
                 const TYPE*, ATL_CINT, const SCALAR, TYPE*, ATL_CINT);
    void *vp=NULL;
-   TYPE *x, *a;
+   TYPE *x;
+   const TYPE *a;
    const size_t opsize = (N*N+N+N)*sizeof(TYPE)SHIFT;
    size_t t0;
    #ifdef TCPLX

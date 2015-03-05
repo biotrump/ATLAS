@@ -379,17 +379,19 @@ startup : lib include results EXtest
 	$(MAKE) -f Make.top leafstart leaf=results/raw
 	$(MAKE) -f Make.top leafstart leaf=EXtest
 	$(MAKE) -f Make.top leafstart leaf=src/threads
+	$(MAKE) -f Make.top leafstart leaf=src/threads/cbc
 	$(MAKE) -f Make.top leafstart leaf=src/threads/lapack
+	$(MAKE) -f Make.top leafstart leaf=src/threads/lapack/amm
 	$(MAKE) -f Make.top leafstart leaf=src/threads/blas/level2
 	$(MAKE) -f Make.top leafstart leaf=src/threads/blas/level3
 	$(MAKE) -f Make.top leafstart leaf=src/lapack
+	$(MAKE) -f Make.top leafstart leaf=src/lapack/amm
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level3/kernel
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level3/rblas
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level3
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level2/kernel
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level2
 	$(MAKE) -f Make.top leafstart leaf=src/blas/level1
-	$(MAKE) -f Make.top leafstart leaf=src/blas/gemm
 	$(MAKE) -f Make.top leafstart leaf=src/blas/ammm
 	$(MAKE) -f Make.top leafstart leaf=src/blas/ger
 	$(MAKE) -f Make.top leafstart leaf=src/blas/gemv
@@ -406,7 +408,6 @@ startup : lib include results EXtest
 	cd src/threads ; touch atomic.inc
 	cd src/blas/ammm ; mkdir KERNEL
 	cd src/blas/ammm ; mkdir UKERNEL
-	cd src/blas/gemm ; mkdir KERNEL
 	cd tune/blas/gemm ; mkdir KERNEL
 	cd tune/blas/gemm ; mkdir res
 	cd tune/blas/gemv ; mkdir res
@@ -457,11 +458,11 @@ refresh :
 	cp $(SRCdir)/makes/Make.tstsrc src/testing/Makefile
 	cp $(SRCdir)/makes/Make.mvsrc src/blas/gemv/Makefile
 	cp $(SRCdir)/makes/Make.r1src src/blas/ger/Makefile
-	cp $(SRCdir)/makes/Make.mmsrc src/blas/gemm/Makefile
 	cp $(SRCdir)/makes/Make.ammsrc src/blas/ammm/Makefile
 	cp $(SRCdir)/makes/Make.l1src src/blas/level1/Makefile
 	cp $(SRCdir)/makes/Make.l2 src/blas/level2/Makefile
 	cp $(SRCdir)/makes/Make.l2aux src/blas/level2/kernel/Makefile
+	cp $(SRCdir)/makes/Make.lpamm src/lapack/amm/Makefile
 	cp $(SRCdir)/makes/Make.lpsrc src/lapack/Makefile
 	cp $(SRCdir)/makes/Make.l3tune tune/blas/level3/Makefile
 	cp $(SRCdir)/makes/Make.mmtune tune/blas/gemm/Makefile
@@ -482,6 +483,8 @@ refresh :
 	cp $(SRCdir)/makes/Make.lathr src/threads/lapack/Makefile
 	cp $(SRCdir)/makes/Make.l3thr src/threads/blas/level3/Makefile
 	cp $(SRCdir)/makes/Make.l2thr src/threads/blas/level2/Makefile
+	cp $(SRCdir)/makes/Make.tlpamm src/threads/lapack/amm/Makefile
+	cp $(SRCdir)/makes/Make.cbc src/threads/cbc/Makefile
 	cp $(SRCdir)/makes/Make.l3 src/blas/level3/Makefile
 	cp $(SRCdir)/makes/Make.l3aux src/blas/level3/rblas/Makefile
 	cp $(SRCdir)/makes/Make.l3kern src/blas/level3/kernel/Makefile
@@ -491,6 +494,8 @@ refresh :
 	cp $(SRCdir)/CONFIG/ARCHS/Makefile ARCHS/.
 
 clean :
+	cd $(archdir) ; $(MAKE) clean
+	cd $(archdir) ; $(MAKE) clean
 	cd $(archdir) ; $(MAKE) clean
 	cd $(archdir) ; $(MAKE) clean
 	cd $(archdir) ; $(MAKE) clean
@@ -565,17 +570,19 @@ killgrd :
 	cd results/raw ; rm -f *.grd
 	cd EXtest ; rm -f *.grd
 	cd src/threads ; rm -f *.grd
+	cd src/threads/cbc ; rm -f *.grd
 	cd src/threads/lapack ; rm -f *.grd
+	cd src/threads/lapack/amm ; rm -f *.grd
 	cd src/threads/blas/level2 ; rm -f *.grd
 	cd src/threads/blas/level3 ; rm -f *.grd
 	cd src/lapack ; rm -f *.grd
+	cd src/lapack/amm ; rm -f *.grd
 	cd src/blas/level3/kernel ; rm -f *.grd
 	cd src/blas/level3/rblas ; rm -f *.grd
 	cd src/blas/level3 ; rm -f *.grd
 	cd src/blas/level2/kernel ; rm -f *.grd
 	cd src/blas/level2 ; rm -f *.grd
 	cd src/blas/level1 ; rm -f *.grd
-	cd src/blas/gemm ; rm -f *.grd
 	cd src/blas/ammm ; rm -f *.grd
 	cd src/blas/ger ; rm -f *.grd
 	cd src/blas/gemv ; rm -f *.grd

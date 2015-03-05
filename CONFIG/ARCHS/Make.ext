@@ -21,16 +21,16 @@ incf = /home/whaley/git/math-atlas/AtlasBase/gen.inc
 
 basdr = $(basdRCW)/misc/ARCHDEF
 
-files = AMD64K10h32SSE3.tar.bz2 AMD64K10h64SSE3.tar.bz2 \
-        AMDDOZER32AVXFMA4.tar.bz2 AMDDOZER64AVXFMA4.tar.bz2 \
-        AMDDRIVER64AVXMAC.tar.bz2 AMDLLANO64SSE3.tar.bz2 ARM6464.tar.bz2 \
-        ARMv732FPV3D16MAC.tar.bz2 ARMv732FPV3D32MAC.tar.bz2 \
-        Atom64SSE3.tar.bz2 BOZOL1.tar.bz2 Core232SSE3.tar.bz2 \
-        Core264SSE3.tar.bz2 CoreDuo32SSE3.tar.bz2 Corei132SSE3.tar.bz2 \
-        Corei164SSE3.tar.bz2 Corei232AVX.tar.bz2 Corei264AVX.tar.bz2 \
-        Corei264SSE3.tar.bz2 Corei364AVXMAC.tar.bz2 CreateDef.sh \
-        CreateDirs.sh CreateTar.sh HAMMER64SSE3.tar.bz2 IA64Itan264.tar.bz2 \
-        IBMz1032.tar.bz2 IBMz1064.tar.bz2 IBMz19632.tar.bz2 IBMz19664.tar.bz2 \
+files = AMD64K10h64SSE3.tar.bz2 AMDDOZER32AVXFMA4.tar.bz2 \
+        AMDDOZER64AVXFMA4.tar.bz2 AMDDRIVER64AVXMAC.tar.bz2 \
+        AMDLLANO64SSE3.tar.bz2 ARM6464.tar.bz2 ARMv732FPV3D16MAC.tar.bz2 \
+        ARMv732FPV3D32MAC.tar.bz2 Atom64SSE3.tar.bz2 BOZOL1.tar.bz2 \
+        Core232SSE3.tar.bz2 Core264SSE3.tar.bz2 CoreDuo32SSE3.tar.bz2 \
+        Corei132SSE3.tar.bz2 Corei164SSE3.tar.bz2 Corei232AVX.tar.bz2 \
+        Corei264AVX.tar.bz2 Corei264SSE3.tar.bz2 Corei364AVXMAC.tar.bz2 \
+        Corei3EP64AVXMAC.tar.bz2 CreateDef.sh CreateDirs.sh CreateTar.sh \
+        HAMMER64SSE3.tar.bz2 IA64Itan264.tar.bz2 IBMz1032.tar.bz2 \
+        IBMz1064.tar.bz2 IBMz19632.tar.bz2 IBMz19664.tar.bz2 \
         K7323DNow.tar.bz2 KillDirs.sh MIPSICE932.tar.bz2 MIPSICE964.tar.bz2 \
         MIPSR1xK64.tar.bz2 Makefile P432SSE2.tar.bz2 P4E32SSE3.tar.bz2 \
         P4E64SSE3.tar.bz2 PIII32SSE1.tar.bz2 POWER432.tar.bz2 \
@@ -137,6 +137,12 @@ Corei364AVXMAC.tar.bz2 : $(basdr)/Corei364AVXMAC
            /tmp/Corei364AVXMAC.tar Corei364AVXMAC
 	bzip2 /tmp/Corei364AVXMAC.tar
 	mv /tmp/Corei364AVXMAC.tar.bz2 ./.
+Corei3EP64AVXMAC.tar.bz2 : $(basdr)/Corei3EP64AVXMAC
+	- rm -f /tmp/Corei3EP64AVXMAC.tar /tmp/Corei3EP64AVXMAC.tar.bz2
+	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
+           /tmp/Corei3EP64AVXMAC.tar Corei3EP64AVXMAC
+	bzip2 /tmp/Corei3EP64AVXMAC.tar
+	mv /tmp/Corei3EP64AVXMAC.tar.bz2 ./.
 Corei132SSE3.tar.bz2 : $(basdr)/Corei132SSE3
 	- rm -f /tmp/Corei132SSE3.tar /tmp/Corei132SSE3.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
@@ -191,12 +197,6 @@ AMD64K10h64SSE3.tar.bz2 : $(basdr)/AMD64K10h64SSE3
            /tmp/AMD64K10h64SSE3.tar AMD64K10h64SSE3
 	bzip2 /tmp/AMD64K10h64SSE3.tar
 	mv /tmp/AMD64K10h64SSE3.tar.bz2 ./.
-AMD64K10h32SSE3.tar.bz2 : $(basdr)/AMD64K10h32SSE3
-	- rm -f /tmp/AMD64K10h32SSE3.tar /tmp/AMD64K10h32SSE3.tar.bz2
-	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \
-           /tmp/AMD64K10h32SSE3.tar AMD64K10h32SSE3
-	bzip2 /tmp/AMD64K10h32SSE3.tar
-	mv /tmp/AMD64K10h32SSE3.tar.bz2 ./.
 AMDDOZER64AVXFMA4.tar.bz2 : $(basdr)/AMDDOZER64AVXFMA4
 	- rm -f /tmp/AMDDOZER64AVXFMA4.tar /tmp/AMDDOZER64AVXFMA4.tar.bz2
 	cd $(basdr) ; tar --dereference --exclude 'CVS' -c -f \

@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  * Copyright (C) 2010 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -219,8 +219,8 @@ void GetMulAdd(char pre, int *MULADD, int *lat)
    }
    fp = fopen(nam, "r");
    assert(fp != NULL);
-   fscanf(fp, "%d", MULADD);
-   fscanf(fp, "%d", lat);
+   assert(fscanf(fp, "%d", MULADD) == 1);
+   assert(fscanf(fp, "%d", lat) == 1);
    fclose(fp);
 }
 
@@ -539,18 +539,21 @@ int FindNumRegs(char pre, int verb, int nb, int ku, int *MACC, int *lat)
    fp = fopen(ln, "r");
    if (fp)
    {
-      fgets(ln, 128, fp);  /* skip header */
-      if (fscanf(fp, " %d %d %d", &nregs, MACC, lat) == 3)
+      if (fgets(ln, 128, fp))  /* skip header */
       {
-         fclose(fp);
-         if (verb)
-            printf("READ IN NUMBER OF GEMM REGISTERS = %d, MACC=%d, lat=%d:\n",
-             nregs, *MACC, *lat);
-         sprintf(ln, "res/%cnreg", pre);
-         fp = fopen(ln, "w");
-         fprintf(fp, "%d\n", nregs);
-         fclose(fp);
-         return(nregs);
+         if (fscanf(fp, " %d %d %d", &nregs, MACC, lat) == 3)
+         {
+            fclose(fp);
+            if (verb)
+               printf(
+                  "READ IN NUMBER OF GEMM REGISTERS = %d, MACC=%d, lat=%d:\n",
+                  nregs, *MACC, *lat);
+            sprintf(ln, "res/%cnreg", pre);
+            fp = fopen(ln, "w");
+            fprintf(fp, "%d\n", nregs);
+            fclose(fp);
+            return(nregs);
+         }
       }
       fclose(fp);
    }

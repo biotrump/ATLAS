@@ -9,31 +9,38 @@
    #endif
    #ifdef ATL_VSX
       #define ATL_NVREG 64
-      #define ATL_VLENb 16
-      #if defined(SREAL) || defined (SCPLX)
-         #define ATL_VLEN 4
-      #else
-         #define ATL_VLEN 2
+      #ifndef ATL_VLEN
+         #define ATL_VLENb 16
+         #if defined(SREAL) || defined (SCPLX)
+            #define ATL_VLEN 4
+         #else
+            #define ATL_VLEN 2
+         #endif
       #endif
    #elif defined(ATL_AltiVec)
       #define ATL_NVREG 32
-      #define ATL_VLENb 16
-      #if defined(SREAL) || defined (SCPLX)
-         #define ATL_VLEN 4
-      #else
-         #define ATL_VLEN 2
+      #ifndef ATL_VLEN
+         #define ATL_VLENb 16
+         #if defined(SREAL) || defined (SCPLX)
+            #define ATL_VLEN 4
+         #else
+            #define ATL_VLEN 2
+         #endif
       #endif
    #elif defined(ATL_AVXZ)
       #include "immintrin.h"
       #define ATL_NVREG 32
       #define ATL_VLENb 64
       #if defined(SREAL) || defined (SCPLX)
-         #define ATL_VLEN 16
+          #define ATL_VLEN 16
+      #else
+          #define ATL_VLEN 8
+      #endif
+      #if defined(SREAL) || defined (SCPLX)
          #define ATL_gvbcast(ptr_, v_) \
             v_ = _mm512_extload_ps((void*)(ptr_), _MM_UPCONV_PS_NONE, \
                                    _MM_BROADCAST_1X16, 0)
       #else
-         #define ATL_VLEN 8
          #define ATL_gvbcast(ptr_, v_) \
             v_ = _mm512_extload_pd((void*)(ptr_), _MM_UPCONV_PD_NONE, \
                                    _MM_BROADCAST_1X8, 0)
@@ -44,52 +51,105 @@
       #else
          #define ATL_NVREG 8
       #endif
-      #define ATL_VLENb 32
-      #if defined(SREAL) || defined (SCPLX)
-         #define ATL_VLEN 8
-      #else
-         #define ATL_VLEN 4
+      #ifndef ATL_VLEN
+         #define ATL_VLENb 32
+         #if defined(SREAL) || defined (SCPLX)
+            #define ATL_VLEN 8
+         #else
+            #define ATL_VLEN 4
+         #endif
       #endif
-      #define ATL_gvbcast(ptr_, v_) \
-         (v_) = __builtin_ia32_vbroadcastsd256((void*)(ptr_));
+      #if ATL_VLENb == 32
+         #define ATL_gvbcast(ptr_, v_) \
+            (v_) = __builtin_ia32_vbroadcastsd256((void*)(ptr_));
+      #elif ATL_VLENb == 16 && defined(ATL_SSE3)
+         #include "immintrin.h"
+         #define ATL_gvbcast(ptr_, v_) \
+            (v_) = _mm_loaddup_pd(ptr_);
+      #endif
    #elif defined(ATL_SSE3) || defined(ATL_SSE2)
       #ifdef ATL_GAS_x8664
          #define ATL_NVREG 16
       #else
          #define ATL_NVREG 8
       #endif
-      #define ATL_VLENb 16
-      #if defined(SREAL) || defined (SCPLX)
-         #define ATL_VLEN 4
-      #else
-         #define ATL_VLEN 2
-         #ifdef ATL_SSE3
+      #ifndef ATL_VLEN
+         #define ATL_VLENb 16
+         #if defined(SREAL) || defined (SCPLX)
+            #define ATL_VLEN 4
+         #else
+            #define ATL_VLEN 2
+         #endif
+      #endif
+      #if defined(DREAL) || defined(DCPLX)
+         #if defined(ATL_SSE3) && ATL_VLEN == 2
+         #include "immintrin.h"
             #define ATL_gvbcast(ptr_, v_) \
-               (v_) = __builtin_ia32_loaddup(ptr_);
+            (v_) = _mm_loaddup_pd(ptr_);
          #endif
       #endif
    #elif defined(SREAL) || defined(SCPLX)   /* single-only stuff */
       #ifdef ATL_AltiVec
          #define ATL_NVREG 32
-         #define ATL_VLENb 16
-         #define ATL_VLEN 4
+         #ifndef ATL_VLEN
+            #define ATL_VLENb 16
+            #define ATL_VLEN 4
+         #endif
       #elif defined(ATL_SSE1)
          #ifdef ATL_GAS_x8664
             #define ATL_NVREG 16
          #else
             #define ATL_NVREG 8
          #endif
-         #define ATL_VLENb 16
-         #define ATL_VLEN 4
+         #ifndef ATL_VLEN
+            #define ATL_VLENb 16
+            #define ATL_VLEN 4
+         #endif
       #elif defined(ATL_NONIEEE) && ATL_NONIEEE != 0
          #ifdef ATL_NEON
             #define ATL_NVREG 16
-            #define ATL_VLENb 8
-            #define ATL_VLEN 2
+            #ifndef ATL_VLEN
+               #define ATL_VLENb 8
+               #define ATL_VLEN 2
+            #endif
          #elif defined(ATL_3DNow)
             #define ATL_NVREG 8
+            #ifndef ATL_VLEN
+               #define ATL_VLENb 16
+               #define ATL_VLEN 4
+            #endif
+         #endif
+      #endif
+   #endif
+   #if defined(ATL_VLEN) && !defined(ATL_VLENb)
+      #if defined(SREAL) || defined (SCPLX)
+         #if ATL_VLEN == 2
+            #define ATL_VLENb 8
+         #endif
+         #if ATL_VLEN == 4
             #define ATL_VLENb 16
-            #define ATL_VLEN 4
+         #endif
+         #if ATL_VLEN == 8
+            #define ATL_VLENb 32
+         #endif
+         #if ATL_VLEN == 16
+            #define ATL_VLENb 64
+         #endif
+      #else
+         #if ATL_VLEN == 2
+            #define ATL_VLENb 16
+         #endif
+         #if ATL_VLEN == 4
+            #define ATL_VLENb 32
+         #endif
+         #if ATL_VLEN == 8
+            #define ATL_VLENb 64
+         #endif
+         #if ATL_VLEN == 16
+            #define ATL_VLENb 128
+         #endif
+         #if ATL_VLEN == 32
+            #define ATL_VLENb 256
          #endif
       #endif
    #endif

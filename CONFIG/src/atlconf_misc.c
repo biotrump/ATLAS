@@ -1,5 +1,5 @@
 /*
- *             Automatically Tuned Linear Algebra Software v3.11.31
+ *             Automatically Tuned Linear Algebra Software v3.11.32
  *                    (C) Copyright 1998 R. Clint Whaley
  *
  * Redistribution and use in source and binary forms, with or without
@@ -388,7 +388,7 @@ void GetEnter(FILE *fpout)
 {
    char ln[128];
    fprintf(fpout, "---------- PRESS ENTER TO CONTINUE ---------- ");
-   fgets(ln, 128, stdin);
+   assert(fgets(ln, 128, stdin));
 }
 
 int DisplayFile(char *fnam, FILE *fpout, int nlines)
