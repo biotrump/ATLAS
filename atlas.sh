@@ -55,7 +55,8 @@ case $1 in
 		#default build is x86: convert KHz to MHz
 			MAX_FREQ=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq | awk '{printf "%d\n", $1/1000}'`
 			DMAX_SPEED="-D c -DPentiumCPS=${MAX_FREQ}"
-			MACHINE_FLAG="-Fa alg -fPIC --nof77 -b 64 ${DMAX_SPEED}"
+#			MACHINE_FLAG="-Fa alg -fPIC --nof77 -b 64 ${DMAX_SPEED}"
+			MACHINE_FLAG="-Fa alg -fPIC -b 64 ${DMAX_SPEED}"
 			echo MACHINE_FLAG=$MACHINE_FLAG
 			#disabling cpu freq to top speed
 			for((i=0;i<${CORE_COUNT};i=i+1))
@@ -64,7 +65,8 @@ case $1 in
 			done
 		else
 			if [[ "$#" -eq 2 && "$2" =~ "arm" ]]; then
-			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC --nof77"
+#			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC --nof77"
+			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC"
 			fi
 		fi
 		;;
@@ -170,6 +172,6 @@ case $1 in
 	;;
 
 	* )
-	atlas.sh config/build
+	echo "atlas.sh config/build"
 	;;
 esac
