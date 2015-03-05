@@ -163,7 +163,8 @@ case $1 in
 	#   kMV_N      235.6   210.3    484.5   470.5    112.4   116.0    216.2   207.0
 	#   kMV_T      234.3   217.0    488.0   477.9    120.0   113.0    239.5   234.3
 	#    kGER      166.9   155.7    320.9   300.2     78.5    75.3    160.5   151.8
-	make -j ${CORE_COUNT}
+	#make -j ${CORE_COUNT}
+	make
 	#we need lapacke to export c api
 	ln -s ${ATLAS_OUT}/src/lapack/reference/liblapacke.a ${ATLAS_OUT}/lib
 	make check
