@@ -1,0 +1,205 @@
+include Make.inc
+mySRCdir = $(SRCdir)/src/blas/ammm
+
+all : lib
+lib : dlib slib zlib clib
+tlib : dtlib stlib ztlib ctlib
+double    : dlib
+single    : slib
+complex   : clib
+complex16 : zlib
+
+clean : dclean sclean cclean zclean
+	rm -f KERNEL/*.o
+
+sINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
+          $(INCAdir)/atlas_samm_blk.h $(INCAdir)/atlas_samm_flag.h \
+          $(INCAdir)/atlas_samm_kern.h \
+          $(INCAdir)/atlas_samm_cm2am_a1.h \
+          $(INCAdir)/atlas_samm_ablk2cmat.h 
+
+sobj = ATL_sGetAmmmInfo.o ATL_sGetRankKInfo.o \
+       ATL_srk4n4.o ATL_sammmREC.o \
+       ATL_sammm.o ATL_sammm_1b.o \
+       ATL_sammm_rk2.o ATL_sammm_rkK.o ATL_sammmNMK.o \
+       ATL_sammm_IP.o ATL_sammm_tN.o ATL_sammmMNK.o
+
+slib : slib.grd
+	cd KERNEL ; $(PMAKE) -f sMake_amm slib
+sclean:
+	rm -f $(sobj) slib.grd
+
+slib.grd : $(sobj)
+	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(sobj)
+	$(RANLIB) $(ATLASlib)
+	touch slib.grd
+
+ATL_sGetRankKInfo.o : $(sINCdep) $(mySRCdir)/ATL_GetRankKInfo.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_GetRankKInfo.c
+ATL_sGetAmmmInfo.o : $(sINCdep) $(mySRCdir)/ATL_GetAmmmInfo.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_GetAmmmInfo.c
+ATL_sammmMNK.o : $(sINCdep) $(mySRCdir)/ATL_ammmMNK.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammmMNK.c
+ATL_sammm_tN.o : $(sINCdep) $(mySRCdir)/ATL_ammm_tN.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_tN.c
+ATL_sammm_IP.o : $(sINCdep) $(mySRCdir)/ATL_ammm_IP.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_IP.c
+ATL_sammm_rkK.o : $(sINCdep) $(mySRCdir)/ATL_ammm_rkK.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_rkK.c
+ATL_sammm_rk2.o : $(sINCdep) $(mySRCdir)/ATL_ammm_rk2.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_rk2.c
+ATL_sammmNMK.o : $(sINCdep) $(mySRCdir)/ATL_ammmNMK.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammmNMK.c
+ATL_sammm_1b.o : $(sINCdep) $(mySRCdir)/ATL_ammm_1b.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm_1b.c
+ATL_sammm.o : $(sINCdep) $(mySRCdir)/ATL_ammm.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammm.c
+ATL_sammmREC.o : $(sINCdep) $(mySRCdir)/ATL_ammmREC.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_ammmREC.c
+ATL_srk4n4.o : $(sINCdep) $(mySRCdir)/ATL_rk4n4.c
+	$(SKC) -DSREAL=1 -o $@ -c $(sKCFLAGS) $(mySRCdir)/ATL_rk4n4.c
+dINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
+          $(INCAdir)/atlas_damm_blk.h $(INCAdir)/atlas_damm_flag.h \
+          $(INCAdir)/atlas_damm_kern.h \
+          $(INCAdir)/atlas_damm_cm2am_a1.h \
+          $(INCAdir)/atlas_damm_ablk2cmat.h 
+
+dobj = ATL_dGetAmmmInfo.o ATL_dGetRankKInfo.o \
+       ATL_drk4n4.o ATL_dammmREC.o \
+       ATL_dammm.o ATL_dammm_1b.o \
+       ATL_dammm_rk2.o ATL_dammm_rkK.o ATL_dammmNMK.o \
+       ATL_dammm_IP.o ATL_dammm_tN.o ATL_dammmMNK.o
+
+dlib : dlib.grd
+	cd KERNEL ; $(PMAKE) -f dMake_amm dlib
+dclean:
+	rm -f $(dobj) dlib.grd
+
+dlib.grd : $(dobj)
+	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(dobj)
+	$(RANLIB) $(ATLASlib)
+	touch dlib.grd
+
+ATL_dGetRankKInfo.o : $(dINCdep) $(mySRCdir)/ATL_GetRankKInfo.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_GetRankKInfo.c
+ATL_dGetAmmmInfo.o : $(dINCdep) $(mySRCdir)/ATL_GetAmmmInfo.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_GetAmmmInfo.c
+ATL_dammmMNK.o : $(dINCdep) $(mySRCdir)/ATL_ammmMNK.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammmMNK.c
+ATL_dammm_tN.o : $(dINCdep) $(mySRCdir)/ATL_ammm_tN.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_tN.c
+ATL_dammm_IP.o : $(dINCdep) $(mySRCdir)/ATL_ammm_IP.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_IP.c
+ATL_dammm_rkK.o : $(dINCdep) $(mySRCdir)/ATL_ammm_rkK.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_rkK.c
+ATL_dammm_rk2.o : $(dINCdep) $(mySRCdir)/ATL_ammm_rk2.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_rk2.c
+ATL_dammmNMK.o : $(dINCdep) $(mySRCdir)/ATL_ammmNMK.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammmNMK.c
+ATL_dammm_1b.o : $(dINCdep) $(mySRCdir)/ATL_ammm_1b.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm_1b.c
+ATL_dammm.o : $(dINCdep) $(mySRCdir)/ATL_ammm.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammm.c
+ATL_dammmREC.o : $(dINCdep) $(mySRCdir)/ATL_ammmREC.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_ammmREC.c
+ATL_drk4n4.o : $(dINCdep) $(mySRCdir)/ATL_rk4n4.c
+	$(DKC) -DDREAL=1 -o $@ -c $(dKCFLAGS) $(mySRCdir)/ATL_rk4n4.c
+cINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
+          $(INCAdir)/atlas_samm_blk.h $(INCAdir)/atlas_samm_flag.h \
+          $(INCAdir)/atlas_samm_kern.h \
+          $(INCAdir)/atlas_camm_cm2am_a1.h \
+          $(INCAdir)/atlas_camm_ablk2cmat.h 
+
+cobj = ATL_cGetAmmmInfo.o ATL_cGetRankKInfo.o \
+       ATL_cammm.o ATL_cammm_1b.o \
+       ATL_cammm_rk2.o ATL_cammm_rkK.o ATL_cammmNMK.o \
+       ATL_cammm_IP.o ATL_cammm_tN.o ATL_cammmMNK.o
+
+clib : clib.grd
+	cd KERNEL ; $(PMAKE) -f sMake_amm slib
+cclean:
+	rm -f $(cobj) clib.grd
+
+clib.grd : $(cobj)
+	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(cobj)
+	$(RANLIB) $(ATLASlib)
+	touch clib.grd
+
+ATL_cammmMNK.o : $(cINCdep) $(mySRCdir)/ATL_cammmMNK.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammmMNK.c
+ATL_cammm_tN.o : $(cINCdep) $(mySRCdir)/ATL_cammm_tN.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm_tN.c
+ATL_cammm_IP.o : $(cINCdep) $(mySRCdir)/ATL_cammm_IP.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm_IP.c
+ATL_cammm_rkK.o : $(cINCdep) $(mySRCdir)/ATL_cammm_rkK.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm_rkK.c
+ATL_cammm_rk2.o : $(cINCdep) $(mySRCdir)/ATL_cammm_rk2.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm_rk2.c
+ATL_cammmNMK.o : $(cINCdep) $(mySRCdir)/ATL_cammmNMK.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammmNMK.c
+ATL_cammm_1b.o : $(cINCdep) $(mySRCdir)/ATL_cammm_1b.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm_1b.c
+ATL_cammm.o : $(cINCdep) $(mySRCdir)/ATL_cammm.c \
+                    $(INCAdir)/atlas_camm_sum.h
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_cammm.c
+ATL_cGetRankKInfo.o : $(cINCdep) $(mySRCdir)/ATL_GetRankKInfo.c
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_GetRankKInfo.c
+ATL_cGetAmmmInfo.o : $(cINCdep) $(mySRCdir)/ATL_GetAmmmInfo.c
+	$(SKC) -DSCPLX=1 -o $@ -c $(cKCFLAGS) $(mySRCdir)/ATL_GetAmmmInfo.c
+zINCdep = $(INCSdir)/atlas_misc.h $(INCAdir)/atlas_type.h \
+          $(INCAdir)/atlas_damm_blk.h $(INCAdir)/atlas_damm_flag.h \
+          $(INCAdir)/atlas_damm_kern.h \
+          $(INCAdir)/atlas_zamm_cm2am_a1.h \
+          $(INCAdir)/atlas_zamm_ablk2cmat.h 
+
+zobj = ATL_zGetAmmmInfo.o ATL_zGetRankKInfo.o \
+       ATL_zammm.o ATL_zammm_1b.o \
+       ATL_zammm_rk2.o ATL_zammm_rkK.o ATL_zammmNMK.o \
+       ATL_zammm_IP.o ATL_zammm_tN.o ATL_zammmMNK.o
+
+zlib : zlib.grd
+	cd KERNEL ; $(PMAKE) -f dMake_amm dlib
+zclean:
+	rm -f $(zobj) zlib.grd
+
+zlib.grd : $(zobj)
+	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(zobj)
+	$(RANLIB) $(ATLASlib)
+	touch zlib.grd
+
+ATL_zammmMNK.o : $(zINCdep) $(mySRCdir)/ATL_cammmMNK.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammmMNK.c
+ATL_zammm_tN.o : $(zINCdep) $(mySRCdir)/ATL_cammm_tN.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm_tN.c
+ATL_zammm_IP.o : $(zINCdep) $(mySRCdir)/ATL_cammm_IP.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm_IP.c
+ATL_zammm_rkK.o : $(zINCdep) $(mySRCdir)/ATL_cammm_rkK.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm_rkK.c
+ATL_zammm_rk2.o : $(zINCdep) $(mySRCdir)/ATL_cammm_rk2.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm_rk2.c
+ATL_zammmNMK.o : $(zINCdep) $(mySRCdir)/ATL_cammmNMK.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammmNMK.c
+ATL_zammm_1b.o : $(zINCdep) $(mySRCdir)/ATL_cammm_1b.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm_1b.c
+ATL_zammm.o : $(zINCdep) $(mySRCdir)/ATL_cammm.c \
+                    $(INCAdir)/atlas_zamm_sum.h
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_cammm.c
+ATL_zGetRankKInfo.o : $(zINCdep) $(mySRCdir)/ATL_GetRankKInfo.c
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_GetRankKInfo.c
+ATL_zGetAmmmInfo.o : $(zINCdep) $(mySRCdir)/ATL_GetAmmmInfo.c
+	$(DKC) -DDCPLX=1 -o $@ -c $(zKCFLAGS) $(mySRCdir)/ATL_GetAmmmInfo.c
+

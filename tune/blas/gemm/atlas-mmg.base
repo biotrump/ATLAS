@@ -1,0 +1,5850 @@
+@ifdef ! kmaj
+   @define kmaj @0@
+@endifdef
+@iif kmaj = 1
+   @iexp kmaj 0 0 +
+@endiif
+@ROUT ATL_cam2amb ATL_ram2amb ATL_muxnu2mat
+#include "atlas_misc.h"
+@beginskip
+#define TYPE double
+#define SCALAR TYPE
+#define ATL_INT int
+#define ATL_rzero 0.0
+#define ATL_CINT const int
+@endskip
+@ROUT cammmtst
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include "atlas_misc.h"
+   @ifdef be
+      @undef be
+   @endifdef
+   @define be @0@
+   @define nbet @@(be)@
+   @define alpha @1@
+   @define malp @@
+   @define nalp @@(alpha)@
+   @define beta @@(be)@
+@ROUT ATL_am2rm ATL_am2cm ATL_cm2am ATL_rm2am ATL_ablk2cmat ATL_cmat2ablk @\
+      ATL_cam2rm ATL_cam2cm ATL_ccm2am ATL_crm2am ATL_cablk2cmat ATL_ccmat2ablk
+#include "atlas_misc.h"
+   @ifdef ! alpha
+      @define alpha @1@
+   @endifdef
+   @iif alpha = 1
+      @define malp @@
+      @define calp @-@
+   @endiif
+   @iif alpha = -1
+      @define malp @-@
+      @define calp @@
+      @define nalp @n@
+   @endiif
+   @iif alpha ! -1
+      @define nalp @@(alpha)@
+      @iif alpha ! 1
+         @define malp @alpha*@
+         @define calp @(-alpha)*@
+         @define nalp @X@
+      @endiif
+   @endiif
+@ROUT ATL_am2cm ATL_cm2am ATL_rm2am cammmtst ammmtst
+   @ifdef ! dupB
+      @define dupB @1@
+   @endifdef
+   @iif dupB = 0
+      @undef dupB
+      @define dupB @1@
+   @endiif
+   @iif dupB < 2
+      @define dsuf @@
+      @iexp incdup @(nu) 0 +
+   @endiif
+   @iif dupB > 1
+      @define dsuf @d@(dupB)@
+      @iexp incdup @(dupB) @(nu) *
+   @endiif
+@ROUT ATL_cablk2cmat ATL_ccmat2ablk ATL_ablk2cmat ATL_cmat2ablk
+   @iif beta = -1
+      @define nbet @n@
+   @endiif
+   @iif beta ! -1
+      @iif beta = 0
+         @define nbet @@(beta)@
+      @endiif
+      @iif beta = 1
+         @define nbet @1@
+      @endiif
+      @ifdef ! nbet
+         @define nbet @X@
+      @endifdef
+   @endiif
+@ROUT ammmtst
+#include "atlas_misc.h"
+   @define alpha @1@
+   @define malp @@
+   @define nalp @@(alpha)@
+@ROUT ammmtst ATL_rm2am ATL_cm2am
+   @define cnst @const @
+   @define cnstb @@
+@ROUT ATL_am2cm ATL_am2rm
+   @define cnst @@
+   @define cnstb @const @
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+@iif kmaj = 1
+   @iexp kmaj 0 0 +
+@endiif
+@iif kmaj ! 0
+   @define ku @@(kmaj)@
+@ROUT ATL_am2cm
+/* 
+ * This routine copies from k-vectorized access-major block b to column-major
+ * submatrix A.
+ */
+void Mjoin(PATL,am2cm_a@(nalp)_@(ku)x@(nu))
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: submatrix copied frm access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *b       /* access-ku-major block holding A */
+)
+@ROUT ATL_cm2am ammmtst
+/*
+ * This routine copies the KxN submatrix A into access-k-vlen-major storage.
+ * In this storage, @(nu) vectors of @(ku) length are taken from the
+ * @(nu) columns of A and stored in a @(ku)x@(nu) subblock.
+ * CEIL(K/ku) of these subblocks are stored together to make a K-panel.
+ * The CEIL(N/nu) K-panels are stored contiguously.  If ku does not evenly
+ * divide K then the last block in the K-panel will be zero padded, and
+ * the same is true for the NU portion of the last K-panel if nu does not
+ * evenly divide N.
+ */
+void Mjoin(PATL,cm2am_a@(nalp)_@(ku)x@(nu))
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *b              /* OUTPUT: access-ku-major block holding A */
+)
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+{
+   ATL_CSZT n = (N/@(nu))*@(nu), k = (K/@(ku))*@(ku), incA = lda*@(nu), nr=N-n;
+   ATL_CSZT KK = ((K+@(ku)-1)/@(ku))*@(ku);
+   ATL_SZT i, j;
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp binc @(nu) @(ku) *
+
+   for (j=0; j < n; j += @(nu))
+   {
+      for (i=0; i < k; i += @(ku), b += @(binc))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+@ROUT ATL_am2cm
+            A@(j)[i+@(k)] = @(malp)b[@(ib)];
+@ROUT ATL_cm2am ammmtst
+            b[@(ib)] = @(malp)A@(j)[i+@(k)];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      }
+      if (k != KK)
+      {
+@ROUT ATL_cm2am ammmtst
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            b[@(ib)] = 
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+                    0.0;
+      @endiwhile
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+         for (; i < K; i++, b++)
+         {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp ib @(j) @(ku) *
+@ROUT ATL_am2cm
+            A@(j)[i] = @(malp)b[@(ib)];
+@ROUT ATL_cm2am ammmtst
+            b[@(ib)] = @(malp)A@(j)[i];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+         @iexp j @(j) 1 +
+      @endiwhile
+         }
+         b += @(binc) - K + k;
+      }
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+      @endiwhile
+   }
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < k; i += @(ku), b += @(binc))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+@ROUT ATL_am2cm
+            A@(j)[i+@(k)] = @(malp)b[@(ib)];
+@ROUT ATL_cm2am ammmtst
+            b[@(ib)] = @(malp)A@(j)[i+@(k)];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cm2am ammmtst
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            b[@(ib)] = 0.0;
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+      }
+      if (k != KK)
+      {
+@ROUT ATL_cm2am ammmtst
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            b[@(ib)] = 
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+                    0.0;
+      @endiwhile
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+         for (; i < K; i++, b++)
+         {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp ib @(j) @(ku) *
+@ROUT ATL_am2cm
+             A@(j)[i] = @(malp)b[@(ib)];
+@ROUT ATL_cm2am ammmtst
+            b[@(ib)] = @(malp)A@(j)[i];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cm2am ammmtst
+      @iwhile j < @(nu)
+         @iexp ib @(j) @(ku) *
+            b[@(ib)] = 0.0;
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+         }
+         b += @(binc) - K + k;
+      }
+      break;
+      @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+}
+@endiif
+@iif kmaj = 0
+@ROUT ATL_am2cm
+/*
+ * Copies from (M-vectorized) access-major storage block b back to column-
+ * major storage A, with possible scale.
+ * For GEMM, this routine handles Notrans B matrices, and Trans A matrices.
+ */
+void Mjoin(PATL,am2cm_a@(nalp)_@(nu)@(dsuf)) /* col-access matx to access-major blk */
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: submatrix copied frm access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *b        /* access-major block holding A */
+)
+@ROUT ATL_cm2am ammmtst
+/*
+ * This routine copies the KxN submatrix A into the KxCEIL(N/@(nu)) block b.
+ * b is stored in access-major storage, where the @(nu) unrolled accesses
+ * are assumed to come from the columns of A.
+ * More specifically, each Kx@(nu) column panel of A is copied into a
+ * @(nu)xK region of b, and if the last such column panel is partial, it
+ * is zero padded.
+ * For GEMM, this routine handles Notrans B matrices, and Trans A matrices.
+ */
+void Mjoin(PATL,cm2am_a@(nalp)_@(nu)@(dsuf)) /* col-access matx to access-major blk */
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *b              /* OUTPUT: access-major block holding A */
+)
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+{
+   ATL_CSZT n = (N/@(nu))*@(nu), incA = lda*@(nu);
+   ATL_SZT i, j;
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @undef cnst
+
+   for (j=0; j < n; j += @(nu))
+   {
+      for (i=0; i < K; i++, b += @(incdup))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp jk @(dupB) @(j) *
+         @iexp k @(dupB) -1 +
+@ROUT ATL_cm2am ammmtst
+         @iwhile k > 0
+         b[@(jk)+@(k)] =
+            @iexp k @(k) -1 +
+         @endiwhile
+         b[@(jk)] = @(malp)A@(j)[i];
+@ROUT ATL_am2cm
+         A@(j)[i] = @(malp)b[@(jk)];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+      @endiwhile
+   }
+   @mif nu ! "1
+   switch(N-n)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+      @iexp j @(n) -1 + 
+   case @(n):
+      for (i=0; i < K; i++, b += @(incdup))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp jk @(dupB) @(j) *
+         @iexp k @(dupB) -1 +
+@ROUT ATL_am2cm
+         A@(j)[i] = @(malp)b[@(jk)];
+@ROUT ATL_cm2am ammmtst
+         @iwhile k > 0
+         b[@(jk)+@(k)] =
+            @iexp k @(k) -1 +
+         @endiwhile
+         b[@(jk)] = @(malp)A@(j)[i];
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+      @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cm2am ammmtst
+      @iwhile j < @(nu)
+         @iexp jk @(dupB) @(j) *
+         @iexp k @(dupB) -1 +
+         @iwhile k > 0
+         b[@(jk)+@(k)] =
+            @iexp k @(k) -1 +
+         @endiwhile
+         b[@(jk)] = ATL_rzero;
+      @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_am2cm ATL_cm2am ammmtst
+      }
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+@endiif
+@ROUT ATL_ccm2am ATL_crm2am cammmtst
+   @define cnst @const @
+   @define cnstb @@
+@ROUT ATL_cam2cm ATL_cam2rm
+   @define cnst @@
+   @define cnstb @const @
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+@iif kmaj = 1
+   @iexp kmaj 0 0 +
+@endiif
+@iif kmaj ! 0
+   @define ku @@(kmaj)@
+   @iexp ku2 @(ku) @(ku) +
+@ROUT ATL_cam2cm
+#ifdef Conj_
+void Mjoin(PATL,am2cm_a@(nalp)_@(ku)x@(nu)C)
+#else
+void Mjoin(PATL,am2cm_a@(nalp)_@(ku)x@(nu))
+#endif
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: submatrix to copy rA/iA to */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *rA,      /* access-ku-major block holding real(A) */
+   const TYPE *iA       /* access-ku-major block holding imag(A) */
+)
+@ROUT ATL_ccm2am cammmtst
+/*
+ * This routine copies the KxN submatrix A into access-k-vlen-major storage.
+ * In this storage, @(nu) vectors of @(ku) length are taken from the
+ * @(nu) columns of A and stored in a @(ku)x@(nu) subblock.
+ * CEIL(K/ku) of these subblocks are stored together to make a K-panel.
+ * The CEIL(N/nu) K-panels are stored contiguously.  If ku does not evenly
+ * divide K then the last block in the K-panel will be zero padded, and
+ * the same is true for the NU portion of the last K-panel if nu does not
+ * evenly divide N.
+ */
+#ifdef Conj_
+void Mjoin(PATL,cm2am_a@(nalp)_@(ku)x@(nu)C)
+#else
+void Mjoin(PATL,cm2am_a@(nalp)_@(ku)x@(nu))
+#endif
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *rA,            /* OUTPUT: access-ku-major block holding real(A) */
+   TYPE *iA             /* OUTPUT: access-ku-major block holding imag(A) */
+)
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+{
+   ATL_CSZT n = (N/@(nu))*@(nu), k = (K/@(ku))*@(ku), nr=N-n;
+   ATL_CSZT KK = ((K+@(ku)-1)/@(ku))*@(ku);
+   ATL_CSZT K2=K+K, lda2 = lda+lda, incA = lda2*@(nu), k2 = k+k, KK2=KK+KK;
+   ATL_SZT i, j;
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rv, iv;
+   @endmif
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda2
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp binc @(nu) @(ku) *
+
+   for (j=0; j < n; j += @(nu))
+   {
+      for (i=0; i < k2; i += @(ku2), rA += @(binc), iA += @(binc))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp k2 @(k) @(k) +
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            @mif nalp ! "X
+@ROUT ATL_cam2cm
+         A@(j)[i+@(k2)] = @(malp)rA[@(ib)];
+         #ifdef Conj_
+            A@(j)[i+@(k2)+1] = @(calp)iA[@(ib)];
+         #else
+            A@(j)[i+@(k2)+1] = @(malp)iA[@(ib)];
+         #endif
+@ROUT ATL_ccm2am cammmtst
+         rA[@(ib)] = @(malp)A@(j)[i+@(k2)];
+         #ifdef Conj_
+            iA[@(ib)] = @(calp)A@(j)[i+@(k2)+1];
+         #else
+            iA[@(ib)] = @(malp)A@(j)[i+@(k2)+1];
+         #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+            @mif nalp = "X
+@ROUT ATL_cam2cm
+         rv = rA[@(ib)];
+         #ifdef Conj_
+            iv = iA[@(ib)];
+         #else
+            iv = -iA[@(ib)];
+         #endif
+         A@(j)[i+@(k2)] = rv*ra - iv*ia;
+         A@(j)[i+@(k2)+1] = rv*ia + iv*ra;
+@ROUT ATL_ccm2am cammmtst
+         rv = A@(j)[i+@(k2)];
+         #ifdef Conj_
+            iv = -A@(j)[i+@(k2)+1];
+         #else
+            iv = A@(j)[i+@(k2)+1];
+         #endif
+         rA[@(ib)] = rv*ra - iv*ia;
+         iA[@(ib)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      }
+      if (k != KK)
+      {
+@ROUT ATL_ccm2am cammmtst
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            iA[@(ib)] = rA[@(ib)] = 
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+                    0.0;
+      @endiwhile
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         for (; i < K2; i += 2, rA++, iA++)
+         {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp ib @(j) @(ku) *
+            @mif nalp ! "X
+@ROUT ATL_ccm2am cammmtst
+            rA[@(ib)] = @(malp)A@(j)[i];
+            #ifdef Conj_
+               iA[@(ib)] = @(calp)A@(j)[i+1];
+            #else
+               iA[@(ib)] = @(malp)A@(j)[i+1];
+            #endif
+@ROUT ATL_cam2cm
+            A@(j)[i] = @(malp)rA[@(ib)];
+            #ifdef Conj_
+               A@(j)[i+1] = @(calp)iA[@(ib)];
+            #else
+               A@(j)[i+1] = @(malp)iA[@(ib)];
+            #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+            @mif nalp = "X
+@ROUT ATL_ccm2am cammmtst
+            rv = A@(j)[i];
+            #ifdef Conj_
+               iv = -A@(j)[i+1];
+            #else
+               iv = A@(j)[i+1];
+            #endif
+            rA[@(ib)] = rv*ra - iv*ia;
+            iA[@(ib)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm
+            rv = rA[@(ib)];
+            #ifdef Conj_
+               iv = -iA[@(ib)];
+            #else
+               iv = iA[@(ib)];
+            #endif
+            A@(j)[i] = rv*ra - iv*ia;
+            A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+         @iexp j @(j) 1 +
+      @endiwhile
+         }
+         rA += @(binc) - K + k;
+         iA += @(binc) - K + k;
+      }
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+      @endiwhile
+   }
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < k2; i += @(ku2), rA += @(binc), iA += @(binc))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp k2 @(k) @(k) +
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            @mif nalp ! "X
+@ROUT ATL_ccm2am cammmtst
+            rA[@(ib)] = @(malp)A@(j)[i+@(k2)];
+            #ifdef Conj_
+               iA[@(ib)] = @(calp)A@(j)[i+@(k2)+1];
+            #else
+               iA[@(ib)] = @(malp)A@(j)[i+@(k2)+1];
+            #endif
+@ROUT ATL_cam2cm
+            A@(j)[i+@(k2)] = @(malp)rA[@(ib)];
+            #ifdef Conj_
+               A@(j)[i+@(k2)+1] = @(calp)iA[@(ib)];
+            #else
+               A@(j)[i+@(k2)+1] = @(malp)iA[@(ib)];
+            #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+            @mif nalp = "X
+@ROUT ATL_ccm2am cammmtst
+            rv = A@(j)[i+@(k2)];
+            #ifdef Conj_
+               iv = -A@(j)[i+@(k2)+1];
+            #else
+               iv = A@(j)[i+@(k2)+1];
+            #endif
+            rA[@(ib)] = rv*ra - iv*ia;
+            iA[@(ib)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm
+            rv = rA[@(ib)];
+            #ifdef Conj_
+               iv = -iA[@(ib)];
+            #else
+               iv = iA[@(ib)];
+            #endif
+            A@(j)[i+@(k2)] = rv*ra - iv*ia;
+            A@(j)[i+@(k2)+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+            @endmif
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_ccm2am cammmtst
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            iA[@(ib)] = rA[@(ib)] = 0.0;
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+      }
+      if (k != KK)
+      {
+@ROUT ATL_ccm2am cammmtst
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @iexp k 0 0 +
+         @iwhile k < @(ku)
+            @iexp k2 @(k) @(k) +
+            @iexp ib @(j) @(ku) *
+            @iexp ib @(ib) @(k) +
+            iA[@(ib)] = rA[@(ib)] = 
+            @iexp k @(k) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+                    0.0;
+      @endiwhile
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         for (; i < K2; i += 2, rA++, iA++)
+         {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp ib @(j) @(ku) *
+         @mif nalp ! "X
+@ROUT ATL_ccm2am cammmtst
+            rA[@(ib)] = @(malp)A@(j)[i];
+            #ifdef Conj_
+               iA[@(ib)] = @(calp)A@(j)[i+1];
+            #else
+               iA[@(ib)] = @(malp)A@(j)[i+1];
+            #endif
+@ROUT ATL_cam2cm
+            A@(j)[i] = @(malp)rA[@(ib)];
+            #ifdef Conj_
+               A@(j)[i+1] = @(calp)iA[@(ib)];
+            #else
+               A@(j)[i+1] = @(malp)iA[@(ib)];
+            #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+         @mif nalp = "X
+@ROUT ATL_ccm2am cammmtst
+            rv = A@(j)[i];
+            #ifdef Conj_
+               iv = -A@(j)[i+1];
+            #else
+               iv = A@(j)[i+1];
+            #endif
+            rA[@(ib)] = rv*ra - iv*ia;
+            iA[@(ib)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm
+            rv = rA[@(ib)];
+            #ifdef Conj_
+               iv = -iA[@(ib)];
+            #else
+               iv = iA[@(ib)];
+            #endif
+            A@(j)[i] = rv*ra - iv*ia;
+            A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_ccm2am cammmtst
+      @iwhile j < @(nu)
+         @iexp ib @(j) @(ku) *
+            iA[@(ib)] = rA[@(ib)] = 0.0;
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         }
+         rA += @(binc) - K + k;
+         iA += @(binc) - K + k;
+      }
+      break;
+      @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+}
+@endiif
+@iif kmaj = 0
+@ROUT ATL_cam2cm
+#ifdef Conj_
+void Mjoin(PATL,am2cm_a@(nalp)_@(nu)C) /* col-access matx to access-major blk */
+#else
+void Mjoin(PATL,am2cm_a@(nalp)_@(nu)) /* col-access matx to access-major blk */
+#endif
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: submatrix to cpy access-major blk */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *rA,      /* access-major block holding real(A) */
+   const TYPE *iA       /* access-major block holding imag(A) */
+)
+@ROUT ATL_ccm2am cammmtst
+/*
+ * This routine copies the KxN submatrix A into the KxCEIL(N/@(nu)) block b.
+ * b is stored in access-major storage, where the @(nu) unrolled accesses
+ * are assumed to come from the columns of A.
+ * More specifically, each Kx@(nu) column panel of A is copied into a
+ * @(nu)xK region of b, and if the last such column panel is partial, it
+ * is zero padded.
+ * For GEMM, this routine handles Notrans B matrices, and Trans A matrices.
+ */
+#ifdef Conj_
+void Mjoin(PATL,cm2am_a@(nalp)_@(nu)C) /* col-access matx to access-major blk */
+#else
+void Mjoin(PATL,cm2am_a@(nalp)_@(nu)) /* col-access matx to access-major blk */
+#endif
+(
+   ATL_CSZT K,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *rA,            /* OUTPUT: access-major block holding real(A) */
+   TYPE *iA             /* OUTPUT: access-major block holding imag(A) */
+)
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+{
+   ATL_CSZT K2=K+K, lda2=lda+lda, n = (N/@(nu))*@(nu), incA = lda2*@(nu);
+   ATL_SZT i, j;
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rv, iv;
+   @endmif
+   @iexp nu2 @(nu) @(nu) +
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda2
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+
+   for (j=0; j < n; j += @(nu))
+   {
+      for (i=0; i < K2; i += 2, rA += @(nu), iA += @(nu))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         @mif nalp = "X
+@ROUT ATL_ccm2am cammmtst
+         rv = A@(j)[i];
+         #ifdef Conj_
+            iv = -A@(j)[i+1];
+         #else
+            iv = A@(j)[i+1];
+         #endif
+         rA[@(j)] = rv*ra - iv*ia;
+         iA[@(j)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm
+         rv = rA[@(j)];
+         #ifdef Conj_
+            iv = -iA[@(j)];
+         #else
+            iv = iA[@(j)];
+         #endif
+         A@(j)[i] = rv*ra - iv*ia;
+         A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+         @mif nalp ! "X
+@ROUT ATL_ccm2am cammmtst
+         rA[@(j)] = @(malp)A@(j)[i];
+         #ifdef Conj_
+            iA[@(j)] = @(calp)A@(j)[i+1];
+         #else
+            iA[@(j)] = @(malp)A@(j)[i+1];
+         #endif
+@ROUT ATL_cam2cm
+         A@(j)[i] = @(malp)rA[@(j)];
+         #ifdef Conj_
+            A@(j)[i+1] = @(calp)iA[@(j)];
+         #else
+            A@(j)[i+1] = @(malp)iA[@(j)];
+         #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+      @endiwhile
+   }
+   @mif nu ! "1
+   switch(N-n)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+      @iexp j @(n) -1 + 
+   case @(n):
+      for (i=0; i < K2; i += 2, rA += @(nu), iA += @(nu))
+      {
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @mif nalp = "X
+@ROUT ATL_ccm2am cammmtst
+         rv = A@(j)[i];
+         #ifdef Conj_
+            iv = -A@(j)[i+1];
+         #else
+            iv = A@(j)[i+1];
+         #endif
+         rA[@(j)] = rv*ra - iv*ia;
+         iA[@(j)] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm
+         rv = rA[@(j)];
+         #ifdef Conj_
+            iv = -iA[@(j)];
+         #else
+            iv = iA[@(j)];
+         #endif
+         A@(j)[i] = rv*ra - iv*ia;
+         A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+         @mif nalp ! "X
+@ROUT ATL_ccm2am cammmtst
+         rA[@(j)] = @(malp)A@(j)[i];
+         #ifdef Conj_
+            iA[@(j)] = @(calp)A@(j)[i+1];
+         #else
+            iA[@(j)] = @(malp)A@(j)[i+1];
+         #endif
+@ROUT ATL_cam2cm
+         A@(j)[i] = @(malp)rA[@(j)];
+         #ifdef Conj_
+            A@(j)[i+1] = @(calp)iA[@(j)];
+         #else
+            A@(j)[i+1] = @(malp)iA[@(j)];
+         #endif
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+         @endmif
+      @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_ccm2am cammmtst
+      @iwhile j < @(nu)
+         rA[@(j)] = iA[@(j)] = ATL_rzero;
+      @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cam2cm ATL_ccm2am cammmtst
+      }
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+@endiif
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+@iif kmaj ! 0
+   @define ku @@(kmaj)@
+@ROUT ATL_am2rm
+void Mjoin(PATL,am2rm_a@(nalp)_@(ku)x@(mu)) /* access-major blk to row-major matrix */
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for b */
+   TYPE *A,             /* OUTPUT: matrix copied from access-major block */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *b        /* INPUT: access-major block to copy to A */
+)
+@ROUT ATL_rm2am ammmtst
+/*
+ * This routine copies the MxK submatrix A into access-k-vlen-major storage.
+ * In this storage, @(mu) vectors of @(ku) length are taken from the
+ * @(mu) rows of A and stored in a @(ku)x@(mu) subblock.
+ * CEIL(K/ku) of these subblocks are stored together to make a K-panel.
+ * The CEIL(M/mu) K-panels are stored contiguously.  If ku does not evenly
+ * divide K then subblocks in some K-panels will be zero padded.
+ * If mu does not evenly divide M, then some subblocks in the last
+ * K-panel will be entirely 0.
+ */
+void Mjoin(PATL,rm2am_a@(nalp)_@(ku)x@(mu)) /* row-access matrix to access-major      block */
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *b              /* OUTPUT: access-major block holding condensed A */
+)
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+{
+   ATL_CSZT MM = ((M+@(mu)-1)/@(mu))*@(mu), KK = ((K+@(ku)-1)/@(ku))*@(ku);
+   ATL_CSZT pansz = @(mu)*KK, m = M/@(mu)*@(mu), mr = M-m, incA = @(ku)*lda;
+   ATL_CSZT k = (K/@(ku))*@(ku);
+   ATL_SZT i, j;
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @iexp j 0 1 +
+      @iwhile j < @(ku)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp incb @(ku) @(mu) *
+
+   for (j=0; j < k; j += @(ku), b += @(incb))
+   {
+      @(cnstb)TYPE *pp = b;   /* panel ptr */
+
+      for (i=0; i < m; i += @(mu), pp += pansz)
+      {
+   @iexp i 0 0 +
+   @iwhile i < @(mu)
+      @iexp j 0 0 +
+      @iwhile j < @(ku)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+@ROUT ATL_am2rm
+         A@(j)[i+@(i)] = @(malp)pp[@(ip)];
+@ROUT ATL_rm2am ammmtst
+         pp[@(ip)] = @(malp)A@(j)[i+@(i)];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i @(i) 1 +
+   @endiwhile
+      }
+      if (m != M)
+      {
+         @(cnstb)TYPE *p;
+/*
+ *       Copy partial M remainder subblock
+ */
+         for (p=pp; i < M; i++, p += @(ku))
+         {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+@ROUT ATL_rm2am ammmtst
+            p[@(j)] = @(malp)A@(j)[i];
+@ROUT ATL_am2rm
+            A@(j)[i] = @(malp)p[@(j)];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+      @iexp j @(j) 1 +
+   @endiwhile
+         }
+@ROUT ATL_rm2am ammmtst
+/*
+ *       Zero rest of M remainder subblock
+ */
+         for (; i < MM; i++, p += @(ku))
+         {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+            p[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+         }
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+      }
+/*
+ * Update column-ptrs from A
+ */
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+/*
+ * Check for final, partial K-panel that needs to be padded wt zeros
+ */
+   switch(K-k)
+   {
+   @iexp r @(ku) -1 +
+   @iwhile r > 0
+   case @(r):
+      {
+         @(cnstb)TYPE *pp = b;   /* panel ptr */
+
+         for (i=0; i < m; i += @(mu), pp += pansz)
+         {
+   @iexp i 0 0 +
+   @iwhile i < @(mu)
+      @iexp j 0 0 +
+      @iwhile j < @(r)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+@ROUT ATL_am2rm
+            A@(j)[i+@(i)] = @(malp)pp[@(ip)];
+@ROUT ATL_rm2am ammmtst
+            pp[@(ip)] = @(malp)A@(j)[i+@(i)];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_rm2am ammmtst
+      @iwhile j < @(ku)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+            pp[@(ip)] = 0.0;
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+      @iexp i @(i) 1 +
+   @endiwhile
+         }
+         if (m != M)
+         {
+            @(cnstb)TYPE *p;
+/*
+ *          Copy partial M remainder subblock
+ */
+            for (p=pp; i < M; i++, p += @(ku))
+            {
+   @iexp j 0 0 +
+   @iwhile j < @(r)
+@ROUT ATL_am2rm
+               A@(j)[i] = @(malp)p[@(j)];
+@ROUT ATL_rm2am ammmtst
+               p[@(j)] = @(malp)A@(j)[i];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+      @iexp j @(j) 1 +
+   @endiwhile
+@ROUT ATL_rm2am ammmtst
+   @iwhile j < @(ku)
+               p[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+            }
+@ROUT ATL_rm2am ammmtst
+/*
+ *          Zero rest of M remainder subblock
+ */
+            for (; i < MM; i++, p += @(ku))
+            {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+               p[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+            }
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+         }
+      }
+      break;
+      @iexp r @(r) -1 +
+   @endiwhile
+   default:;
+   }
+}
+@endiif
+@ROUT ammmtst
+   @define dupB @1@
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+@iif kmaj = 0
+@ROUT ATL_am2rm
+@iif dupB > 1
+void Mjoin(PATL,am2rm_a@(nalp)_@(mu)d@(dupB)) /* access-major blk to row-maj submatrix */
+@endiif
+@iif dupB < 2
+void Mjoin(PATL,am2rm_a@(nalp)_@(mu)) /* access-major blk to row-major submatrix */
+@endiif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for b */
+   TYPE *A,             /* OUTPUT: submatrix copied frm access-major b */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *b        /* INPUT: access-major block holding condensed A */
+)
+@ROUT ATL_rm2am ammmtst
+/*
+ * This routine copies the MxK submatrix A into the KxCEIL(M/@(mu) block b.
+ * b is stored in access-major storage, where the @(mu) unrolled accesses
+ * are assumed to come from the rows of A.
+ * More specifically, the @(mu)xK row panel of A becomes a @(mu)xK region
+ * in b, and if the last such row panel is partial, it is zero padded.
+ * For GEMM, this routine handles Notrans A matrices, and Trans B matrices.
+ */
+@iif dupB > 1
+void Mjoin(PATL,rm2am_a@(nalp)_@(mu)d@(dupB)) /* row-access matrix to access-major block */
+@endiif
+@iif dupB < 2
+void Mjoin(PATL,rm2am_a@(nalp)_@(mu)) /* row-access matrix to access-major block */
+@endiif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *b              /* OUTPUT: access-major block holding condensed A */
+)
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+{
+   ATL_CSZT pansz = @(mu)*K, m = M/@(mu)*@(mu), mr = M-m, incA = lda - m;
+   ATL_SZT i, j;
+   @iexp incV @(mu) @(dupB) *
+
+   for (j=0; j < K; j++, b += @(incV), A += incA)
+   {
+      @(cnstb)TYPE *pp = b;  /* panel ptr */
+      for (i=0; i < m; i += @(mu), pp += pansz, A += @(mu))
+      {
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @iexp ik @(dupB) @(i) *
+@ROUT ATL_rm2am ammmtst
+         @iexp k @(dupB) -1 +
+         @iwhile k > 0
+         pp[@(ik)+@(k)] =
+            @iexp k @(k) -1 +
+         @endiwhile
+         pp[@(ik)] = @(malp)A[@(i)];
+@ROUT ATL_am2rm
+         A[@(i)] = @(malp)pp[@(ik)];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+      @iexp i @(i) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp n 1 0 +
+      @iwhile n < @(mu)
+      case @(n):
+         @iexp i 0 0 +
+         @iwhile i < @(n)
+            @iexp ik @(dupB) @(i) *
+@ROUT ATL_am2rm
+         A[@(i)] = @(malp)pp[@(ik)];
+@ROUT ATL_rm2am ammmtst
+            @iexp k @(dupB) -1 +
+            @iwhile k > 0
+         pp[@(ik)+@(k)] =
+               @iexp k @(k) -1 +
+            @endiwhile
+         pp[@(ik)] = @(malp)A[@(i)];
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+         @iexp i @(i) 1 +
+         @endiwhile
+@ROUT ATL_rm2am ammmtst
+         @iwhile i < @(mu)
+            @iexp ik @(dupB) @(i) *
+            @iexp k @(dupB) -1 +
+            @iwhile k > 0
+         pp[@(ik)+@(k)] =
+               @iexp k @(k) -1 +
+            @endiwhile
+         pp[@(ik)] = ATL_rzero;
+         @iexp i @(i) 1 +
+         @endiwhile
+@ROUT ATL_am2rm ATL_rm2am ammmtst
+         break;
+      @iexp n @(n) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+   }
+}
+@endiif
+@ROUT ammmtst
+   @undef dupB
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+@iif kmaj ! 0
+   @define ku @@(kmaj)@
+@ROUT ATL_cam2rm
+#ifdef Conj_
+void Mjoin(PATL,am2rm_a@(nalp)_@(ku)x@(mu)C) /* access- to row-major */
+#else
+void Mjoin(PATL,am2rm_a@(nalp)_@(ku)x@(mu))  /* access- to row-major */
+#endif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: matrix copied from access-major blk */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *rA,      /* access-maj blk holding condensed real(A) */
+   const TYPE *iA       /* access-maj blk holding condensed imag(A) */
+)
+@ROUT ATL_crm2am cammmtst
+/*
+ * This routine copies the MxK submatrix A into access-k-vlen-major storage.
+ * In this storage, @(mu) vectors of @(ku) length are taken from the
+ * @(mu) rows of A and stored in a @(ku)x@(mu) subblock.
+ * CEIL(K/ku) of these subblocks are stored together to make a K-panel.
+ * The CEIL(M/mu) K-panels are stored contiguously.  If ku does not evenly
+ * divide K then subblocks in some K-panels will be zero padded.
+ * If mu does not evenly divide M, then some subblocks in the last
+ * K-panel will be entirely 0.
+ */
+#ifdef Conj_
+void Mjoin(PATL,rm2am_a@(nalp)_@(ku)x@(mu)C) /* row- to access-major */
+#else
+void Mjoin(PATL,rm2am_a@(nalp)_@(ku)x@(mu))  /* row- to access-major */
+#endif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *rA,            /* OUTPUT: access-maj blk holding condensed real(A) */
+   TYPE *iA             /* OUTPUT: access-maj blk holding condensed imag(A) */
+)
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+{
+   @iexp mu2 @(mu) @(mu) +
+   ATL_CSZT MM = ((M+@(mu)-1)/@(mu))*@(mu), KK = ((K+@(ku)-1)/@(ku))*@(ku);
+   ATL_CSZT pansz = @(mu)*KK, m = M/@(mu)*@(mu), mr = M-m, k = (K/@(ku))*@(ku);
+   ATL_CSZT K2=K+K, m2 = m+m, lda2=lda+lda, M2 = M+M, incA = @(ku)*lda2;
+   ATL_SZT i, j;
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rv, iv;
+   @endmif
+   @declare "   @(cnst)TYPE " n n ";"
+      *A0=A
+      @iexp j 0 1 +
+      @iwhile j < @(ku)
+         @iexp i @(j) -1 +
+         *A@(j)=A@(i)+lda2
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp incb @(ku) @(mu) *
+
+   for (j=0; j < k; j += @(ku), rA += @(incb), iA += @(incb))
+   {
+      @(cnstb)TYPE *pr = rA, *pi = iA;   /* panel ptrs */
+
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+      {
+   @iexp i 0 0 +
+   @iwhile i < @(mu)
+      @iexp i2 @(i) @(i) +
+      @iexp j 0 0 +
+      @iwhile j < @(ku)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+         @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+         pr[@(ip)] = @(malp)A@(j)[i+@(i2)];
+         #ifdef Conj_
+            pi[@(ip)] = @(calp)A@(j)[i+@(i2)+1];
+         #else
+            pi[@(ip)] = @(malp)A@(j)[i+@(i2)+1];
+         #endif
+@ROUT ATL_cam2rm
+         A@(j)[i+@(i2)] = @(malp)pr[@(ip)];
+         #ifdef Conj_
+            A@(j)[i+@(i2)+1] = @(calp)pi[@(ip)];
+         #else
+            A@(j)[i+@(i2)+1] = @(malp)pi[@(ip)];
+         #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+         rv = A@(j)[i+@(i2)];
+         #ifdef Conj_
+            iv = -A@(j)[i+@(i2)+1];
+         #else
+            iv = A@(j)[i+@(i2)+1];
+         #endif
+         pr[@(ip)] = rv*ra - iv*ia;
+         pi[@(ip)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+         rv = pr[@(ip)];
+         #ifdef Conj_
+            iv = -pi[@(ip)];
+         #else
+            iv = pi[@(ip)];
+         #endif
+         A@(j)[i+@(i2)] = rv*ra - iv*ia;
+         A@(j)[i+@(i2)+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i @(i) 1 +
+   @endiwhile
+      }
+      if (m != M)
+      {
+         @(cnstb)TYPE *rr, *ii;
+/*
+ *       Copy partial M remainder subblock
+ */
+         for (rr=pr, ii=pi; i < M2; i += 2, rr += @(ku), ii += @(ku))
+         {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+      @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+            rr[@(j)] = @(malp)A@(j)[i];
+            #ifdef Conj_
+               ii[@(j)] = @(calp)A@(j)[i+1];
+            #else
+               ii[@(j)] = @(malp)A@(j)[i+1];
+            #endif
+@ROUT ATL_cam2rm
+            A@(j)[i] = @(malp)rr[@(j)];
+            #ifdef Conj_
+               A@(j)[i+1] = @(calp)ii[@(j)];
+            #else
+               A@(j)[i+1] = @(malp)ii[@(j)];
+            #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      @endmif
+      @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+         rv = A@(j)[i];
+         #ifdef Conj_
+            iv = -A@(j)[i+1];
+         #else
+            iv = A@(j)[i+1];
+         #endif
+         rr[@(j)] = rv*ra - iv*ia;
+         ii[@(j)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+         rv = rr[@(j)];
+         #ifdef Conj_
+            iv = -ii[@(j)];
+         #else
+            iv = ii[@(j)];
+         #endif
+         A@(j)[i] = rv*ra - iv*ia;
+         A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      @endmif
+      @iexp j @(j) 1 +
+   @endiwhile
+         }
+@ROUT ATL_crm2am cammmtst
+/*
+ *       Zero rest of M remainder subblock
+ */
+         for (i=M; i < MM; i++, rr += @(ku), ii += @(ku))
+         {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+            ii[@(j)] = rr[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+         }
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      }
+/*
+ * Update column-ptrs from A
+ */
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+      A@(j) += incA;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+/*
+ * Check for final, partial K-panel that needs to be padded wt zeros
+ */
+   switch(K-k)
+   {
+   @iexp r @(ku) -1 +
+   @iwhile r > 0
+   case @(r):
+      {
+         @(cnstb)TYPE *pr = rA, *pi = iA;   /* panel ptrs */
+
+         for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+         {
+   @iexp i 0 0 +
+   @iwhile i < @(mu)
+      @iexp i2 @(i) @(i) +
+      @iexp j 0 0 +
+      @iwhile j < @(r)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+         @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+            pr[@(ip)] = @(malp)A@(j)[i+@(i2)];
+            #ifdef Conj_
+               pi[@(ip)] = @(calp)A@(j)[i+@(i2)+1];
+            #else
+               pi[@(ip)] = @(malp)A@(j)[i+@(i2)+1];
+            #endif
+@ROUT ATL_cam2rm
+            A@(j)[i+@(i2)] = @(malp)pr[@(ip)];
+            #ifdef Conj_
+               A@(j)[i+@(i2)+1] = @(calp)pi[@(ip)];
+            #else
+               A@(j)[i+@(i2)+1] = @(malp)pi[@(ip)];
+            #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+            rv = A@(j)[i+@(i2)];
+            #ifdef Conj_
+               iv = -A@(j)[i+@(i2)+1];
+            #else
+               iv = A@(j)[i+@(i2)+1];
+            #endif
+            pr[@(ip)] = rv*ra - iv*ia;
+            pi[@(ip)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+            rv =  pr[@(ip)];
+            #ifdef Conj_
+               iv = -pi[@(ip)];
+            #else
+               iv = pi[@(ip)];
+            #endif
+            A@(j)[i+@(i2)] = rv*ra - iv*ia;
+            A@(j)[i+@(i2)+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_crm2am cammmtst
+      @iwhile j < @(ku)
+         @iexp ip @(i) @(ku) *
+         @iexp ip @(ip) @(j) +
+            pi[@(ip)] = pr[@(ip)] = 0.0;
+         @iexp j @(j) 1 +
+      @endiwhile
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      @iexp i @(i) 1 +
+   @endiwhile
+         }
+         if (m != M)
+         {
+            @(cnstb)TYPE *rr, *ii;
+/*
+ *          Copy partial M remainder subblock
+ */
+            for (rr=pr, ii=pi; i < M2; i += 2, rr += @(ku), ii += @(ku))
+            {
+   @iexp j 0 0 +
+   @iwhile j < @(r)
+      @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+               rr[@(j)] = @(malp)A@(j)[i];
+               #ifdef Conj_
+                  ii[@(j)] = @(calp)A@(j)[i+1];
+               #else
+                  ii[@(j)] = @(malp)A@(j)[i+1];
+               #endif
+@ROUT ATL_cam2rm
+               A@(j)[i] = @(malp)rr[@(j)];
+               #ifdef Conj_
+                  A@(j)[i+1] = @(calp)ii[@(j)];
+               #else
+                  A@(j)[i+1] = @(malp)ii[@(j)];
+               #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      @endmif
+      @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+               rv = A@(j)[i];
+               #ifdef Conj_
+                  iv = -A@(j)[i+1];
+               #else
+                  iv = A@(j)[i+1];
+               #endif
+               rr[@(j)] = rv*ra - iv*ia;
+               ii[@(j)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+               rv = rr[@(j)];
+               #ifdef Conj_
+                  iv = -ii[@(j)];
+               #else
+                  iv = ii[@(j)];
+               #endif
+               A@(j)[i] = rv*ra - iv*ia;
+               A@(j)[i+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+      @endmif
+      @iexp j @(j) 1 +
+   @endiwhile
+@ROUT ATL_crm2am cammmtst
+   @iwhile j < @(ku)
+               ii[@(j)] = rr[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+            }
+@ROUT ATL_crm2am cammmtst
+/*
+ *          Zero rest of M remainder subblock
+ */
+            for (i=M; i < MM; i++, rr += @(ku), ii += @(ku))
+            {
+   @iexp j 0 0 +
+   @iwhile j < @(ku)
+               ii[@(j)] = rr[@(j)] = 0.0;
+      @iexp j @(j) 1 +
+   @endiwhile
+            }
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         }
+      }
+      break;
+      @iexp r @(r) -1 +
+   @endiwhile
+   default:;
+   }
+}
+@endiif
+@iif kmaj = 0
+@ROUT ATL_cam2rm
+#ifdef Conj_
+void Mjoin(PATL,am2rm_a@(nalp)_@(mu)C)
+#else
+void Mjoin(PATL,am2rm_a@(nalp)_@(mu))
+#endif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   TYPE *A,             /* OUTPUT: submatrix dest for access-major blk */
+   ATL_CSZT lda,        /* stride between row elements */
+   const TYPE *rA,      /* access-maj blk holding condensed real(A) */
+   const TYPE *iA       /* access-maj blk holding condensed imag(A) */
+)
+@ROUT ATL_crm2am cammmtst
+/*
+ * This routine copies the MxK submatrix A into the KxCEIL(M/@(mu) blocks rA,iA.
+ * ?A are stored in access-major storage, where the @(mu) unrolled accesses
+ * are assumed to come from the rows of A.
+ * More specifically, the @(mu)xK row panel of A becomes a @(mu)xK region
+ * in b, and if the last such row panel is partial, it is zero padded.
+ * For GEMM, this routine handles Notrans A matrices, and Trans B matrices.
+ */
+#ifdef Conj_
+void Mjoin(PATL,rm2am_a@(nalp)_@(mu)C)
+#else
+void Mjoin(PATL,rm2am_a@(nalp)_@(mu))
+#endif
+(
+   ATL_CSZT K,          /* number of columns in A */
+   ATL_CSZT M,          /* number of rows in A */
+   const SCALAR alpha,  /* scalar for A */
+   const TYPE *A,       /* matrix to be copied to access-major format */
+   ATL_CSZT lda,        /* stride between row elements */
+   TYPE *rA,            /* OUTPUT: access-maj blk holding condensed real(A) */
+   TYPE *iA             /* OUTPUT: access-maj blk holding condensed imag(A) */
+)
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+{
+   @iexp mu2 @(mu) @(mu) +
+   ATL_CSZT pansz = @(mu)*K, m = M/@(mu)*@(mu), mr = M-m, incA = (lda - m)<<1;
+   ATL_CSZT m2 = m+m;
+   ATL_SZT i, j;
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rv, iv;
+   @endmif
+
+   for (j=0; j < K; j++, rA += @(mu), iA += @(mu), A += incA)
+   {
+      @(cnstb)TYPE *pr = rA, *pi = iA;  /* panel ptrs */
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz, A += @(mu2))
+      {
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @iexp i2 @(i) @(i) +
+         @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+         rv = A[@(i2)];
+         #ifdef Conj_
+            iv = -A[@(i2)+1];
+         #else
+            iv = A[@(i2)+1];
+         #endif
+         pr[@(i)] = rv*ra - iv*ia;
+         pi[@(i)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+         rv = pr[@(i)];
+         #ifdef Conj_
+            iv = -pi[@(i)];
+         #else
+            iv = pi[@(i)];
+         #endif
+         A[@(i2)] = rv*ra - iv*ia;
+         A[@(i2)+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+         pr[@(i)] = @(malp)A[@(i2)];
+         #ifdef Conj_
+            pi[@(i)] = @(calp)A[@(i2)+1];
+         #else
+            pi[@(i)] = @(malp)A[@(i2)+1];
+         #endif
+@ROUT ATL_cam2rm
+         A[@(i2)] = @(malp)pr[@(i)];
+         #ifdef Conj_
+            A[@(i2)+1] = @(calp)pi[@(i)];
+         #else
+            A[@(i2)+1] = @(malp)pi[@(i)];
+         #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+      @iexp i @(i) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp n 1 0 +
+      @iwhile n < @(mu)
+      case @(n):
+         @iexp i 0 0 +
+         @iwhile i < @(n)
+         @iexp i2 @(i) @(i) +
+         @mif nalp = "X
+@ROUT ATL_crm2am cammmtst
+         rv = A[@(i2)];
+         #ifdef Conj_
+            iv = -A[@(i2)+1];
+         #else
+            iv = A[@(i2)+1];
+         #endif
+         pr[@(i)] = rv*ra - iv*ia;
+         pi[@(i)] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm
+         rv = pr[@(i)];
+         #ifdef Conj_
+            iv = -pi[@(i)];
+         #else
+            iv = pi[@(i)];
+         #endif
+         A[@(i2)] = rv*ra - iv*ia;
+         A[@(i2)+1] = rv*ia + iv*ra;
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @mif nalp ! "X
+@ROUT ATL_crm2am cammmtst
+         pr[@(i)] = @(malp)A[@(i2)];
+         #ifdef Conj_
+            pi[@(i)] = @(calp)A[@(i2)+1];
+         #else
+            pi[@(i)] = @(malp)A[@(i2)+1];
+         #endif
+@ROUT ATL_cam2rm
+         A[@(i2)] = @(malp)pr[@(i)];
+         #ifdef Conj_
+            A[@(i2)+1] = @(calp)pi[@(i)];
+         #else
+            A[@(i2)+1] = @(malp)pi[@(i)];
+         #endif
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         @endmif
+         @iexp i @(i) 1 +
+         @endiwhile
+@ROUT ATL_crm2am cammmtst
+         @iwhile i < @(mu)
+         pr[@(i)] = pi[@(i)] = ATL_rzero;
+         @iexp i @(i) 1 +
+         @endiwhile
+@ROUT ATL_cam2rm ATL_crm2am cammmtst
+         break;
+      @iexp n @(n) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+   }
+}
+@endiif
+@ROUT ammmtst
+  @define beta @0@
+  @define nbet @0@
+@ROUT ATL_ablk2cmat ammmtst
+@beginproc cploops aligned vtyp ralp rbet
+   @mif vtyp = "__m256
+      @define velts @8@
+      @define vadd @_mm256_add_ps@
+      @define vsub @_mm256_sub_ps@
+      @define vmul @_mm256_mul_ps@
+      @define vld @_mm256_load_ps@
+      @iif aligned = 0
+         @define vldu @_mm256_loadu_ps@
+         @define vstu @_mm256_storeu_ps@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm256_load_ps@
+         @define vstu @_mm256_store_ps@
+      @endiif
+   @endmif
+   @mif vtyp = "__m256d
+      @define velts @4@
+      @define vadd @_mm256_add_pd@
+      @define vsub @_mm256_sub_pd@
+      @define vmul @_mm256_mul_pd@
+      @define vld @_mm256_load_pd@
+      @iif aligned = 0
+         @define vldu @_mm256_loadu_pd@
+         @define vstu @_mm256_storeu_pd@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm256_load_pd@
+         @define vstu @_mm256_store_pd@
+      @endiif
+   @endmif
+   @mif vtyp = "__m128d
+      @define velts @2@
+      @define vadd @_mm_add_pd@
+      @define vsub @_mm_sub_pd@
+      @define vmul @_mm_mul_pd@
+      @define vld @_mm_load_pd@
+      @iif aligned = 0
+         @define vldu @_mm_loadu_pd@
+         @define vstu @_mm_storeu_pd@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm_load_pd@
+         @define vstu @_mm_store_pd@
+      @endiif
+   @endmif
+   @mif vtyp = "__m128
+      @define velts @4@
+      @define vadd @_mm_add_ps@
+      @define vsub @_mm_sub_ps@
+      @define vmul @_mm_mul_ps@
+      @define vld @_mm_load_ps@
+      @iif aligned = 0
+         @define vldu @_mm_loadu_ps@
+         @define vstu @_mm_storeu_ps@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm_load_ps@
+         @define vstu @_mm_store_ps@
+      @endiif
+   @endmif
+      for (j=0; j < n; j += @(nu), b += incb)
+      {
+         const TYPE *p = b;
+         for (i=0; i < m; i += @(mu), p += pansz)
+         {
+            register @(vtyp) rC0, rc0;
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @iexp h 0 0 +
+            rc0 = @(vld)(p+@(k));
+         @mif nalp = "X
+            rc0 = @(vmul)(rc0, rALP);
+         @endmif
+         @mif nbet = "0
+            @mif nalp = "n
+            rc0 = @(vmul)(rc0, rALP);
+            @endmif
+            @(vstu)(C@(j)+i+@(i), rc0);
+            @iexp h 1 0 +
+         @endmif
+         @iif h = 0
+            rC0 = @(vldu)(C@(j)+i+@(i));
+            @mif nbet = "X
+            rC0 = @(vmul)(rC0, rBETA);
+            @endmif
+            @mif nalp = "n
+               @mif nbet = "0
+            rc0 = @(vmul)(rc0, rALP);
+            @(vstu)(C@(j)+i+@(i), rc0);
+                  @iexp h 1 0 +
+               @endmif
+               @mif nbet = "n
+            rC0 = @(vadd)(rC0, rc0);
+            rC0 = @(vmul)(rC0, rALP);
+            @(vstu)(C@(j)+i+@(i), rC0);
+                  @iexp h 1 0 +
+               @endmif
+               @iif h = 0
+            rC0 = @(vsub)(rC0, rc0);
+            @(vstu)(C@(j)+i+@(i), rC0);
+                  @iexp h 1 0 +
+               @endiif
+            @endmif
+            @iif h = 0
+               @mif nbet = "n
+            rc0 = @(vsub)(rc0, rC0);
+            @(vstu)(C@(j)+i+@(i), rc0);
+               @endmif
+               @mif nbet ! "n
+            rC0 = @(vadd)(rC0, rc0);
+           @(vstu)(C@(j)+i+@(i), rC0);
+               @endmif
+            @endiif
+         @endiif
+         @iexp k @(k) @(velts) +
+      @iexp i @(i) @(velts) +
+      @endiwhile
+   @iexp j @(j) 1 +
+   @endiwhile
+         }
+      @mif mu ! "1
+         switch(mr)
+         {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+         case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+         @mif nalp = "n
+            @mif nbet = "X
+            C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @mif nbet = "1
+            C@(j)[i+@(i)] -= p[@(k)];
+            @endmif
+            @mif nbet = "0
+            C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+            C@(j)[i+@(i)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+            C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)p[@(k)];
+            @endmif
+         @mif nbet = "1
+            C@(j)[i+@(i)] += @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "0
+            C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+            C@(j)[i+@(i)] = @(malp)p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+         @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+            break;
+      @iexp m @(m) 1 +
+      @endiwhile
+         default:;
+         }
+      @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+         C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+      }
+   @undef velts
+   @undef vadd
+   @undef vsub 
+   @undef vmul 
+   @undef vld 
+   @undef vldu 
+   @undef vstu 
+@endproc
+/*
+ *  C <- beta*C + alpha*b,
+ *  C is an MxN matrix in column-major storage
+ *  b is a CEIL(M/@(mu))*@(mu) x CEIL(N/@(nu))*@(nu) matrix stored in
+ *    @(mu)x@(nu)-major storage
+ */
+@beginproc cpfunc vtyp
+#include <immintrin.h>
+   @mif vtyp = "__m256
+      @define andC @0x1F@
+      @define andL @7@
+      @define vtyp2 @__m128@
+      @define andC2 @0xF@
+      @define andL2 @3@
+      @define ibe @{beta,beta,beta,beta,beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha,alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+      @define ib2 @{beta,beta,beta,beta}@
+      @define ia2 @{alpha,alpha,alpha,alpha}@
+      @define in2 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m256d
+      @define andC @0x1F@
+      @define andL @3@
+      @define vtyp2 @__m128d@
+      @define andC2 @0xF@
+      @define andL2 @1@
+      @define ibe @{beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m128
+      @define andC @0xF@
+      @define andL @3@
+      @define ibe @{beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m128d
+      @define andC @0xF@
+      @define andL @1@
+      @define ibe @{beta,beta}@
+      @define ial @{alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone}@
+   @endmif
+
+void Mjoin(PATL,ablk2cmat_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for b */
+   const TYPE *b,       /* matrix stored in @(mu)x@(nu)-major order */
+   const SCALAR beta,   /* scalar for C */
+   TYPE *C,             /* matrix to be copied to access-major format */
+   ATL_CSZT ldc         /* stride between row elements */
+)
+{
+   ATL_CINT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CINT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CINT incC = ldc*@(nu), incb = @(mu)*@(nu);
+   ATL_INT i, j;
+   @mif nbet = "X
+   const register @(vtyp) rBETA=@(ibe);
+   @endmif
+   @mif nbet = "n
+   const register @(vtyp) rBETA=@(in1);
+   @endmif
+   @mif nalp = "X
+   const register @(vtyp) rALP=@(ial);
+   @endmif
+   @mif nalp = "n
+   const register @(vtyp) rALP=@(in1);
+   @endmif
+   @declare "   TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+
+/*
+ * If C is aligned, use aligned load/stores to C
+ */
+   if (((((size_t)C) & @(andC))|(ldc&@(andL))) == 0)
+   {
+      @callproc cploops 1 @(vtyp) rALP rBETA
+   }
+   @mif andC = "0x1F
+   else if (((((size_t)C) & @(andC2))|(ldc&@(andL2))) == 0)
+   {
+      @(vtyp2) ralp=(@(vtyp2)) rALP;
+      @callproc cploops 1 @(vtyp2) rALP rBETA
+   }
+   @endmif
+   @mif andC ! "0x1F
+   else
+   {
+      @callproc cploops 0 @(vtyp) rALP rBETA
+   }
+   @endmif
+   @mif nu ! "1
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < m; i += @(mu), b += pansz)
+      {
+      @iexp k 0 0 +
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)b[@(k)];
+            @endmif
+            @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)b[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)b[@(k)] - C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)b[@(k)];
+            @endmif
+            @iexp k @(k) 1 +
+         @iexp i @(i) 1 +
+         @endiwhile
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+               @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)b[@(k)] - C@(j)[i+@(i)];
+               @endmif
+               @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)b[@(k)];
+               @endmif
+               @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)b[@(k)];
+               @endmif
+               @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)b[@(k)];
+               @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         b += incb;
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+   @undef ial
+   @undef ibe
+   @undef in1
+   @undef andC
+   @undef andL
+@endproc
+@iexp vtst 4 @(mu) %
+@iif vtst = 0
+#if 0 && defined(ATL_AVX) && defined(DREAL)  /* AVX loses perf for unaligned */
+   @callproc cpfunc __m256d
+@endiif
+@iif vtst ! 0
+#if 0
+@endiif
+@iexp vtst 8 @(mu) %
+@iif vtst = 0
+#elif 0 && defined(ATL_AVX) && defined(SREAL) /* AVX loses perf for unaligned */
+   @callproc cpfunc __m256
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+@iexp vtst 2 @(mu) %
+@iif vtst = 0
+#elif defined(ATL_SSE2) && defined(DREAL) && defined(__GNUC__)
+   @callproc cpfunc __m128d
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+@iexp vtst 4 @(mu) %
+@iif vtst = 0
+#elif defined(SREAL) && defined(ATL_SSE1) && defined(__GNUC__)
+   @callproc cpfunc __m128
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+#else
+void Mjoin(PATL,ablk2cmat_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for b */
+   const TYPE *b,       /* matrix stored in @(mu)x@(nu)-major order */
+   const SCALAR beta,   /* scalar for C */
+   TYPE *C,             /* matrix to be copied to access-major format */
+   ATL_CSZT ldc         /* stride between row elements */
+)
+{
+   ATL_CINT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CINT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CINT incC = ldc*@(nu), incb = @(mu)*@(nu);
+   ATL_INT i, j;
+   @declare "   TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+
+   for (j=0; j < n; j += @(nu), b += incb)
+   {
+      const TYPE *p = b;
+      for (i=0; i < m; i += @(mu), p += pansz)
+      {
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @mif nalp = "n
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @mif nbet = "1
+         C@(j)[i+@(i)] -= p[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)p[@(k)];
+            @endmif
+         @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+         @endmif
+         @iexp k @(k) 1 +
+      @iexp i @(i) 1 +
+      @endiwhile
+   @iexp j @(j) 1 +
+   @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+         @mif nalp = "n
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @mif nbet = "1
+         C@(j)[i+@(i)] -= p[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)p[@(k)];
+            @endmif
+         @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)p[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+         @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+   @mif nu ! "1
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < m; i += @(mu), b += pansz)
+      {
+      @iexp k 0 0 +
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)b[@(k)];
+            @endmif
+            @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)b[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)b[@(k)] - C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)b[@(k)];
+            @endmif
+            @iexp k @(k) 1 +
+         @iexp i @(i) 1 +
+         @endiwhile
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+               @mif nbet = "n
+         C@(j)[i+@(i)] = @(malp)b[@(k)] - C@(j)[i+@(i)];
+               @endmif
+               @mif nbet = "X
+         C@(j)[i+@(i)] = beta*C@(j)[i+@(i)] + @(malp)b[@(k)];
+               @endmif
+               @mif nbet = "1
+         C@(j)[i+@(i)] += @(malp)b[@(k)];
+               @endmif
+               @mif nbet = "0
+         C@(j)[i+@(i)] = @(malp)b[@(k)];
+               @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         b += incb;
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+#endif
+@ROUT ATL_cablk2cmat cammmtst
+/*
+ *  C <- beta*C + alpha*b,
+ *  C is an MxN matrix in column-major storage
+ *  b is a CEIL(M/@(mu))*@(mu) x CEIL(N/@(nu))*@(nu) matrix stored in
+ *    @(mu)x@(nu)-major storage
+ */
+void Mjoin(PATL,ablk2cmat_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for b */
+   const TYPE *rC,      /* matrix stored in @(mu)x@(nu)-major order */
+   const TYPE *iC,      /* matrix stored in @(mu)x@(nu)-major order */
+   const SCALAR beta,   /* scalar for C */
+   TYPE *C,             /* col-major array to write to */
+   ATL_CSZT ldc         /* stride between row elements */
+)
+{
+   ATL_CSZT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CSZT m2 = m+m;
+   ATL_CSZT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CSZT ldc2 = ldc+ldc, incC = ldc2*@(nu), incb = @(mu)*@(nu);
+   ATL_SZT i, j;
+   @mif nbet = "X
+   const register TYPE rb=(*beta), ib=beta[1];
+   register TYPE rc, ic;
+   @endmif
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rp, ip, rtmp;
+   @endmif
+   @declare "   TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc2
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp mu2 @(mu) @(mu) +
+
+   for (j=0; j < n; j += @(nu), rC += incb, iC += incb)
+   {
+      const TYPE *pr = rC, *pi = iC;
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+      {
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu2)
+         @mif nalp = "n
+            @mif nbet = "X
+            rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib - pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb - pi[@(k)];
+            @endmif
+            @mif nbet = "1
+         C@(j)[i+@(i)] -= pr[@(k)];
+         C@(j)[i+@(i)+1] -= pi[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = -pr[@(k)];
+         C@(j)[i+@(i)+1] = -pi[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         C@(j)[i+@(i)+1] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+            @endmif
+         @endmif
+         @mif nalp = "1
+            @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + pi[@(k)];
+            @endmif
+            @mif nbet = "1
+         C@(j)[i+@(i)] += pr[@(k)];
+         C@(j)[i+@(i)+1] += pi[@(k)];
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = pr[@(k)];
+         C@(j)[i+@(i)+1] = pi[@(k)];
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = pr[@(k)] - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = pi[@(k)] - C@(j)[i+@(i)+1];
+            @endmif
+         @endmif
+         @mif nalp = "X
+         rtmp = rp = pr[@(k)];
+         ip = pi[@(k)];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+            @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + rp;
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + ip;
+            @endmif
+            @mif nbet = "1
+         C@(j)[i+@(i)] += rp;
+         C@(j)[i+@(i)+1] += ip;
+            @endmif
+            @mif nbet = "0
+         C@(j)[i+@(i)] = rp;
+         C@(j)[i+@(i)+1] = ip;
+            @endmif
+            @mif nbet = "n
+         C@(j)[i+@(i)] = rp - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = ip - C@(j)[i+@(i)+1];
+            @endmif
+         @endmif
+         @iexp k @(k) 1 +
+         @iexp i @(i) 2 +
+      @endiwhile
+      @iexp j @(j) 1 +
+   @endiwhile
+      }
+   @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iexp m2 @(m) @(m) +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m2)
+               @mif nalp = "n
+                  @mif nbet = "X
+            rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib - pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb - pi[@(k)];
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] -= pr[@(k)];
+         C@(j)[i+@(i)+1] -= pi[@(k)];
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = -pr[@(k)];
+         C@(j)[i+@(i)+1] = -pi[@(k)];
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         C@(j)[i+@(i)+1] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                  @endmif
+               @endmif
+               @mif nalp = "1
+                  @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + pi[@(k)];
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] += pr[@(k)];
+         C@(j)[i+@(i)+1] += pi[@(k)];
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = pr[@(k)];
+         C@(j)[i+@(i)+1] = pi[@(k)];
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = pr[@(k)] - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = pi[@(k)] - C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @mif nalp = "X
+         rtmp = rp = pr[@(k)];
+         ip = pi[@(k)];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                  @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + rp;
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + ip;
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] += rp;
+         C@(j)[i+@(i)+1] += ip;
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = rp;
+         C@(j)[i+@(i)+1] = ip;
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = rp - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = ip - C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @iexp k @(k) 1 + 
+               @iexp i @(i) 2 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         break;
+         @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+   @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+   @mif nu ! "1
+   switch(nr)
+   {
+      const TYPE *pr, *pi;
+      @iexp n 1 0 +
+      @iwhile n < @(nu)
+   case @(n):
+      pr = rC; pi = iC;
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+      {
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp i 0 0 +
+            @iwhile i < @(mu2)
+               @mif nalp = "n
+                  @mif nbet = "X
+            rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib - pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb - pi[@(k)];
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] -= pr[@(k)];
+         C@(j)[i+@(i)+1] -= pi[@(k)];
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = -pr[@(k)];
+         C@(j)[i+@(i)+1] = -pi[@(k)];
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         C@(j)[i+@(i)+1] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                  @endmif
+               @endmif
+               @mif nalp = "1
+                  @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + pi[@(k)];
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] += pr[@(k)];
+         C@(j)[i+@(i)+1] += pi[@(k)];
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = pr[@(k)];
+         C@(j)[i+@(i)+1] = pi[@(k)];
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = pr[@(k)] - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = pi[@(k)] - C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @mif nalp = "X
+         rtmp = rp = pr[@(k)];
+         ip = pi[@(k)];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                  @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + rp;
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + ip;
+                  @endmif
+                  @mif nbet = "1
+         C@(j)[i+@(i)] += rp;
+         C@(j)[i+@(i)+1] += ip;
+                  @endmif
+                  @mif nbet = "0
+         C@(j)[i+@(i)] = rp;
+         C@(j)[i+@(i)+1] = ip;
+                  @endmif
+                  @mif nbet = "n
+         C@(j)[i+@(i)] = rp - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = ip - C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @iexp i @(i) 2 +
+               @iexp k @(k) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+      }
+         @mif mu ! "1
+      switch(mr)
+      {
+            @iexp m 1 0 +
+            @iwhile m < @(mu)
+      case @(m):
+               @iexp j 0 0 +
+               @iwhile j < @(n)
+                  @iexp k @(mu) @(j) *
+                  @iexp i 0 0 +
+                  @iexp m2 @(m) @(m) +
+                  @iwhile i < @(m2)
+                     @mif nalp = "n
+                        @mif nbet = "X
+            rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib - pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb - pi[@(k)];
+                        @endmif
+                        @mif nbet = "1
+         C@(j)[i+@(i)] -= pr[@(k)];
+         C@(j)[i+@(i)+1] -= pi[@(k)];
+                        @endmif
+                        @mif nbet = "0
+         C@(j)[i+@(i)] = -pr[@(k)];
+         C@(j)[i+@(i)+1] = -pi[@(k)];
+                        @endmif
+                        @mif nbet = "n
+         C@(j)[i+@(i)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         C@(j)[i+@(i)+1] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                        @endmif
+                     @endmif
+                     @mif nalp = "1
+                        @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + pr[@(k)];
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + pi[@(k)];
+                        @endmif
+                        @mif nbet = "1
+         C@(j)[i+@(i)] += pr[@(k)];
+         C@(j)[i+@(i)+1] += pi[@(k)];
+                        @endmif
+                        @mif nbet = "0
+         C@(j)[i+@(i)] = pr[@(k)];
+         C@(j)[i+@(i)+1] = pi[@(k)];
+                        @endmif
+                        @mif nbet = "n
+         C@(j)[i+@(i)] = pr[@(k)] - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = pi[@(k)] - C@(j)[i+@(i)+1];
+                        @endmif
+                     @endmif
+                     @mif nalp = "X
+         rtmp = rp = pr[@(k)];
+         ip = pi[@(k)];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                        @mif nbet = "X
+         rc = C@(j)[i+@(i)]; ic = C@(j)[i+@(i)+1];
+         C@(j)[i+@(i)] = rc*rb - ic*ib + rp;
+         C@(j)[i+@(i)+1] = rc*ib + ic*rb + ip;
+                        @endmif
+                        @mif nbet = "1
+         C@(j)[i+@(i)] += rp;
+         C@(j)[i+@(i)+1] += ip;
+                        @endmif
+                        @mif nbet = "0
+         C@(j)[i+@(i)] = rp;
+         C@(j)[i+@(i)+1] = ip;
+                        @endmif
+                        @mif nbet = "n
+         C@(j)[i+@(i)] = rp - C@(j)[i+@(i)];
+         C@(j)[i+@(i)+1] = ip - C@(j)[i+@(i)+1];
+                        @endmif
+                     @endmif
+                     @iexp k @(k) 1 +
+                     @iexp i @(i) 2 +
+                  @endiwhile
+                  @iexp j @(j) 1 +
+               @endiwhile
+         pr += pansz;
+         pi += pansz;
+         break;
+               @iexp m @(m) 1 +
+            @endiwhile
+      default:;
+      }
+         @endmif
+      break;
+         @iexp n @(n) 1 +
+      @endiwhile
+   default:;
+   }
+   @endmif
+}
+@ROUT ATL_ccmat2ablk cammmtst
+/*
+ *  b <- alpha*C + beta*b,
+ *  C is an MxN matrix in column-major storage
+ *  b is a CEIL(M/@(mu))*@(mu) x CEIL(N/@(nu))*@(nu) matrix stored in
+ *    @(mu)x@(nu)-major storage
+ */
+void Mjoin(PATL,cmat2ablk_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for C */
+   const TYPE *C,       /* col-major array to write from */
+   ATL_CSZT ldc,        /* stride between row elements */
+   const SCALAR beta,   /* scalar for b */
+   TYPE *rC,            /* matrix to store in @(mu)x@(nu)-major order */
+   TYPE *iC             /* matrix to store in @(mu)x@(nu)-major order */
+)
+{
+   ATL_CSZT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CSZT m2 = m+m;
+   ATL_CSZT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CSZT ldc2 = ldc+ldc, incC = ldc2*@(nu), incb = @(mu)*@(nu);
+   ATL_SZT i, j;
+   @mif nbet = "X
+   const register TYPE rb=(*beta), ib=beta[1];
+   register TYPE rc, ic;
+   @endmif
+   @mif nalp = "X
+   const register TYPE ra=(*alpha), ia=alpha[1];
+   register TYPE rp, ip, rtmp;
+   @endmif
+   @declare "  const TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc2
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+   @iexp mu2 @(mu) @(mu) +
+
+   for (j=0; j < n; j += @(nu), rC += incb, iC += incb)
+   {
+      TYPE *pr = rC, *pi = iC;
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+      {
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu2)
+         @mif nalp = "n
+            @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib - C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb - C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "1
+         pr[@(k)] -= C@(j)[i+@(i)];
+         pi[@(k)] -= C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "0
+         pr[@(k)] = -C@(j)[i+@(i)];
+         pi[@(k)] = -C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "n
+         pr[@(k)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         pi[@(k)] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+            @endmif
+         @endmif
+         @mif nalp = "1
+            @mif nbet = "X
+            rc = pr[@(k)]; ic = pr[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb + C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "1
+         pr[@(k)] += C@(j)[i+@(i)];
+         pi[@(k)] += C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "0
+         pr[@(k)] = C@(j)[i+@(i)];
+         pi[@(k)] = C@(j)[i+@(i)+1];
+            @endmif
+            @mif nbet = "n
+         pr[@(k)] = -pr[@(k)] + C@(j)[i+@(i)];
+         pi[@(k)] = -pi[@(k)] + C@(j)[i+@(i)+1];
+            @endmif
+         @endmif
+         @mif nalp = "X
+         rtmp = rp = C@(j)[i+@(i)];
+         ip = C@(j)[i+@(i)+1];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+            @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + rp;
+         pi[@(k)] = rc*ib + ic*rb + ip;
+            @endmif
+            @mif nbet = "1
+         pr[@(k)] += rp;
+         pi[@(k)] += ip;
+            @endmif
+            @mif nbet = "0
+         pr[@(k)] = rp;
+         pi[@(k)] = ip;
+            @endmif
+            @mif nbet = "n
+         pr[@(k)] = rp - pr[@(k)];
+         pi[@(k)] = ip - pi[@(k)];
+            @endmif
+         @endmif
+         @iexp k @(k) 1 +
+         @iexp i @(i) 2 +
+      @endiwhile
+      @iexp j @(j) 1 +
+   @endiwhile
+      }
+   @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iexp m2 @(m) @(m) +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m2)
+               @mif nalp = "n
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib - C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb - C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] -= C@(j)[i+@(i)];
+         pi[@(k)] -= C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = -C@(j)[i+@(i)];
+         pi[@(k)] = -C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         pi[@(k)] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                  @endmif
+               @endmif
+               @mif nalp = "1
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pr[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb + C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] += C@(j)[i+@(i)];
+         pi[@(k)] += C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = C@(j)[i+@(i)];
+         pi[@(k)] = C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = -pr[@(k)] + C@(j)[i+@(i)];
+         pi[@(k)] = -pi[@(k)] + C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @mif nalp = "X
+         rtmp = rp = C@(j)[i+@(i)];
+         ip = C@(j)[i+@(i)+1];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + rp;
+         pi[@(k)] = rc*ib + ic*rb + ip;
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] += rp;
+         pi[@(k)] += ip;
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = rp;
+         pi[@(k)] = ip;
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = rp - pr[@(k)];
+         pi[@(k)] = ip - pi[@(k)];
+                  @endmif
+               @endmif
+               @iexp k @(k) 1 + 
+               @iexp i @(i) 2 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         break;
+         @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+   @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+   @mif nu ! "1
+   switch(nr)
+   {
+      TYPE *pr, *pi;
+      @iexp n 1 0 +
+      @iwhile n < @(nu)
+   case @(n):
+      pr = rC; pi = iC;
+      for (i=0; i < m2; i += @(mu2), pr += pansz, pi += pansz)
+      {
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp i 0 0 +
+            @iwhile i < @(mu2)
+               @mif nalp = "n
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib - C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb - C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] -= C@(j)[i+@(i)];
+         pi[@(k)] -= C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = -C@(j)[i+@(i)];
+         pi[@(k)] = -C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         pi[@(k)] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                  @endmif
+               @endmif
+               @mif nalp = "1
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pr[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb + C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] += C@(j)[i+@(i)];
+         pi[@(k)] += C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = C@(j)[i+@(i)];
+         pi[@(k)] = C@(j)[i+@(i)+1];
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = -pr[@(k)] + C@(j)[i+@(i)];
+         pi[@(k)] = -pi[@(k)] + C@(j)[i+@(i)+1];
+                  @endmif
+               @endmif
+               @mif nalp = "X
+         rtmp = rp = C@(j)[i+@(i)];
+         ip = C@(j)[i+@(i)+1];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                  @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + rp;
+         pi[@(k)] = rc*ib + ic*rb + ip;
+                  @endmif
+                  @mif nbet = "1
+         pr[@(k)] += rp;
+         pi[@(k)] += ip;
+                  @endmif
+                  @mif nbet = "0
+         pr[@(k)] = rp;
+         pi[@(k)] = ip;
+                  @endmif
+                  @mif nbet = "n
+         pr[@(k)] = rp - pr[@(k)];
+         pi[@(k)] = ip - pi[@(k)];
+                  @endmif
+               @endmif
+               @iexp i @(i) 2 +
+               @iexp k @(k) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+      }
+         @mif mu ! "1
+      switch(mr)
+      {
+            @iexp m 1 0 +
+            @iwhile m < @(mu)
+      case @(m):
+               @iexp j 0 0 +
+               @iwhile j < @(n)
+                  @iexp k @(mu) @(j) *
+                  @iexp i 0 0 +
+                  @iexp m2 @(m) @(m) +
+                  @iwhile i < @(m2)
+                     @mif nalp = "n
+                        @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib - C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb - C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "1
+         pr[@(k)] -= C@(j)[i+@(i)];
+         pi[@(k)] -= C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "0
+         pr[@(k)] = -C@(j)[i+@(i)];
+         pi[@(k)] = -C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "n
+         pr[@(k)] = -(pr[@(k)] + C@(j)[i+@(i)]);
+         pi[@(k)] = -(pi[@(k)] + C@(j)[i+@(i)+1]);
+                        @endmif
+                     @endmif
+                     @mif nalp = "1
+                        @mif nbet = "X
+            rc = pr[@(k)]; ic = pr[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + C@(j)[i+@(i)];
+         pi[@(k)] = rc*ib + ic*rb + C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "1
+         pr[@(k)] += C@(j)[i+@(i)];
+         pi[@(k)] += C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "0
+         pr[@(k)] = C@(j)[i+@(i)];
+         pi[@(k)] = C@(j)[i+@(i)+1];
+                        @endmif
+                        @mif nbet = "n
+         pr[@(k)] = -pr[@(k)] + C@(j)[i+@(i)];
+         pi[@(k)] = -pi[@(k)] + C@(j)[i+@(i)+1];
+                        @endmif
+                     @endmif
+                     @mif nalp = "X
+         rtmp = rp = C@(j)[i+@(i)];
+         ip = C@(j)[i+@(i)+1];
+         rp = rp*ra - ip*ia;
+         ip = rtmp*ia + ip*ra;
+                        @mif nbet = "X
+            rc = pr[@(k)]; ic = pi[@(k)];
+         pr[@(k)] = rc*rb - ic*ib + rp;
+         pi[@(k)] = rc*ib + ic*rb + ip;
+                        @endmif
+                        @mif nbet = "1
+         pr[@(k)] += rp;
+         pi[@(k)] += ip;
+                        @endmif
+                        @mif nbet = "0
+         pr[@(k)] = rp;
+         pi[@(k)] = ip;
+                        @endmif
+                        @mif nbet = "n
+         pr[@(k)] = rp - pr[@(k)];
+         pi[@(k)] = ip - pi[@(k)];
+                        @endmif
+                     @endmif
+                     @iexp k @(k) 1 +
+                     @iexp i @(i) 2 +
+                  @endiwhile
+                  @iexp j @(j) 1 +
+               @endiwhile
+         pr += pansz;
+         pi += pansz;
+         break;
+               @iexp m @(m) 1 +
+            @endiwhile
+      default:;
+      }
+         @endmif
+      break;
+         @iexp n @(n) 1 +
+      @endiwhile
+   default:;
+   }
+   @endmif
+}
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avx ATL_mm@(kmaj)_@(mu)x@(nu)_1_sse ATL_mm@(kmaj)_@(mu)x@(nu)_1_avxz
+#include <immintrin.h>
+#include "atlas_misc.h"
+#include "atlas_prefetch.h"
+#ifndef ATL_CSZT
+   #define ATL_CSZT const size_t
+#endif
+#ifndef ATL_MM_KB 
+   #ifdef KB
+      #if KB == 0
+         #define ATL_MM_KB K
+         #define ATL_KBCONST 0
+      #else
+         #define ATL_MM_KB KB
+         #define ATL_KBCONST 1
+      #endif
+   #else
+      #define ATL_MM_KB K
+      #define ATL_KBCONST 0
+   #endif
+#else
+   #define ATL_KBCONST 1
+#endif
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_sse
+@ifdef ! dupB
+   @define dupB @1@
+@endifdef
+@iif dupB = 0
+   @undef dupB
+   @define dupB @1@
+@endiif
+@ifdef ! vlen
+   @define vlen @2@
+@endifdef
+@iif vlen = 2
+   @define vtyp @__m128d@
+   @define mul @_mm_mul_pd@
+   @define add @_mm_add_pd@
+   @define sub @_mm_sub_pd@
+   @define ld  @_mm_load_pd@
+   @define store @_mm_store_pd@
+   @define CL @8@
+#ifdef ATL_SSE3
+   #define ATL_bcast(p_, r_) \
+      r_ =  _mm_loaddup_pd(p_)
+#else
+   #define ATL_bcast(p_, r_) \
+      r_ = _mm_load1_pd(p_)
+#endif
+@endiif
+@iif vlen = 4
+   @define vtyp @__m128@
+   @define mul @_mm_mul_ps@
+   @define add @_mm_add_ps@
+   @define sub @_mm_sub_ps@
+   @define ld  @_mm_load_ps@
+   @define store @_mm_store_ps@
+   @define CL @16@
+   @iif dupB = 1
+#define ATL_bcast(p_, r_) \
+   r_ = _mm_load1_ps(p_)
+   @endiif
+   @iif dupB = 2
+#ifdef ATL_SSE3
+   #define ATL_bcast(p_, r_) \
+      r_ = (__m128) _mm_loaddup_pd((double*)(p_))
+#else
+   #define ATL_bcast(p_, r_) \
+      r_ = _mm_load1_ps(p_)
+#endif
+   @endiif
+   @iif dupB = 4
+   #define ATL_bcast(p_, r_) \
+      r_ = _mm_load_ps(p_)
+   @endiif
+@endiif
+@iexp vmu @(vlen) @(mu) /
+@iexp i @(vmu) @(vlen) *
+@iif i ! @(mu)
+   @abort "@(mu) must be a multiple of @(vlen)!"
+@endiif
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avxz
+@ifdef ! vlen
+   @define vlen @8@
+@endifdef
+@iif vlen = 8
+   @define vtyp @__m512d@
+   @define bcast @my_mm512_broadcast_sd@
+   @define fma @_mm512_fmadd_pd@
+   @define mul @_mm512_mul_pd@
+   @define add @_mm512_add_pd@
+   @define sub @_mm512_sub_pd@
+   @define ld  @_mm512_load_pd@
+   @define store @_mm512_store_pd@
+   @define CL @8@
+   #define ATL_bcast(p_, r_) \
+      r_ = _mm512_extload_pd(pB, _MM_UPCONV_PD_NONE, _MM_BROADCAST_1X8, 0)
+@endiif
+@iif vlen = 16
+   @define vtyp @__m512@
+   @define bcast @my__mm512_broadcast_ss@
+   @define fma @_mm512_fmadd_ps@
+   @define mul @_mm512_mul_ps@
+   @define add @_mm512_add_ps@
+   @define sub @_mm512_sub_ps@
+   @define ld  @_mm512_load_ps@
+   @define store @_mm512_store_ps@
+   @define CL @16@
+   #define ATL_bcast(p_, r_) \
+      r_ = _mm512_extload_ps(pB, _MM_UPCONV_PS_NONE, _MM_BROADCAST_1X16, 0)
+@endiif
+@iexp vmu @(vlen) @(mu) /
+@iexp i @(vmu) @(vlen) *
+@iif i ! @(mu)
+   @abort "@(mu) must be a multiple of @(vlen)!"
+@endiif
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avx
+@ifdef ! vlen
+   @define vlen @4@
+@endifdef
+@iif vlen = 4
+   @define vtyp @__m256d@
+   @define bcast @_mm256_broadcast_sd@
+   @define mul @_mm256_mul_pd@
+   @define add @_mm256_add_pd@
+   @define sub @_mm256_sub_pd@
+   @define ld  @_mm256_load_pd@
+   @define store @_mm256_store_pd@
+   @define CL @8@
+@endiif
+@iif vlen = 8
+   @define vtyp @__m256@
+   @define bcast @_mm256_broadcast_ss@
+   @define mul @_mm256_mul_ps@
+   @define add @_mm256_add_ps@
+   @define sub @_mm256_sub_ps@
+   @define ld  @_mm256_load_ps@
+   @define store @_mm256_store_ps@
+   @define CL @16@
+@endiif
+@iexp vmu @(vlen) @(mu) /
+@iexp i @(vmu) @(vlen) *
+@iif i ! @(mu)
+   @abort "@(mu) must be a multiple of @(vlen)!"
+@endiif
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avx ATL_mm@(kmaj)_@(mu)x@(nu)_1_sse ATL_mm@(kmaj)_@(mu)x@(nu)_1_avxz
+void ATL_USERMM
+(
+   ATL_CSZT nmus,
+   ATL_CSZT nnus,
+   ATL_CSZT K,
+   const TYPE *pA,    /* @(mu)*KB*nmus-length access-major array of A */
+   const TYPE *pB,    /* @(nu)*KB*nnus-length access-major array of B */
+   TYPE *pC,          /* @(mu)*@(nu)*nnus*nmus-length access-major array of C */
+   const TYPE *pAn,   /* next block of A */
+   const TYPE *pBn,   /* next block of B */
+   const TYPE *pCn    /* next block of C */
+)
+/*
+ * Performs a GEMM operation on a @(mu)x@(nu) jammed GEMM with a compile-time
+ * constant K-length of ATL_MM_KB.
+ */
+{
+   @declare "   register @(vtyp) " y y ";"
+      m0
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         rB@(j)
+         @iexp i 0 0 +
+         @iwhile i < @(vmu)
+            rC@(i)@(j)
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i 0 0 +
+      @iwhile i < @(vmu)
+         rA@(i)
+         @iexp i @(i) 1 +
+      @endiwhile
+   @enddeclare
+   const TYPE *pB0 = pB;
+   const TYPE *pfA, *pfB;
+   size_t incPF;
+   size_t i, j, k;
+   #if ATL_KBCONST == 0
+      size_t incAm = @(mu)*ATL_MM_KB;
+   #else
+      #define incAm @(mu)*ATL_MM_KB
+   #endif
+
+   if (pAn != pA)
+   {
+      pfA = pAn;
+      incPF = (nmus*@(mu)*K) / (nmus * nnus);
+      pfB = pBn;
+      
+   }
+   else if (pBn != pB)
+   {
+      pfA = pBn;
+      pfB = pA + nmus*@(mu)*2;
+      incPF = (K*nnus*@(nu)*sizeof(TYPE)) / ((nmus * nnus)<<1);
+   }
+   else
+   {
+      pfA = pA + nmus*@(mu)*(K>>1);
+      incPF = (nmus*@(mu)*K) / (nmus * nnus);
+   }
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avxz
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel K=1 iteration to avoid zero of rCxx and extra add 
+ */
+         rA0 = @(ld)(pA);
+         ATL_bcast(pB, rB0);
+         @iexp k 0 @(vlen) +
+         @iexp i 0 1 +
+         @iwhile i < @(vmu)
+         rA@(i) = @(ld)(pA+@(k));
+            @iexp k @(k) @(vlen) +
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+         ATL_bcast(pB+@(j), rB@(j));
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+         rC@(i)@(j) = @(mul)(rA@(i), rB@(j));
+            @iif k = 0
+               ATL_pfl1W(pC);
+            @endiif
+            @iif k = 1
+               ATL_pfl1W(pC+@(CL));
+            @endiif
+            @iif k = 2
+               ATL_pfl1R(pfA);
+            @endiif
+            @iif k = 3
+               ATL_pfl1R(pfA+@(CL));
+            @endiif
+            @iif k = 4
+               pfA += incPF;
+            @endiif
+            @iif k = 5
+               pA += @(mu);
+            @endiif
+            @iif k = 6
+               pB += @(nu);
+            @endiif
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iif k < 2
+               ATL_pfl1W(pC+@(CL));
+         @endiif
+         @iif k < 3
+               ATL_pfl1R(pfA);
+         @endiif
+         @iif k < 4
+               ATL_pfl1R(pfA+@(CL));
+         @endiif
+         @iif k < 5
+               pfA += incPF;
+         @endiif
+         @iif k < 6
+               pA += @(mu);
+         @endiif
+         @iif k < 7
+               pB += @(nu);
+         @endiif
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = @(ld)(pA);
+            ATL_bcast(pB, rB0);
+            @iexp k 0 @(vlen) +
+            @iexp i 0 1 +
+            @iwhile i < @(vmu)
+            rA@(i) = @(ld)(pA+@(k));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j 0 1 +
+            @iwhile j < @(nu)
+            ATL_bcast(pB+@(j),rB@(j));
+               @iexp j @(j) 1 +
+            @endiwhile
+            @iexp j 0 0 +
+            @iwhile j < @(nu)
+               @iexp i 0 0 +
+               @iwhile i < @(vmu)
+            rC@(i)@(j) = @(fma)(rA@(i), rB@(j), rC@(i)@(j));
+                  @iexp i @(i) 1 +
+               @endiwhile
+               @iexp j @(j) 1 +
+            @endiwhile
+            pA += @(mu);
+            pB += @(nu);
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(sub)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(add)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_avx
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel K=1 iteration to avoid zero of rCxx and extra add 
+ */
+         rA0 = @(ld)(pA);
+         rB0 = @(bcast)(pB);
+         @iexp k 0 @(vlen) +
+         @iexp i 0 1 +
+         @iwhile i < @(vmu)
+         rA@(i) = @(ld)(pA+@(k));
+            @iexp k @(k) @(vlen) +
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+         rB@(j) = @(bcast)(pB+@(j));
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+         rC@(i)@(j) = @(mul)(rA@(i), rB@(j));
+            @iif k = 0
+               ATL_pfl1W(pC);
+            @endiif
+            @iif k = 1
+               ATL_pfl1W(pC+@(CL));
+            @endiif
+            @iif k = 2
+               ATL_pfl1R(pfA);
+            @endiif
+            @iif k = 3
+               ATL_pfl1R(pfA+@(CL));
+            @endiif
+            @iif k = 4
+               pfA += incPF;
+            @endiif
+            @iif k = 5
+               pA += @(mu);
+            @endiif
+            @iif k = 6
+               pB += @(nu);
+            @endiif
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iif k < 2
+               ATL_pfl1W(pC+@(CL));
+         @endiif
+         @iif k < 3
+               ATL_pfl1R(pfA);
+         @endiif
+         @iif k < 4
+               ATL_pfl1R(pfA+@(CL));
+         @endiif
+         @iif k < 5
+               pfA += incPF;
+         @endiif
+         @iif k < 6
+               pA += @(mu);
+         @endiif
+         @iif k < 7
+               pB += @(nu);
+         @endiif
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = @(ld)(pA);
+            rB0 = @(bcast)(pB);
+            @iexp k 0 @(vlen) +
+            @iexp i 0 1 +
+            @iwhile i < @(vmu)
+            rA@(i) = @(ld)(pA+@(k));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j 0 1 +
+            @iwhile j < @(nu)
+            rB@(j) = @(bcast)(pB+@(j));
+               @iexp j @(j) 1 +
+            @endiwhile
+            @iexp j 0 0 +
+            @iwhile j < @(nu)
+               @iexp i 0 0 +
+               @iwhile i < @(vmu)
+            m0 = @(mul)(rA@(i), rB@(j));
+            rC@(i)@(j) = @(add)(m0, rC@(i)@(j));
+                  @iexp i @(i) 1 +
+               @endiwhile
+               @iexp j @(j) 1 +
+            @endiwhile
+            pA += @(mu);
+            pB += @(nu);
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(sub)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(add)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_sse
+   @iexp nud @(nu) @(dupB) *
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel K=1 iteration to avoid zero of rCxx and extra add 
+ */
+         rA0 = @(ld)(pA);
+         ATL_bcast(pB, rB0);
+         @iexp k 0 @(vlen) +
+         @iexp i 0 1 +
+         @iwhile i < @(vmu)
+         rA@(i) = @(ld)(pA+@(k));
+            @iexp k @(k) @(vlen) +
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+            @iexp jd @(j) @(dupB) *
+         ATL_bcast(pB+@(jd), rB@(j));
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+         rC@(i)@(j) = @(mul)(rA@(i), rB@(j));
+            @iif k = 0
+               ATL_pfl1W(pC);
+            @endiif
+            @iif k = 1
+               ATL_pfl1W(pC+@(CL));
+            @endiif
+            @iif k = 2
+               ATL_pfl1R(pfA);
+            @endiif
+            @iif k = 3
+               ATL_pfl1R(pfA+@(CL));
+            @endiif
+            @iif k = 4
+               pfA += incPF;
+            @endiif
+            @iif k = 5
+               pA += @(mu);
+            @endiif
+            @iif k = 6
+               pB += @(nud);
+            @endiif
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iif k < 2
+            ATL_pfl1W(pC+@(CL));
+         @endiif
+         @iif k < 3
+            ATL_pfl1R(pfA);
+         @endiif
+         @iif k < 4
+            ATL_pfl1R(pfA+@(CL));
+         @endiif
+         @iif k < 5
+            pfA += incPF;
+         @endiif
+         @iif k < 6
+            pA += @(mu);
+         @endiif
+         @iif k < 7
+            pB += @(nud);
+         @endiif
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = @(ld)(pA);
+            ATL_bcast(pB, rB0);
+            @iexp k 0 @(vlen) +
+            @iexp i 0 1 +
+            @iwhile i < @(vmu)
+            rA@(i) = @(ld)(pA+@(k));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j 0 1 +
+            @iwhile j < @(nu)
+               @iexp jd @(j) @(dupB) *
+            ATL_bcast(pB+@(jd), rB@(j));
+               @iexp j @(j) 1 +
+            @endiwhile
+            @iexp j 0 0 +
+            @iwhile j < @(nu)
+               @iexp i 0 0 +
+               @iwhile i < @(vmu)
+            m0 = @(mul)(rA@(i), rB@(j));
+            rC@(i)@(j) = @(add)(m0, rC@(i)@(j));
+                  @iexp i @(i) 1 +
+               @endiwhile
+               @iexp j @(j) 1 +
+            @endiwhile
+            pA += @(mu);
+            pB += @(nud);
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(sub)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(vmu)
+            m0 = @(ld)(pC+@(k));
+            rC@(i)@(j) = @(add)(rC@(i)@(j), m0);
+            @(store)(pC+@(k), rC@(i)@(j));
+               @iexp k @(k) @(vlen) +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1_sse ATL_mm@(kmaj)_@(mu)x@(nu)_1_avx @\
+      ATL_mm@(kmaj)_@(mu)x@(nu)_1_avxz
+#if ATL_KBCONST != 0
+   #undef incAm
+#endif
+#undef ATL_KBCONST
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_gvec
+#include "atlas_misc.h"
+#include "atlas_prefetch.h"
+#define ATL_VLEN @(vlen)
+#if defined(SREAL) || defined(SCPLX)
+   @iexp vlb @(vlen) 4 *
+   #define ATL_VLENb @(vlb)
+#else
+   @iexp vlb @(vlen) 8 *
+   #define ATL_VLENb @(vlb)
+#endif
+#include "atlas_gnuvec.h"
+#ifndef ATL_CSZT
+   #define ATL_CSZT const size_t
+#endif
+#ifndef ATL_MM_KB 
+   #ifdef KB
+      #if KB == 0
+         #define ATL_KBCONST 0
+         #define ATL_MM_KB K
+      #else
+         #define ATL_KBCONST 1
+         #define ATL_MM_KB KB
+      #endif
+   #else
+      #define ATL_KBCONST 0
+      #define ATL_MM_KB K
+   #endif
+#endif
+@skip typedef TYPE ATL_vec_t __attribute__ ((vector_size (@(vlen))));
+void ATL_USERMM
+(
+   ATL_CSZT nmus,
+   ATL_CSZT nnus,
+   ATL_CSZT K,
+   const TYPE *pAv,   /* @(mu)*KB*nmus-length access-major array of A */
+   const TYPE *pB,    /* @(nu)*KB*nnus-length access-major array of B */
+   TYPE *pCv,         /* @(mu)*@(nu)*nnus*nmus-length access-major array of C */
+   const TYPE *pAn,   /* next block of A */
+   const TYPE *pBn,   /* next block of B */
+   const TYPE *pCn    /* next block of C */
+)
+/*
+ * Performs a GEMM operation on a @(mu)x@(nu) jammed GEMM with a compile-time
+ * constant K-length of ATL_MM_KB.
+ */
+{
+   const ATL_vec_t *pA = (const ATL_vec_t*)pAv;
+   ATL_vec_t *pC = (ATL_vec_t*)pCv;
+   @declare "   register ATL_vec_t " y n ";"
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         rB@(j)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            rC@(i)@(j)
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         rA@(i)
+         @iexp i @(i) 1 +
+      @endiwhile
+   @enddeclare
+   const TYPE *pB0 = pB;
+   const TYPE *pfA;
+   size_t incPF;
+   size_t i, j, k;
+   #if ATL_KBCONST == 0
+      size_t incAm = @(mu)*K;
+   #else
+      #define incAm (@(mu)*ATL_MM_KB)
+   #endif
+
+   if (pAn != pAv)
+   {
+      pfA = pAn;
+      incPF = (nmus*@(mu)*K*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else if (pCn != pCv)
+   {
+      pfA = pCn;
+      incPF = (nmus*@(mu)*nnus*@(nu)*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else if (pBn != pB)
+   {
+      pfA = pBn;
+      incPF = (K*nnus*@(nu)*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else
+   {
+      pfA = pAv + nmus*@(mu)*(K>>1);
+      incPF = (nmus*@(mu)*K*sizeof(TYPE)) / (nmus * nnus);
+   }
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel K=1 iteration to avoid zero of rCxx and extra add 
+ */
+         rA0 = *pA;
+         ATL_gvbcast(pB, rB0);
+         @iexp i 0 1 +
+         @iwhile i < @(mu)
+         rA@(i) = pA[@(i)];
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+         ATL_gvbcast(pB+@(j), rB@(j));
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+         rC@(i)@(j) = rA@(i) * rB@(j);
+            @iif k = 0
+               ATL_pfl1W(pC);
+            @endiif
+            @iif k = 1
+               ATL_pfl1R(pfA);
+            @endiif
+            @iif k = 2
+               pfA += incPF;
+            @endiif
+            @iif k = 3
+               pA += @(mu);
+            @endiif
+            @iif k = 4
+               pB += @(nu);
+            @endiif
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iif k < 2
+               ATL_pfl1R(pfA);
+         @endiif
+         @iif k < 3
+               pfA += incPF;
+         @endiif
+         @iif k < 4
+               pA += @(mu);
+         @endiif
+         @iif k < 5
+               pB += @(nu);
+         @endiif
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = *pA;
+            ATL_gvbcast(pB, rB0);
+            @iexp i 0 1 +
+            @iwhile i < @(mu)
+            rA@(i) = pA[@(i)];
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j 0 1 +
+            @iwhile j < @(nu)
+            ATL_gvbcast(pB+@(j), rB@(j));
+               @iexp j @(j) 1 +
+            @endiwhile
+            @iexp j 0 0 +
+            @iwhile j < @(nu)
+               @iexp i 0 0 +
+               @iwhile i < @(mu)
+            rC@(i)@(j) += rA@(i) * rB@(j);
+                  @iexp i @(i) 1 +
+               @endiwhile
+               @iexp j @(j) 1 +
+            @endiwhile
+            pA += @(mu);
+            pB += @(nu);
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j) - pC[@(k)];
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] += rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+#if ATL_KBCONST != 0
+   #undef incAm
+#endif
+#undef ATL_KBCONST
+@ROUT ATL_mm@(kmaj)_@(mu)x@(nu)_1
+@iif kmaj = 0
+#include "atlas_misc.h"
+#include "atlas_prefetch.h"
+#ifndef ATL_CSZT
+   #define ATL_CSZT const size_t
+#endif
+#ifndef ATL_MM_KB 
+   #ifdef KB
+      #if KB == 0
+         #define ATL_KBCONST 0
+         #define ATL_MM_KB K
+      #else
+         #define ATL_KBCONST 1
+         #define ATL_MM_KB KB
+      #endif
+   #else
+      #define ATL_KBCONST 0
+      #define ATL_MM_KB K
+   #endif
+#endif
+void ATL_USERMM
+(
+   ATL_CSZT nmus,
+   ATL_CSZT nnus,
+   ATL_CSZT K,
+   const TYPE *pA,    /* @(mu)*KB*nmus-length access-major array of A */
+   const TYPE *pB,    /* @(nu)*KB*nnus-length access-major array of B */
+   TYPE *pC,          /* @(mu)*@(nu)*nnus*nmus-length access-major array of C */
+   const TYPE *pAn,   /* next block of A */
+   const TYPE *pBn,   /* next block of B */
+   const TYPE *pCn    /* next block of C */
+)
+/*
+ * Performs a GEMM operation on a @(mu)x@(nu) jammed GEMM with a compile-time
+ * constant K-length of ATL_MM_KB.
+ */
+{
+   @declare "   register TYPE " y n ";"
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         rB@(j)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            rC@(i)@(j)
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         rA@(i)
+         @iexp i @(i) 1 +
+      @endiwhile
+   @enddeclare
+   const TYPE *pB0 = pB;
+   const TYPE *pfA;
+   size_t incPF;
+   size_t i, j, k;
+   #if ATL_KBCONST == 0
+      size_t incAm = @(mu)*K;
+   #else
+      #define incAm (@(mu)*ATL_MM_KB)
+   #endif
+
+   if (pAn != pA)
+   {
+      pfA = pAn;
+      incPF = (nmus*@(mu)*K*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else if (pCn != pA)
+   {
+      pfA = pCn;
+      incPF = (nmus*@(mu)*nnus*@(nu)*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else if (pBn != pB)
+   {
+      pfA = pBn;
+      incPF = (K*nnus*@(nu)*sizeof(TYPE)) / (nmus * nnus);
+   }
+   else
+   {
+      pfA = pA + nmus*@(mu)*(K>>1);
+      incPF = (nmus*@(mu)*K*sizeof(TYPE)) / (nmus * nnus);
+   }
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel K=1 iteration to avoid zero of rCxx and extra add 
+ */
+         rA0 = *pA;
+         rB0 = *pB;
+         @iexp i 0 1 +
+         @iwhile i < @(mu)
+         rA@(i) = pA[@(i)];
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+         rB@(j) = pB[@(j)];
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+         rC@(i)@(j) = rA@(i) * rB@(j);
+            @iif k = 0
+               ATL_pfl1W(pC);
+            @endiif
+            @iif k = 1
+               ATL_pfl1R(pfA);
+            @endiif
+            @iif k = 2
+               pfA += incPF;
+            @endiif
+            @iif k = 3
+               pA += @(mu);
+            @endiif
+            @iif k = 4
+               pB += @(nu);
+            @endiif
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iif k < 2
+               ATL_pfl1R(pfA);
+         @endiif
+         @iif k < 3
+               pfA += incPF;
+         @endiif
+         @iif k < 4
+               pA += @(mu);
+         @endiif
+         @iif k < 5
+               pB += @(nu);
+         @endiif
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = *pA;
+            rB0 = *pB;
+            @iexp i 0 1 +
+            @iwhile i < @(mu)
+            rA@(i) = pA[@(i)];
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j 0 1 +
+            @iwhile j < @(nu)
+            rB@(j) = pB[@(j)];
+               @iexp j @(j) 1 +
+            @endiwhile
+            @iexp j 0 0 +
+            @iwhile j < @(nu)
+               @iexp i 0 0 +
+               @iwhile i < @(mu)
+            rC@(i)@(j) += rA@(i) * rB@(j);
+                  @iexp i @(i) 1 +
+               @endiwhile
+               @iexp j @(j) 1 +
+            @endiwhile
+            pA += @(mu);
+            pB += @(nu);
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j) - pC[@(k)];
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] += rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+#if ATL_KBCONST != 0
+   #undef incAm
+#endif
+#undef ATL_KBCONST
+   @endextract
+@endiif
+#include "atlas_misc.h"
+#include "atlas_prefetch.h"
+#ifndef ATL_CSZT
+   #define ATL_CSZT const size_t
+#endif
+void ATL_USERMM
+(
+   ATL_CSZT nmus,
+   ATL_CSZT nnus,
+   ATL_CSZT K,
+   const TYPE *pA,    /* @(kmaj)*mu*nkus*nmus access-major array of A */
+   const TYPE *pB,    /* @(kmaj)*nu*nkus*nkus access-major array of A */
+   TYPE *pC,          /* @(mu)*@(nu)*nnus*nmus-length access-major array of C */
+   const TYPE *pAn,   /* next block of A */
+   const TYPE *pBn,   /* next block of B */
+   const TYPE *pCn    /* next block of C */
+)
+/*
+ * Performs a GEMM operation on a @(mu)x@(nu) jammed GEMM in simplist way
+ * possible in order to get k-major access-major framework working.
+ * Replace with real code generator once things work.
+ */
+{
+   @declare "   register TYPE " y n ";"
+      @iexp j 0 0 +
+      @iwhile j < @(nu)
+         rB@(j)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            rC@(i)@(j)
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j @(j) 1 +
+      @endiwhile
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         rA@(i)
+         @iexp i @(i) 1 +
+      @endiwhile
+   @enddeclare
+   const TYPE *pB0 = pB;
+   const TYPE *pfA;
+   size_t incPF;
+   size_t i, j, k;
+   size_t incAm = @(mu)*K;
+
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+/*
+ *       Peel first iteration to avoid zero of rCxx & extra add
+ */
+         rA0 = *pA;
+         rB0 = *pB;
+         @iexp i 0 1 +
+         @iwhile i < @(mu)
+            @iexp h @(i) @(kmaj) *
+         rA@(i) = pA[@(h)];
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+            @iexp h @(j) @(kmaj) *
+         rB@(j) = pB[@(h)];
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+         rC@(i)@(j) = rA@(i) * rB@(j);
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+/*
+ *       Peal remaining @(kmaj)-1 iters to start loop properly
+ */
+      @iexp k 0 1 +
+      @iwhile k < @(kmaj)
+         rA0 = pA[@(k)];
+         rB0 = pB[@(k)];
+         @iexp i 0 1 +
+         @iwhile i < @(mu)
+            @iexp h @(i) @(kmaj) *
+            @iexp h @(h) @(k) +
+         rA@(i) = pA[@(h)];
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+            @iexp h @(j) @(kmaj) *
+            @iexp h @(h) @(k) +
+         rB@(j) = pB[@(h)];
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+         rC@(i)@(j) += rA@(i) * rB@(j);
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k @(k) 1 +
+      @endiwhile
+/*
+ *       Increment A/B ptrs past used k-blks
+ */
+         @iexp incA @(mu) @(kmaj) *
+         @iexp incB @(nu) @(kmaj) *
+         pA += @(incA);
+         pB += @(incB);
+/*
+ *       Handle remaining K its with rolled loop (compiler can unroll easily)
+ */
+         for (k=@(kmaj); k < K; k += @(kmaj), pA += @(incA), pB += @(incB))
+         {
+      @iexp k 0 0 +
+      @iwhile k < @(kmaj)
+         rA0 = pA[@(k)];
+         rB0 = pB[@(k)];
+         @iexp i 0 1 +
+         @iwhile i < @(mu)
+            @iexp h @(i) @(kmaj) *
+            @iexp h @(h) @(k) +
+         rA@(i) = pA[@(h)];
+            @iexp i @(i) 1 +
+         @endiwhile
+         @iexp j 0 1 +
+         @iwhile j < @(nu)
+            @iexp h @(j) @(kmaj) *
+            @iexp h @(h) @(k) +
+         rB@(j) = pB[@(h)];
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+         rC@(i)@(j) += rA@(i) * rB@(j);
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         @iexp k @(k) 1 +
+      @endiwhile
+         }
+         pA -= incAm;
+         #ifdef BETA0
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #elif defined(BETAN1)
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] = rC@(i)@(j) - pC[@(k)];
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #else  /* BETA = 1 */
+         @iexp k 0 0 +
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp i 0 0 +
+            @iwhile i < @(mu)
+            pC[@(k)] += rC@(i)@(j);
+               @iexp k @(k) 1 +
+               @iexp i @(i) 1 +
+            @endiwhile
+            @iexp j @(j) 1 +
+         @endiwhile
+         #endif
+         pC += @(mu)*@(nu);
+      }
+      pA += incAm;
+      pB = pB0;
+   }
+}
+@ROUT ATL_mm4x2
+void ATL_UGEMM
+(
+   size_t nmus,
+   size_t nnus,
+   TYPE *pA,    /* mu*KB*nmus-length access-major array of A */
+   TYPE *pB,    /* nu*KB*nnus-length access-major array of B */
+   TYPE *pC,    /* mu*nu*nnus*nmus-length acces-major array of C */
+   TYPE *pf     /* will prefetch next KB*KB elts from this area into L2cache */
+)
+/*
+ * Performs a GEMM operation on a 4x2 jammed GEMM with a compile-time
+ * constant K-length of ATL_MM_KB.
+ */
+{
+   register TYPE rA0, rA1, rA2, rA3, rB0, rB1;
+   register TYPE rC00, rC10, rC20, rC30,
+                 rC01, rC11, rC21, rC31,
+                 rC02, rC12, rC22, rC32,
+                 rC03, rC13, rC23, rC33;
+   TYPE pB0 = pB;
+   ATL_CINT incPF = ((size_t)KB*KB)/(nmus*nnus);
+   for (i=0; i < nmus; i++)
+   {
+      for (j=0; j < nnus; j++)
+      {
+         rA0 = *pA;
+         rA1 = pA[1];
+         rA2 = pA[2];
+         rA3 = pA[3];
+         rB0 = *pB;
+         rB1 = pB[1];
+         rC00 = rA0 * rB0;
+         ATL_pfl1W(pC);
+         rC10 = rA1 * rB0;
+         pA += 4;
+         rC20 = rA2 * rB0;
+         pB += 2;
+         rC30 = rA3 * rB0;
+         rC01 = rA0 * rB1;
+         rC11 = rA1 * rB1;
+         ATL_pfl1R(pf);
+         rC21 = rA2 * rB1;
+         pf += incPF;
+         rC31 = rA3 * rB1;
+         for (k=1; k < ATL_MM_KB; k++)
+         {
+            rA0 = *pA; rA1 = pA[1]; rA2 = pA[2]; rA3 = pA[3];
+            rB0 = *pB; rB1 = pB[1];
+            rC00 += rA0 * rB0;
+            rC10 += rA1 * rB0;
+            rC20 += rA2 * rB0;
+            rC30 += rA3 * rB0;
+            rC01 += rA0 * rB1;
+            rC11 += rA1 * rB1;
+            rC21 += rA2 * rB1;
+            rC31 += rA3 * rB1;
+            pA += 4;
+            pB += 2;
+         }
+         pA -= 4*ATL_MM_KB;
+         #ifdef BETA0
+            pC[0] = rC00;
+            pC[1] = rC10;
+            pC[2] = rC20;
+            pC[3] = rC30;
+            pC[4] = rC01;
+            pC[5] = rC11;
+            pC[6] = rC21;
+            pC[7] = rC31;
+         #elif defined(BETAN1)
+            pC[0] = rC00 - pC[0];
+            pC[1] = rC10 - pC[1];
+            pC[2] = rC20 - pC[2];
+            pC[3] = rC30 - pC[3];
+            pC[4] = rC01 - pC[4];
+            pC[5] = rC11 - pC[5];
+            pC[6] = rC21 - pC[6];
+            pC[7] = rC31 - pC[7];
+         #else /* BETA=1 */
+            pC[0] += rC00;
+            pC[1] += rC10;
+            pC[2] += rC20;
+            pC[3] += rC30;
+            pC[4] += rC01;
+            pC[5] += rC11;
+            pC[6] += rC21;
+            pC[7] += rC31;
+         #endif
+         pC += 8;
+      }
+      pA += 4*ATL_MM_KB;
+      pB = pB0;
+   }
+}
+@ROUT cammmtst
+
+#define dumb_seed(iseed_) srand(iseed_)
+#ifndef RAND_MAX  /* rather dangerous non-ansi workaround */
+   #define RAND_MAX ((unsigned long)(1<<30))
+#endif
+#define dumb_rand() ( 0.5 - ((double)rand())/((double)RAND_MAX) )
+
+#define NoTransA 1
+#define NoTransB 1
+
+void cmm_b0(const size_t nmu, const size_t nnu, const size_t K, 
+            const TYPE *A, const TYPE *B, TYPE *C, 
+            const TYPE *pAn, const TYPE *pBn, const TYPE *pCn);
+void cmm_b1(const size_t nmu, const size_t nnu, const size_t K, 
+            const TYPE *A, const TYPE *B, TYPE *C, 
+            const TYPE *pAn, const TYPE *pBn, const TYPE *pCn);
+void cmm_bn(const size_t nmu, const size_t nnu, const size_t K, 
+            const TYPE *A, const TYPE *B, TYPE *C, 
+            const TYPE *pAn, const TYPE *pBn, const TYPE *pCn);
+#ifndef ATL_CWRK3
+   #define ATL_CWRK3 0
+#endif
+static void cusermm(const int M, const int N, const int K, const TYPE *A,
+                    const TYPE *B, TYPE *C)
+{
+   ATL_CINT nmu = (M+@(mu)-1)/@(mu), nnu = (N+@(nu)-1)/@(nu);
+   ATL_CINT MMU=nmu*@(mu), NNU=nnu*@(nu);
+   ATL_CINT incA = MMU*K, incB=K*NNU, incC=MMU*NNU;
+   const TYPE *iA=A, *rA = A+incA, *iB=B, *rB = B+incB;
+   #if ATL_CWRK3
+      TYPE *iC=C, rC = C+incC, rC1 = C+incC+incC;
+      ATL_INT i;
+
+   @iif beta = 0
+      cmm_b0(nmu, nnu, K, iA, iB, rC1, rA, iB, iC);
+      cmm_b0(nmu, nnu, K, rA, iB, iC, rA, rB, rC);
+      cmm_b0(nmu, nnu, K, rA, rB, rC, iA, rB, iC);
+   @endiif
+   @iif beta ! 0
+      for (i=0; i < incC; i++)
+         rC1[i] = ATL_rzero;
+      cmm_b1(nmu, nnu, K, iA, iB, rC1, rA, iB, iC);
+      cmm_b1(nmu, nnu, K, rA, iB, iC, rA, rB, rC);
+      cmm_b1(nmu, nnu, K, rA, rB, rC, iA, rB, iC);
+   @endiif
+      cmm_b1(nmu, nnu, K, iA, rB, iC, rA+incA, rB+incB, rC+incC);
+      for (i=0; i < incC; i++)
+         rC[i] -= rC1[i];
+   #else
+      TYPE *iC=C, *rC = C+incC;
+   @iif beta = 0
+      cmm_b0(nmu, nnu, K, iA, iB, rC, rA, iB, iC);
+      cmm_b0(nmu, nnu, K, rA, iB, iC, rA, rB, rC);
+   @endiif
+   @iif beta ! 0
+      cmm_bn(nmu, nnu, K, iA, iB, rC, rA, iB, iC);
+      cmm_b1(nmu, nnu, K, rA, iB, iC, rA, rB, rC);
+   @endiif
+      cmm_bn(nmu, nnu, K, rA, rB, rC, iA, rB, iC);
+      cmm_b1(nmu, nnu, K, iA, rB, iC, rA+incA, rB+incB, rC+incC);
+   #endif
+}
+
+void tst_mm(const int M, const int N, const int K, const SCALAR alpha,
+            const TYPE *A, const int lda0, const TYPE *B, const int ldb0,
+            const SCALAR beta, TYPE *C, const int ldc0)
+{
+   int i, j, k;
+   int lda = lda0 SHIFT, ldb = ldb0 SHIFT, ldc = ldc0 SHIFT;
+   register TYPE c0;
+   register TYPE cr, ci, ar, ai, br, bi;
+
+   for (j=0; j < N; j++)
+   {
+      for (i=0; i < M; i++)
+      {
+         cr = ci = 0.0;
+         for (k=0; k < K; k++)
+         {
+            #if defined(NoTransA) && defined(NoTransB)
+               ar = A[2*i+k*lda];
+               ai = A[2*i+k*lda+1];
+               br = B[j*ldb+2*k];
+               bi = B[j*ldb+2*k+1];
+            #elif defined(NoTransA) && !defined(NoTransB)
+               ar = A[2*i+k*lda] ;
+               ai = A[2*i+k*lda+1];
+               br = B[2*j+k*ldb];
+               bi = B[2*j+k*ldb+1];
+            #elif !defined(NoTransA) && defined(NoTransB)
+               ar = A[i*lda+k*2];
+               ai = A[i*lda+k*2+1];
+               br = B[j*ldb+k*2];
+               bi = B[j*ldb+k*2+1];
+            #elif !defined(NoTransA) && !defined(NoTransB)
+               ar = A[i*lda+k*2];
+               ai = A[i*lda+k*2+1];
+               br = B[2*j+k*ldb];
+               bi = B[2*j+k*ldb+1];
+            #endif
+            #ifdef ConjTransA
+               ai = -ai;
+            #endif
+            #ifdef ConjTransB
+               bi = -bi;
+            #endif
+            cr += ar * br - ai * bi;
+            ci += ar * bi + ai * br;
+         }
+/*
+ *       Scale by alpha
+ */
+         ar = *alpha;
+         ai = alpha[1];
+         br = cr;
+         bi = ci;
+         cr =  br * ar;
+         ci =  bi * ar;
+         cr -= bi * ai;
+         ci += br * ai;
+/*
+ *       Scale C by beta
+ */
+         br = *beta;
+         bi = beta[1];
+         ar = C[2*i+j*ldc];
+         ai = C[2*i+j*ldc+1];
+         C[2*i+j*ldc]   = ar*br - ai * bi;
+         C[2*i+j*ldc+1] = ai*br + ar * bi;
+/*
+ *       Store answer back to C
+ */
+         C[2*i+j*ldc]   += cr;
+         C[2*i+j*ldc+1] += ci;
+
+      }
+   }
+}
+@ifdef ! M
+   @define M @40@
+@endifdef
+@ifdef ! N
+   @define N @60@
+@endifdef
+@ifdef ! K
+   @define K @80@
+@endifdef
+
+@beginskip
+/*
+ * This routine copies the column-major array A into muxnu storage, split 
+ * real/imag storage.  
+ * It is used to copy C for the tester GEMM into the C for the tested kernel.
+ */
+static void ATL_CM2BK
+(
+   ATL_CINT M,   /* # of rows in A */
+   ATL_CINT N,   /* # of cols in A */
+   ATL_CINT mu,  /* M unrolling */
+   ATL_CINT nu,  /* N unrolling */
+   TYPE *A,      /* column-major ldaxN matrix A */
+   ATL_CINT lda, /* stride between row elements of A */
+   TYPE *I       /* OUTPUT: muxnu blk storage of A */
+)
+{
+   ATL_CINT MMU = ((M+mu-1)/mu)*mu, NNU = ((N+nu-1)/nu)*nu;
+   ATL_INT i, j;
+   TYPE *R = I + MMU*NNU;
+
+   for (i=0; i != MMU; i += mu)
+   {
+      for (j=0; j != NNU; j += nu)
+      {
+         ATL_INT iu, ju;
+         for (ju=0; ju < nu; ju++)
+         {
+            for (iu=0; iu < mu; iu++)
+            {
+               if (i+iu < M && j+ju < N)
+               {
+                  ATL_CINT k = ((j+ju)*lda+i+iu)<<1;
+                  *R++ = A[k];
+                  *I++ = A[k+1];
+               }
+               else
+                  *R++ = *I++ = 0.0;
+            }
+         }
+      }
+   }
+}
+@endskip
+
+int mmtst(void)
+{
+   int inca, incb, incc;
+   const TYPE one=1.0, none=(-1.0);
+   TYPE alpha[2] = {1.0, 0.0};
+   TYPE beta[2] = {@(be).0, 0.0};
+   TYPE zero[2] = {0.0, 0.0};
+   const TYPE rone=1.0, rnone=(-1.0);
+   void *va=NULL, *vb=NULL, *vc=NULL;
+   TYPE *C, *D, *A, *B, *a, *b, *c;
+   TYPE diff, tmp;
+   int i, j, k, n, nerr;
+   ATL_CINT M=@(M), N=@(N), K=@(K), lda=M, ldb=K, ldc=M+3;
+   @iif kmaj = 0
+   ATL_CINT KK = K;
+   @endiif
+   @iif kmaj ! 0
+   ATL_CINT KK = ((K+@(ku)-1)/@(ku))*@(ku);
+   @endiif
+   ATL_CINT NMU = ((@(M)+@(mu)-1)/@(mu));
+   ATL_CINT NNU = ((@(N)+@(nu)-1)/@(nu));
+   ATL_CINT MM=NMU*@(mu), NN=NNU*@(nu);
+   ATL_CINT incA = MM*KK, incB = KK*NN*@(dupB), incC = MM*NN;
+   TYPE ErrBound;
+
+   tmp = Mabs(*beta) + Mabs(beta[1]);
+   ErrBound =  2.0 * (8.0*K*EPS + tmp*EPS) + EPS;
+/*
+ * Allocate normal & access-major storage arrays; access-major arrays are
+ * always aligned to ATL_Cachelen
+ */
+   
+   A = malloc(2*sizeof(TYPE)*lda*K);
+   B = malloc(2*sizeof(TYPE)*ldb*N);
+   C = malloc(2*sizeof(TYPE)*ldc*N);
+   D = malloc(2*sizeof(TYPE)*ldc*N);
+   va = malloc(4*sizeof(TYPE)*incA + ATL_Cachelen);
+   vb = malloc(4*sizeof(TYPE)*incB + ATL_Cachelen);
+   vc = malloc(4*sizeof(TYPE)*incC + ATL_Cachelen);
+   a = ATL_AlignPtr(va);
+   b = ATL_AlignPtr(vb);
+   c = ATL_AlignPtr(vc);
+/*
+ * Fill in column-major arrays and translate to access-major
+ */
+   assert(A && B && C && a && b && c);
+   for (n=lda*K SHIFT, i=0; i < n; i++) A[i] = dumb_rand();
+   for (n=ldb*N SHIFT, i=0; i < n; i++) B[i] = dumb_rand();
+   for (n=ldc*N SHIFT, i=0; i < n; i++) C[i] = dumb_rand();
+   @iif kmaj = 0
+   Mjoin(PATL,rm2am_a1_@(mu))(K, M, alpha, A, lda, a+incA, a);
+   Mjoin(PATL,cm2am_a1_@(nu))(K, N, alpha, B, ldb, b+incB, b);
+   @endiif
+   @iif kmaj ! 0
+   Mjoin(PATL,rm2am_a1_@(ku)x@(mu))(K, M, alpha, A, lda, a+incA, a);
+   Mjoin(PATL,cm2am_a1_@(ku)x@(nu))(K, N, alpha, B, ldb, b+incB, b);
+   @endiif
+@skip   ATL_CM2BK(M, N, @(mu), @(nu), C, ldc, c);
+@skip   Mjoin(PATL,gezero)(M, N, D, ldc);
+/*
+ * Call test routine, move output to col-major D for comparison with correct C
+ */
+   cusermm(M, N, KK, a, b, c);
+   tst_mm(M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+//   printf("c=%e,%e,%e,%e; %e,%e,%e,%e\n", c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]);
+//   printf("C=%e,%e,%e,%e; %e,%e,%e,%e\n", C[0], C[1], C[2], C[3], C[ldc], C[ldc+1], C[ldc+2], C[ldc+3]);
+   Mjoin(PATL,ablk2cmat_@(mu)x@(nu)_a1_b@(be))(M, N, alpha, c+incC, c, beta, D, ldc);
+
+   nerr = 0;
+   for (j=0; j < N; j++)
+   {
+      for (i=0; i < M SHIFT; i++)
+      {
+         k = i + j*(ldc SHIFT);
+         diff = C[k] - D[k];
+         if (diff < 0.0) diff = -diff;
+         if (diff > ErrBound)
+         {
+            fprintf(stderr, "C(%d,%d) : expected=%e, got=%e, diff=%e\n",
+                    i, j, C[k], D[k], diff);
+            nerr++;
+         }
+         else if (D[k] != D[k])   /* test for NaNs in test answer */
+         {
+            fprintf(stderr, "C(%d,%d) : expected=%e, got=%e\n",
+                    i, j, C[k], D[k]);
+            nerr++;
+         }
+      }
+   }
+   free(A);
+   free(B);
+   free(C);
+   free(va);
+   free(vb);
+   free(vc);
+   free(D);
+   return(nerr);
+}
+
+int main(void)
+{
+   int ierr;
+   ierr = mmtst();
+   if (!ierr) fprintf(stdout, "PASSED TEST\n");
+   exit(ierr);
+}
+@ROUT ammmtst
+#include <stdio.h>
+#include <stdlib.h>
+#include <assert.h>
+#include <string.h>
+#include "atlas_misc.h"
+
+#define dumb_seed(iseed_) srand(iseed_)
+#ifndef RAND_MAX  /* rather dangerous non-ansi workaround */
+   #define RAND_MAX ((unsigned long)(1<<30))
+#endif
+#define dumb_rand() ( 0.5 - ((double)rand())/((double)RAND_MAX) )
+
+#define NoTransA 1
+#define NoTransB 1
+
+void ATL_USERMM(const size_t nmu, const size_t nnu, const size_t K, 
+                const TYPE *A, const TYPE *B, TYPE *C, 
+                const TYPE *pAn, const TYPE *pBn, const TYPE *pCn);
+
+void tst_mm(const int M, const int N, const int K, const SCALAR alpha,
+            const TYPE *A, const int lda0, const TYPE *B, const int ldb0,
+            const SCALAR beta, TYPE *C, const int ldc0)
+{
+   int i, j, k;
+   int lda = lda0 SHIFT, ldb = ldb0 SHIFT, ldc = ldc0 SHIFT;
+   register TYPE c0;
+   #ifdef TREAL
+      for (j=0; j < N; j++)
+      {
+         for (i=0; i < M; i++)
+         {
+            c0 = 0.0;
+            for (k=0; k < K; k++)
+            {
+               #if defined(NoTransA) && defined(NoTransB)
+                  c0 += A[i+k*lda] * B[j*ldb+k];
+               #elif defined(NoTransA) && defined(TransB)
+                  c0 += A[i+k*lda] * B[j+k*ldb];
+               #elif defined(TransA) && defined(NoTransB)
+                  c0 += A[i*lda+k] * B[j*ldb+k];
+               #elif defined(TransA) && defined(TransB)
+                  c0 += A[i*lda+k] * B[j+k*ldb];
+               #endif
+            }
+            C[i+j*ldc] = beta*C[i+j*ldc] + alpha*c0;
+         }
+      }
+   #else
+      register TYPE cr, ci, ar, ai, br, bi;
+
+      for (j=0; j < N; j++)
+      {
+         for (i=0; i < M; i++)
+         {
+            cr = ci = 0.0;
+            for (k=0; k < K; k++)
+            {
+               #if defined(NoTransA) && defined(NoTransB)
+                  ar = A[2*i+k*lda];
+                  ai = A[2*i+k*lda+1];
+                  br = B[j*ldb+2*k];
+                  bi = B[j*ldb+2*k+1];
+               #elif defined(NoTransA) && !defined(NoTransB)
+                  ar = A[2*i+k*lda] ;
+                  ai = A[2*i+k*lda+1];
+                  br = B[2*j+k*ldb];
+                  bi = B[2*j+k*ldb+1];
+               #elif !defined(NoTransA) && defined(NoTransB)
+                  ar = A[i*lda+k*2];
+                  ai = A[i*lda+k*2+1];
+                  br = B[j*ldb+k*2];
+                  bi = B[j*ldb+k*2+1];
+               #elif !defined(NoTransA) && !defined(NoTransB)
+                  ar = A[i*lda+k*2];
+                  ai = A[i*lda+k*2+1];
+                  br = B[2*j+k*ldb];
+                  bi = B[2*j+k*ldb+1];
+               #endif
+               #ifdef ConjTransA
+                  ai = -ai;
+               #endif
+               #ifdef ConjTransB
+                  bi = -bi;
+               #endif
+               cr += ar * br - ai * bi;
+               ci += ar * bi + ai * br;
+            }
+/*
+ *          Scale by alpha
+ */
+            ar = *alpha;
+            ai = alpha[1];
+            br = cr;
+            bi = ci;
+            cr =  br * ar;
+            ci =  bi * ar;
+            cr -= bi * ai;
+            ci += br * ai;
+/*
+ *          Scale C by beta
+ */
+            br = *beta;
+            bi = beta[1];
+            ar = C[2*i+j*ldc];
+            ai = C[2*i+j*ldc+1];
+            C[2*i+j*ldc]   = ar*br - ai * bi;
+            C[2*i+j*ldc+1] = ai*br + ar * bi;
+/*
+ *          Store answer back to C
+ */
+            C[2*i+j*ldc]   += cr;
+            C[2*i+j*ldc+1] += ci;
+
+         }
+      }
+      #if csA == 1 && csB == 1
+         free(aa);
+         free(bb);
+      #endif
+   #endif
+}
+@ifdef ! M
+   @define M @40@
+@endifdef
+@ifdef ! N
+   @define N @60@
+@endifdef
+@ifdef ! K
+   @define K @80@
+@endifdef
+
+static void ATL_CM2BK
+(
+   ATL_CINT M,   /* # of rows in A */
+   ATL_CINT N,   /* # of cols in A */
+   ATL_CINT mu,  /* M unrolling */
+   ATL_CINT nu,  /* N unrolling */
+   TYPE *A,      /* column-major ldaxN matrix A */
+   ATL_CINT lda, /* stride between row elements of A */
+   TYPE *b       /* OUTPUT: muxnu blk storage of A */
+)
+{
+   ATL_CINT MMU = ((M+mu-1)/mu)*mu, NNU = ((N+nu-1)/nu)*nu;
+   ATL_INT i, j;
+
+   for (i=0; i != MMU; i += mu)
+   {
+      for (j=0; j != NNU; j += nu)
+      {
+         ATL_INT iu, ju;
+         for (ju=0; ju < nu; ju++)
+         {
+            for (iu=0; iu < mu; iu++)
+            {
+               if (i+iu < M && j+ju < N)
+                  *b++ = A[(j+ju)*lda+i+iu];
+               else
+                  *b++ = 0.0;
+            }
+         }
+      }
+   }
+}
+
+int mmtst(void)
+{
+   #ifdef TCPLX
+      int inca, incb, incc;
+      const TYPE one=1.0, none=(-1.0);
+      TYPE alpha[2] = {1.0, 0.0};
+      TYPE beta[2] = {@(be).0, 0.0};
+   #else
+      TYPE alpha=1.0;
+      TYPE beta=@(be).0;
+   #endif
+   const TYPE rone=1.0, rnone=(-1.0);
+   void *va=NULL, *vb=NULL, *vc=NULL;
+   TYPE *C, *D, *A, *B, *a, *b, *c;
+   TYPE diff, tmp;
+   int i, j, k, n, nerr;
+   ATL_CINT M=@(M), N=@(N), K=@(K), lda=M, ldb=K, ldc=M+3;
+   ATL_CINT MMU = ((@(M)+@(mu)-1)/@(mu))*@(mu);
+   ATL_CINT NNU = ((@(N)+@(nu)-1)/@(nu))*@(nu);
+   @iif kmaj > 1
+   ATL_CINT KKU = (K+@(kmaj)-1)/@(kmaj)*@(kmaj);
+   @endiif
+   @iif kmaj < 2
+   ATL_CINT KKU = K;
+   @endiif
+   TYPE ErrBound;
+
+   #ifdef TREAL
+      ErrBound = 2.0 * (2.0*K*EPS + Mabs(beta) * EPS) + EPS;
+   #else
+      tmp = Mabs(*beta) + Mabs(beta[1]);
+      ErrBound =  2.0 * (8.0*K*EPS + tmp*EPS) + EPS;
+   #endif
+/*
+ * Allocate normal & access-major storage arrays; access-major arrays are
+ * always aligned to ATL_Cachelen
+ */
+   
+   A = malloc(sizeof(TYPE)*lda*K);
+   B = malloc(sizeof(TYPE)*ldb*N);
+   C = malloc(sizeof(TYPE)*ldc*N);
+   D = malloc(sizeof(TYPE)*ldc*N);
+   va = malloc(2*sizeof(TYPE)*MMU*KKU + ATL_Cachelen);
+   vb = malloc(2*sizeof(TYPE)*NNU*KKU*@(dupB) + ATL_Cachelen);
+   vc = malloc(2*sizeof(TYPE)*MMU*NNU + ATL_Cachelen);
+   a = ATL_AlignPtr(va);
+   b = ATL_AlignPtr(vb);
+   c = ATL_AlignPtr(vc);
+/*
+ * Fill in column-major arrays and translate to access-major
+ */
+   assert(A && B && C && a && b && c);
+   for (n=lda*K SHIFT, i=0; i < n; i++) A[i] = dumb_rand();
+   for (n=ldb*N SHIFT, i=0; i < n; i++) B[i] = dumb_rand();
+   for (n=ldc*N SHIFT, i=0; i < n; i++) C[i] = dumb_rand();
+/*
+ * To ease debugging, make matrices easily mappable:
+ *    A counts from 1.0-M*K, col-maj
+ *    B counts from .1-K*N, col maj
+ *    C counts from 1.0 - M*N, col maj
+ */
+   #if 0
+   {
+      int i, j;
+      for (j=0; j < K; j++)
+      {
+         for (i=0; i < M; i++)
+            A[i+j*lda] = 1.0+(i+j*M);
+         for (; i < lda; i++)
+            A[i+j*lda] = 1000000.0;
+      }
+      for (j=0; j < N; j++)
+      {
+         for (i=0; i < K; i++)
+            B[i+j*ldb] = 0.1 + (i+j*M)*0.1;
+         for (; i < ldb; i++)
+            B[i+j*ldb] = 2000000.0;
+      }
+      for (j=0; j < N; j++)
+      {
+         for (i=0; i < M; i++)
+            C[i+j*ldc] = 0; // 1.0+(i+j*M);
+         for (; i < ldc; i++)
+            C[i+j*ldc] = 3000000.0;
+      }
+   }
+   #endif
+   @iif kmaj < 2
+   Mjoin(PATL,rm2am_a1_@(mu))(K, M, 1.0, A, lda, a);
+   Mjoin(PATL,cm2am_a1_@(nu)@(dsuf))(K, N, 1.0, B, ldb, b);
+   @endiif
+   @iif kmaj > 1
+   Mjoin(PATL,rm2am_a1_@(kmaj)x@(mu))(K, M, 1.0, A, lda, a);
+   Mjoin(PATL,cm2am_a1_@(kmaj)x@(nu)@(dsuf))(K, N, 1.0, B, ldb, b);
+   @endiif
+   ATL_CM2BK(M, N, @(mu), @(nu), C, ldc, c);
+/*
+ * Call test routine, move output to col-major D for comparison with correct C
+ */
+   ATL_USERMM(MMU/@(mu), NNU/@(nu), KKU, a, b, c, NULL, NULL, NULL);
+   tst_mm(M, N, K, alpha, A, lda, B, ldb, beta, C, ldc);
+//   printf("c=%e,%e,%e,%e; %e,%e,%e,%e\n", c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7]);
+//   printf("C=%e,%e,%e,%e; %e,%e,%e,%e\n", C[0], C[1], C[2], C[3], C[ldc], C[ldc+1], C[ldc+2], C[ldc+3]);
+   Mjoin(PATL,ablk2cmat_@(mu)x@(nu)_a1_b0)(M, N, 1.0, c, 0.0, D, ldc);
+
+   nerr = 0;
+   for (j=0; j < N; j++)
+   {
+      for (i=0; i < M SHIFT; i++)
+      {
+         k = i + j*(ldc SHIFT);
+         diff = C[k] - D[k];
+         if (diff < 0.0) diff = -diff;
+         if (diff > ErrBound)
+         {
+            fprintf(stderr, "C(%d,%d) : expected=%e, got=%e, diff=%e\n",
+                    i, j, C[k], D[k], diff);
+            nerr++;
+         }
+         else if (D[k] != D[k])   /* test for NaNs in test answer */
+         {
+            fprintf(stderr, "C(%d,%d) : expected=%e, got=%e\n",
+                    i, j, C[k], D[k]);
+            nerr++;
+         }
+      }
+   }
+   free(A);
+   free(B);
+   free(C);
+   free(va);
+   free(vb);
+   free(vc);
+   free(D);
+   return(nerr);
+}
+
+main()
+{
+   int ierr;
+   ierr = mmtst();
+   if (!ierr) fprintf(stdout, "PASSED TEST\n");
+   exit(ierr);
+}
+@ROUT ATL_ChooseNB
+/*
+ * This include file defines teh following:
+ *   ATL_MM_MU : CPP macro of selected M unrolling factor
+ *   ATL_MM_NU : CPP macro of selected N unrolling factor
+ *   ATL_NKBS  : CPP macro of number of generated KBs
+ *   ATL_KBS   : ATL_NKBS-length static array of all supported KBs;
+ *               array is sorted from largest to smallest
+ *   ATL_KItTimByKb : ATL_NKBS-length static double array time to perform one
+ *                    k iteration of muxnu jammed loop
+ *   ATL_mm_b0_Ks : ATL_NKBS-length function pointer array beta=0
+ *   ATL_mm_b1_Ks : ATL_NKBS-length function pointer array beta=1
+ *   ATL_mm_bn_Ks : ATL_NKBS-length function pointer array beta=-1
+ *   ATL_DivByMU : CPP macro func that cheaply divides arg by MU 
+ *   ATL_DivByNU : CPP macro func that cheaply divides arg by MU 
+ *   ATL_MulByMU : CPP macro func that cheaply multiplies arg by MU 
+ *   ATL_MulByNU : CPP macro func that cheaply multiplies arg by MU 
+ */
+#include Mstr(Mjoin(Mjoin(atlas_,PRE),mm.h))
+int ATL_FindClosestKB(ATL_CINT K)
+/*
+ * Of the given KBs, find first one >= supplied K using recursive refinement
+ * search
+ */
+{
+   int i, imax, imin;
+   if (K >= ATL_KBS[ATL_NKBS-1])
+      return(ATL_NKBS-1);
+   else if (K <= ATL_KBS[0])
+      return(0);
+   imax = ATL_NKBS-1;
+   imin = 0;
+   while (imax-imin > 1)
+   {
+      int k;
+      i = (imin + imax) >> 1;
+      k = ATL_KBS[i];
+      if (k > K)
+         imax = i;
+      else if (k < K)
+         imin = i;
+      else if (k == K)
+         return(i);
+   }
+   return((k < K) ? imax : i);
+}
+
+int ATL_ChooseNB(ATL_CINT M, ATL_CINT N, ATL_CINT K)
+/* 
+ * RETURNS: index into ATL_KBS of NB to use to min time for MxNxK gemm
+ */
+{
+   size_t nnus, nmus, nkbs;
+   int kb, kr, imin;
+   double nmblks, minTime, t0;
+
+   nmus = M + ATL_MM_MU - 1;
+   nnus = N + ATL_MM_NU - 1;
+   nmus = ATL_DivByMU(nmus);
+   nnus = ATL_DivByNU(nnus);
+   nmblks = nmus;
+   nmblks *= nnus;
+   kb = ATL_KBS[0];
+   nkbs = K / kb;
+   kr = K - nkbs*kb;
+   minTime = nmblks * nkbs*ATL_KItTimByKb[0] + 
+             ATL_KItTimByKb[ATL_FindClosestKB(kr)];
+   imin = 0;
+   for (i=1; i < ATL_NKBS; i++)
+   {
+      double t0;
+      kb = ATL_KBS[i];
+      nkbs = K / kb;
+      kr = K - nkbs*kb;
+      t0 = nmblks * nkbs*ATL_KItTimByKb[0] + 
+           ATL_KItTimByKb[ATL_FindClosestKB(kr)];
+      if (t0 < minTime)
+      {
+         minTime = t0;
+         imin = i;
+      }
+   }
+   return(imin);
+}
+@ROUT ATL_ngemm
+
+@whiledef al 1 X
+#define ATL_A2blk_a@(al) Mjoin(Mjoin(PATL,rm2am_a@(al)_),ATL_MM_MU)
+#define ATL_AT2blk_a@(al) Mjoin(Mjoin(PATL,cm2am_a@(al)_),ATL_MM_MU)
+#define ATL_B2blk_a@(al) Mjoin(Mjoin(PATL,cm2am_a@(al)_),ATL_MM_NU)
+#define ATL_BT2blk_a@(al) Mjoin(Mjoin(PATL,rm2am_a@(al)_),ATL_MM_NU)
+@endwhile
+@ROUT ATL_cmat2ablk
+@beginproc pcloops aligned vtyp ralp rbet
+   @mif vtyp = "__m256
+      @define velts @8@
+      @define vadd @_mm256_add_ps@
+      @define vsub @_mm256_sub_ps@
+      @define vmul @_mm256_mul_ps@
+      @define vld @_mm256_load_ps@
+      @define vst @_mm256_store_ps@
+      @iif aligned = 0
+         @define vldu @_mm256_loadu_ps@
+         @define vstu @_mm256_storeu_ps@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm256_load_ps@
+         @define vstu @_mm256_store_ps@
+      @endiif
+   @endmif
+   @mif vtyp = "__m256d
+      @define velts @4@
+      @define vadd @_mm256_add_pd@
+      @define vsub @_mm256_sub_pd@
+      @define vmul @_mm256_mul_pd@
+      @define vld @_mm256_load_pd@
+      @define vst @_mm256_store_pd@
+      @iif aligned = 0
+         @define vldu @_mm256_loadu_pd@
+         @define vstu @_mm256_storeu_pd@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm256_load_pd@
+         @define vstu @_mm256_store_pd@
+      @endiif
+   @endmif
+   @mif vtyp = "__m128d
+      @define velts @2@
+      @define vadd @_mm_add_pd@
+      @define vsub @_mm_sub_pd@
+      @define vmul @_mm_mul_pd@
+      @define vld @_mm_load_pd@
+      @define vst @_mm_store_pd@
+      @iif aligned = 0
+         @define vldu @_mm_loadu_pd@
+         @define vstu @_mm_storeu_pd@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm_load_pd@
+         @define vstu @_mm_store_pd@
+      @endiif
+   @endmif
+   @mif vtyp = "__m128
+      @define velts @4@
+      @define vadd @_mm_add_ps@
+      @define vsub @_mm_sub_ps@
+      @define vmul @_mm_mul_ps@
+      @define vld @_mm_load_ps@
+      @define vst @_mm_store_ps@
+      @iif aligned = 0
+         @define vldu @_mm_loadu_ps@
+         @define vstu @_mm_storeu_ps@
+      @endiif
+      @iif aligned ! 0
+         @define vldu @_mm_load_ps@
+         @define vstu @_mm_store_ps@
+      @endiif
+   @endmif
+      for (j=0; j < n; j += @(nu), b += incb)
+      {
+         TYPE *p = b;
+         for (i=0; i < m; i += @(mu), p += pansz)
+         {
+            register @(vtyp) rP0, rp0;
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @iexp h 0 0 +
+            rp0 = @(vldu)(C@(j)+i+@(i));
+         @mif nalp = "X
+            rp0 = @(vmul)(rp0, rALP);
+         @endmif
+         @mif nbet = "0
+            @mif nalp = "n
+            rp0 = @(vmul)(rp0, rALP);
+            @endmif
+            @(vst)(p+@(k), rp0);
+            @iexp h 1 0 +
+         @endmif
+         @iif h = 0
+            rP0 = @(vld)(p+@(k));
+            @mif nbet = "X
+            rP0 = @(vmul)(rP0, rBETA);
+            @endmif
+            @mif nalp = "n
+               @mif nbet = "0
+            rp0 = @(vmul)(rp0, rALP);
+            @(vst)(p+@(k), rp0);
+                  @iexp h 1 0 +
+               @endmif
+               @mif nbet = "n
+            rP0 = @(vadd)(rP0, rp0);
+            rP0 = @(vmul)(rP0, rALP);
+            @(vst)(p+@(k), rP0);
+                  @iexp h 1 0 +
+               @endmif
+               @iif h = 0
+            rP0 = @(vsub)(rP0, rp0);
+            @(vst)(p+@(k), rP0);
+                  @iexp h 1 0 +
+               @endiif
+            @endmif
+            @iif h = 0
+               @mif nbet = "n
+            rp0 = @(vsub)(rp0, rP0);
+            @(vst)(p+@(k), rp0);
+               @endmif
+               @mif nbet ! "n
+            rP0 = @(vadd)(rP0, rp0);
+           @(vst)(p+@(k), rP0);
+               @endmif
+            @endiif
+         @endiif
+         @iexp k @(k) @(velts) +
+      @iexp i @(i) @(velts) +
+      @endiwhile
+   @iexp j @(j) 1 +
+   @endiwhile
+         }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+         @mif nalp = "n
+            @mif nbet = "X
+         p[@(k)] = beta*p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "1
+         p[@(k)] -= C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+         p[@(k)] = @(malp)C@(j)[i+@(i)] + beta*p[@(k)];
+            @endmif
+            @mif nbet = "1
+         p[@(k)] += @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = @(malp)C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+         C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+      }
+   @undef velts
+   @undef vadd
+   @undef vsub 
+   @undef vmul 
+   @undef vld 
+   @undef vldu 
+   @undef vstu 
+@endproc
+/*
+ *  b <- alpha*C + beta*b,
+ *  C is an MxN matrix in column-major storage
+ *  b is a CEIL(M/@(mu))*@(mu) x CEIL(N/@(nu))*@(nu) matrix stored in
+ *    @(mu)x@(nu)-major storage
+ */
+@beginproc pcfunc vtyp
+#include <immintrin.h>
+   @mif vtyp = "__m256
+      @define andC @0x1F@
+      @define andL @7@
+      @define vtyp2 @__m128@
+      @define andC2 @0xF@
+      @define andL2 @3@
+      @define ibe @{beta,beta,beta,beta,beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha,alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+      @define ib2 @{beta,beta,beta,beta}@
+      @define ia2 @{alpha,alpha,alpha,alpha}@
+      @define in2 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m256d
+      @define andC @0x1F@
+      @define andL @3@
+      @define vtyp2 @__m128d@
+      @define andC2 @0xF@
+      @define andL2 @1@
+      @define ibe @{beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m128
+      @define andC @0xF@
+      @define andL @3@
+      @define ibe @{beta,beta,beta,beta}@
+      @define ial @{alpha,alpha,alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone,ATL_rnone,ATL_rnone}@
+   @endmif
+   @mif vtyp = "__m128d
+      @define andC @0xF@
+      @define andL @1@
+      @define ibe @{beta,beta}@
+      @define ial @{alpha,alpha}@
+      @define in1 @{ATL_rnone,ATL_rnone}@
+   @endmif
+
+void Mjoin(PATL,cmat2ablk_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for C */
+   const TYPE *C,       /* matrix to be copied to access-major format */
+   ATL_CSZT ldc,        /* stride between row elements */
+   const SCALAR beta,   /* scalar for b */
+   TYPE *b              /* matrix stored in @(mu)x@(nu)-major order */
+)
+{
+   ATL_CINT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CINT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CINT incC = ldc*@(nu), incb = @(mu)*@(nu);
+   ATL_INT i, j;
+   @mif nbet = "X
+   const register @(vtyp) rBETA=@(ibe);
+   @endmif
+   @mif nbet = "n
+   const register @(vtyp) rBETA=@(in1);
+   @endmif
+   @mif nalp = "X
+   const register @(vtyp) rALP=@(ial);
+   @endmif
+   @mif nalp = "n
+   const register @(vtyp) rALP=@(in1);
+   @endmif
+   @declare "   const TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+
+/*
+ * If C is aligned, use aligned load/stores to C
+ */
+   if (((((size_t)C) & @(andC))|(ldc&@(andL))) == 0)
+   {
+      @callproc pcloops 1 @(vtyp) rALP rBETA
+   }
+   @mif andC = "0x1F
+   else if (((((size_t)C) & @(andC2))|(ldc&@(andL2))) == 0)
+   {
+      @(vtyp2) ralp=(@(vtyp2)) rALP;
+      @callproc pcloops 1 @(vtyp2) rALP rBETA
+   }
+   @endmif
+   @mif andC ! "0x1F
+   else
+   {
+      @callproc pcloops 0 @(vtyp) rALP rBETA
+   }
+   @endmif
+   @mif nu ! "1
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < m; i += @(mu), b += pansz)
+      {
+      @iexp k 0 0 +
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            @mif nbet = "X
+         b[@(k)] = @(malp)C@(j)[i+@(i)] + beta*b[@(k)];
+            @endmif
+            @mif nbet = "1
+         b[@(k)] += @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         b[@(k)] = @(malp)C@(j)[i+@(i)] - b[@(k)];
+            @endmif
+            @mif nbet = "0
+         b[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @iexp k @(k) 1 +
+         @iexp i @(i) 1 +
+         @endiwhile
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+               @mif nbet = "n
+         b[@(k)] = @(malp)C@(j)[i+@(i)] - b[@(k)];
+               @endmif
+               @mif nbet = "X
+         b[@(k)] = @(malp)C@(j)[i+@(i)] + beta*b[@(k)];
+               @endmif
+               @mif nbet = "1
+         b[@(k)] += @(malp)C@(j)[i+@(i)];
+               @endmif
+               @mif nbet = "0
+         b[@(k)] = @(malp)C@(j)[i+@(i)];
+               @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         b += incb;
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+   @undef ial
+   @undef ibe
+   @undef in1
+   @undef andC
+   @undef andL
+@endproc
+@iexp vtst 4 @(mu) %
+@iif vtst = 0
+#if 0 && defined(ATL_AVX) && defined(DREAL)  /* AVX loses perf for unaligned */
+   @callproc pcfunc __m256d
+@endiif
+@iif vtst ! 0
+#if 0
+@endiif
+@iexp vtst 8 @(mu) %
+@iif vtst = 0
+#elif 0 && defined(ATL_AVX) && defined(SREAL) /* AVX loses perf for unaligned */
+   @callproc pcfunc __m256
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+@iexp vtst 2 @(mu) %
+@iif vtst = 0
+#elif defined(ATL_SSE2) && defined(DREAL) && defined(__GNUC__)
+   @callproc pcfunc __m128d
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+@iexp vtst 4 @(mu) %
+@iif vtst = 0
+#elif defined(SREAL) && defined(ATL_SSE1) && defined(__GNUC__)
+   @callproc pcfunc __m128
+@endiif
+@iif vtst ! 0
+#elif 0
+@endiif
+#else
+void Mjoin(PATL,cmat2ablk_@(mu)x@(nu)_a@(nalp)_b@(nbet))
+(
+   ATL_CSZT M,          /* number of rows in A */
+   ATL_CSZT N,          /* number of columns in A */
+   const SCALAR alpha,  /* scalar for C */
+   const TYPE *C,       /* matrix to be copied to access-major format */
+   ATL_CSZT ldc,        /* stride between row elements */
+   const SCALAR beta,   /* scalar for b */
+   TYPE *b              /* matrix stored in @(mu)x@(nu)-major order */
+)
+{
+   ATL_CINT m = (M/@(mu))*@(mu), n = (N/@(nu))*@(nu), mr = M-m, nr = N-n;
+   ATL_CINT pansz = (nr) ? (n+@(nu))*@(mu) : n*@(mu);
+   ATL_CINT incC = ldc*@(nu), incb = @(mu)*@(nu);
+   ATL_INT i, j;
+   @declare "   const TYPE " n n ";"
+      *C0=C
+      @define j @1@
+      @iwhile j < @(nu)
+         @iexp i @(j) -1 +
+         *C@(j)=C@(i)+ldc
+         @iexp j @(j) 1 +
+      @endiwhile
+   @enddeclare
+
+   for (j=0; j < n; j += @(nu), b += incb)
+   {
+      TYPE *p = b;
+      for (i=0; i < m; i += @(mu), p += pansz)
+      {
+   @iexp k 0 0 +
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      @iexp i 0 0 +
+      @iwhile i < @(mu)
+         @mif nalp = "n
+            @mif nbet = "X
+         p[@(k)] = beta*p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+         @mif nbet = "1
+         p[@(k)] -= C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+         p[@(k)] = @(malp)C@(j)[i+@(i)] + beta*p[@(k)];
+            @endmif
+         @mif nbet = "1
+         p[@(k)] += @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = @(malp)C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @endmif
+         @iexp k @(k) 1 +
+      @iexp i @(i) 1 +
+      @endiwhile
+   @iexp j @(j) 1 +
+   @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(nu)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+         @mif nalp = "n
+            @mif nbet = "X
+         p[@(k)] = beta*p[@(k)] - C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "1
+         p[@(k)] -= C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = -(p[@(k)] + C@(j)[i+@(i)]);
+            @endmif
+         @endmif
+         @mif nalp ! "n
+            @mif nbet = "X
+         p[@(k)] = @(malp)C@(j)[i+@(i)] + beta*p[@(k)];
+            @endmif
+            @mif nbet = "1
+         p[@(k)] += @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "0
+         p[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         p[@(k)] = @(malp)C@(j)[i+@(i)] - p[@(k)];
+            @endmif
+         @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+   @iexp j 0 0 +
+   @iwhile j < @(nu)
+      C@(j) += incC;
+      @iexp j @(j) 1 +
+   @endiwhile
+   }
+   @mif nu ! "1
+   switch(nr)
+   {
+   @iexp n 1 0 +
+   @iwhile n < @(nu)
+   case @(n):
+      for (i=0; i < m; i += @(mu), b += pansz)
+      {
+      @iexp k 0 0 +
+      @iexp j 0 0 +
+      @iwhile j < @(n)
+         @iexp i 0 0 +
+         @iwhile i < @(mu)
+            @mif nbet = "X
+         b[@(k)] = @(malp)C@(j)[i+@(i)] + beta*b[@(k)];
+            @endmif
+            @mif nbet = "1
+         b[@(k)] += @(malp)C@(j)[i+@(i)];
+            @endmif
+            @mif nbet = "n
+         b[@(k)] = @(malp)C@(j)[i+@(i)] - b[@(k)];
+            @endmif
+            @mif nbet = "0
+         b[@(k)] = @(malp)C@(j)[i+@(i)];
+            @endmif
+            @iexp k @(k) 1 +
+         @iexp i @(i) 1 +
+         @endiwhile
+      @iexp j @(j) 1 +
+      @endiwhile
+      }
+      @mif mu ! "1
+      switch(mr)
+      {
+      @iexp m 1 0 +
+      @iwhile m < @(mu)
+      case @(m):
+         @iexp j 0 0 +
+         @iwhile j < @(n)
+            @iexp k @(mu) @(j) *
+            @iexp i 0 0 +
+            @iwhile i < @(m)
+               @mif nbet = "n
+         b[@(k)] = @(malp)C@(j)[i+@(i)] - b[@(k)];
+               @endmif
+               @mif nbet = "X
+         b[@(k)] = @(malp)C@(j)[i+@(i)] + beta*b[@(k)];
+               @endmif
+               @mif nbet = "1
+         b[@(k)] += @(malp)C@(j)[i+@(i)];
+               @endmif
+               @mif nbet = "0
+         b[@(k)] = @(malp)C@(j)[i+@(i)];
+               @endmif
+               @iexp k @(k) 1 + 
+            @iexp i @(i) 1 +
+            @endiwhile
+         @iexp j @(j) 1 +
+         @endiwhile
+         b += incb;
+         break;
+      @iexp m @(m) 1 +
+      @endiwhile
+      default:;
+      }
+      @endmif
+      break;
+   @iexp n @(n) 1 +
+   @endiwhile
+   default:;
+   }
+   @endmif
+}
+#endif

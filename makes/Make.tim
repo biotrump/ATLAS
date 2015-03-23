@@ -1,0 +1,39 @@
+include Make.inc
+mySRCdir = $(SRCdir)/timing
+resd = $(BLDdir)/timing/res
+basf = $(mySRCdir)/script.base
+extM = $(BINdir)/xextract -langM -b $(basf)
+N1=200
+NN=2000
+Ni=200
+pre=d
+repl=4
+blas="all"
+lapack="geqrf getrf potrf"
+rkK=0
+$(BINdir)/xextract :
+	cd $(BINdir) ; make xextract
+all: tvrun_rng.sh tvrun_lst.sh tvcmprep.sh tvgenmf_lst.sh tvgenmf_rng.sh \
+     tvcmpver.sh
+tvec.grd :
+	cd $(BINdir) ; make tvec_all
+	touch tvec.grd
+deps = $(BINdir)/xextract tvec.grd $(basf)
+tvgenmf_lst.sh : $(deps)
+	$(extM) -o $@ rout=tvgenmf type=list
+	chmod u+x $@
+tvgenmf_rng.sh : $(deps)
+	$(extM) -o $@ rout=tvgenmf type=rng
+	chmod u+x $@
+tvrun_rng.sh : $(deps)
+	$(extM) -o $@ rout=tvrun type=rng
+	chmod u+x $@
+tvrun_lst.sh : $(deps)
+	$(extM) -o $@ rout=tvrun type=list
+	chmod u+x $@
+tvcmprep.sh : $(deps)
+	$(extM) -o $@ rout=tvcmprep type=list
+	chmod u+x $@
+tvcmpver.sh : $(deps)
+	$(extM) -o $@ rout=tvcmpver type=list
+	chmod u+x $@

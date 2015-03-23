@@ -1,0 +1,226 @@
+include Make.inc
+mySRCdir = $(SRCdir)/src/threads/lapack/amm
+
+all : lib
+lib : dlib slib zlib clib ilib
+clean : sclean dclean cclean zclean iclean
+
+tlib : lib
+ptlib : lib
+
+sumd :
+	mkdir sumd
+
+
+deps = $(INCSdir)/atlas_lapack.h $(INCSdir)/atlas_pca.h 
+iobj = ATL_bcIpivDecode.o ATL_bcIpivEncode.o ATL_bcIpivInit.o
+
+sdeps = $(INCAdir)/atlas_su0amm_cmat2ablk.h sumd/suAMMFRC.sum 
+sobj = ATL_sbcAblk2cmat.o ATL_sbcAm2rm.o ATL_sbcG2L_cpy.o ATL_sbcL2G_blkcpy.o \
+       ATL_sbcL2G_cpy.o ATL_sbcLaswp_amm.o ATL_sbcRm2am.o ATL_sgetrf_bcAmm.o \
+       ATL_sgetrf_bcAmm_info.o
+
+ddeps = $(INCAdir)/atlas_du0amm_cmat2ablk.h sumd/duAMMFRC.sum 
+dobj = ATL_dbcAblk2cmat.o ATL_dbcAm2rm.o ATL_dbcG2L_cpy.o ATL_dbcL2G_blkcpy.o \
+       ATL_dbcL2G_cpy.o ATL_dbcLaswp_amm.o ATL_dbcRm2am.o ATL_dgetrf_bcAmm.o \
+       ATL_dgetrf_bcAmm_info.o
+
+cdeps = $(INCAdir)/atlas_cu0amm_cmat2ablk.h sumd/suAMMFRC.sum 
+cobj = ATL_cbcAblk2cmat.o ATL_cbcAm2rm.o ATL_cbcG2L_cpy.o ATL_cbcL2G_blkcpy.o \
+       ATL_cbcL2G_cpy.o ATL_cbcLaswp_amm.o ATL_cbcRm2am.o ATL_cgetrf_bcAmm.o \
+       ATL_cgetrf_bcAmm_info.o
+
+zdeps = $(INCAdir)/atlas_zu0amm_cmat2ablk.h sumd/duAMMFRC.sum 
+zobj = ATL_zbcAblk2cmat.o ATL_zbcAm2rm.o ATL_zbcG2L_cpy.o ATL_zbcL2G_blkcpy.o \
+       ATL_zbcL2G_cpy.o ATL_zbcLaswp_amm.o ATL_zbcRm2am.o ATL_zgetrf_bcAmm.o \
+       ATL_zgetrf_bcAmm_info.o
+
+slib : 
+	cd $(BLDdir)/src/threads/cbc ; $(PMAKE) lib
+	$(MAKE) sumd
+	$(MAKE) sumd/suAMMFRC.sum
+	$(PMAKE) slib.grd
+slib.grd : $(sdeps) $(sobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(sobj)
+	$(RANLIB) $(PTLAPACKlib)
+	touch slib.grd
+sclean :
+	rm $(sobj)
+dlib : 
+	cd $(BLDdir)/src/threads/cbc ; $(PMAKE) lib
+	$(MAKE) sumd
+	$(MAKE) sumd/duAMMFRC.sum
+	$(PMAKE) dlib.grd
+dlib.grd : $(ddeps) $(dobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(dobj)
+	$(RANLIB) $(PTLAPACKlib)
+	touch dlib.grd
+dclean :
+	rm $(dobj)
+clib : 
+	cd $(BLDdir)/src/threads/cbc ; $(PMAKE) lib
+	$(MAKE) sumd
+	$(MAKE) sumd/cuAMMFRC.sum
+	$(PMAKE) clib.grd
+clib.grd : $(cdeps) $(cobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(cobj)
+	$(RANLIB) $(PTLAPACKlib)
+	touch clib.grd
+cclean :
+	rm $(cobj)
+zlib : 
+	cd $(BLDdir)/src/threads/cbc ; $(PMAKE) lib
+	$(MAKE) sumd
+	$(MAKE) sumd/zuAMMFRC.sum
+	$(PMAKE) zlib.grd
+zlib.grd : $(zdeps) $(zobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(zobj)
+	$(RANLIB) $(PTLAPACKlib)
+	touch zlib.grd
+zclean :
+	rm $(zobj)
+ilib : 
+	cd $(BLDdir)/src/threads/cbc ; $(PMAKE) lib
+	$(PMAKE) ilib.grd
+ilib.grd : $(ideps) $(iobj)
+	$(ARCHIVER) $(ARFLAGS) $(PTLAPACKlib) $(iobj)
+	$(RANLIB) $(PTLAPACKlib)
+	touch ilib.grd
+iclean :
+	rm $(iobj)
+
+ATL_bcIpivDecode.o : $(deps) $(mySRCdir)/ATL_bcIpivDecode.c
+	$(KC) $(KCFLAGS) -I./ -o $@ -c $(mySRCdir)/ATL_bcIpivDecode.c
+ATL_bcIpivEncode.o : $(deps) $(mySRCdir)/ATL_bcIpivEncode.c
+	$(KC) $(KCFLAGS) -I./ -o $@ -c $(mySRCdir)/ATL_bcIpivEncode.c
+ATL_bcIpivInit.o : $(deps) $(mySRCdir)/ATL_bcIpivInit.c
+	$(KC) $(KCFLAGS) -I./ -o $@ -c $(mySRCdir)/ATL_bcIpivInit.c
+
+$(INCAdir)/atlas_du0amm_cmat2ablk.h : sumd/duAMMFRC.sum
+$(INCAdir)/atlas_su0amm_cmat2ablk.h : sumd/suAMMFRC.sum
+$(INCAdir)/atlas_cu0amm_cmat2ablk.h : sumd/cuAMMFRC.sum
+$(INCAdir)/atlas_zu0amm_cmat2ablk.h : sumd/zuAMMFRC.sum
+sumd/suAMMFRC.sum : 
+	$(MAKE) sumd
+	cd $(MMTdir) ; make suamm_getrf
+ATL_sbcAm2rm.o : $(mySRCdir)/ATL_bcAm2rm.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcAm2rm.o -DSREAL \
+              $(mySRCdir)/ATL_bcAm2rm.c
+ATL_sbcL2G_cpy.o : $(mySRCdir)/ATL_bcL2G_cpy.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcL2G_cpy.o -DSREAL \
+              $(mySRCdir)/ATL_bcL2G_cpy.c
+ATL_sbcG2L_cpy.o : $(mySRCdir)/ATL_bcG2L_cpy.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcG2L_cpy.o -DSREAL \
+              $(mySRCdir)/ATL_bcG2L_cpy.c
+ATL_sbcRm2am.o : $(mySRCdir)/ATL_bcRm2am.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcRm2am.o -DSREAL \
+              $(mySRCdir)/ATL_bcRm2am.c
+ATL_sbcAblk2cmat.o : $(mySRCdir)/ATL_bcAblk2cmat.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcAblk2cmat.o -DSREAL \
+              $(mySRCdir)/ATL_bcAblk2cmat.c
+ATL_sbcL2G_blkcpy.o : $(mySRCdir)/ATL_bcL2G_blkcpy.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcL2G_blkcpy.o -DSREAL \
+              $(mySRCdir)/ATL_bcL2G_blkcpy.c
+ATL_sgetrf_bcAmm.o : $(mySRCdir)/ATL_getrf_bcAmm.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sgetrf_bcAmm.o -DSREAL \
+              $(mySRCdir)/ATL_getrf_bcAmm.c
+ATL_sgetrf_bcAmm_info.o : $(mySRCdir)/ATL_getrf_bcAmm_info.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sgetrf_bcAmm_info.o -DSREAL \
+              $(mySRCdir)/ATL_getrf_bcAmm_info.c
+ATL_sbcLaswp_amm.o : $(mySRCdir)/ATL_bcLaswp_amm.c $(deps) $(sdep)
+	$(SKC) $(sKCFLAGS) -c -o ATL_sbcLaswp_amm.o -DSREAL \
+              $(mySRCdir)/ATL_bcLaswp_amm.c
+
+sumd/duAMMFRC.sum : 
+	$(MAKE) sumd
+	cd $(MMTdir) ; make duamm_getrf
+ATL_dbcAm2rm.o : $(mySRCdir)/ATL_bcAm2rm.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcAm2rm.o -DDREAL \
+              $(mySRCdir)/ATL_bcAm2rm.c
+ATL_dbcL2G_cpy.o : $(mySRCdir)/ATL_bcL2G_cpy.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcL2G_cpy.o -DDREAL \
+              $(mySRCdir)/ATL_bcL2G_cpy.c
+ATL_dbcG2L_cpy.o : $(mySRCdir)/ATL_bcG2L_cpy.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcG2L_cpy.o -DDREAL \
+              $(mySRCdir)/ATL_bcG2L_cpy.c
+ATL_dbcRm2am.o : $(mySRCdir)/ATL_bcRm2am.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcRm2am.o -DDREAL \
+              $(mySRCdir)/ATL_bcRm2am.c
+ATL_dbcAblk2cmat.o : $(mySRCdir)/ATL_bcAblk2cmat.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcAblk2cmat.o -DDREAL \
+              $(mySRCdir)/ATL_bcAblk2cmat.c
+ATL_dbcL2G_blkcpy.o : $(mySRCdir)/ATL_bcL2G_blkcpy.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcL2G_blkcpy.o -DDREAL \
+              $(mySRCdir)/ATL_bcL2G_blkcpy.c
+ATL_dgetrf_bcAmm.o : $(mySRCdir)/ATL_getrf_bcAmm.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dgetrf_bcAmm.o -DDREAL \
+              $(mySRCdir)/ATL_getrf_bcAmm.c
+ATL_dgetrf_bcAmm_info.o : $(mySRCdir)/ATL_getrf_bcAmm_info.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dgetrf_bcAmm_info.o -DDREAL \
+              $(mySRCdir)/ATL_getrf_bcAmm_info.c
+ATL_dbcLaswp_amm.o : $(mySRCdir)/ATL_bcLaswp_amm.c $(deps) $(ddep)
+	$(DKC) $(dKCFLAGS) -c -o ATL_dbcLaswp_amm.o -DDREAL \
+              $(mySRCdir)/ATL_bcLaswp_amm.c
+
+sumd/cuAMMFRC.sum : 
+	$(MAKE) sumd
+	cd $(MMTdir) ; make cuamm_getrf
+ATL_cbcAm2rm.o : $(mySRCdir)/ATL_bcAm2rm.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcAm2rm.o -DSCPLX \
+              $(mySRCdir)/ATL_bcAm2rm.c
+ATL_cbcL2G_cpy.o : $(mySRCdir)/ATL_bcL2G_cpy.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcL2G_cpy.o -DSCPLX \
+              $(mySRCdir)/ATL_bcL2G_cpy.c
+ATL_cbcG2L_cpy.o : $(mySRCdir)/ATL_bcG2L_cpy.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcG2L_cpy.o -DSCPLX \
+              $(mySRCdir)/ATL_bcG2L_cpy.c
+ATL_cbcRm2am.o : $(mySRCdir)/ATL_bcRm2am.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcRm2am.o -DSCPLX \
+              $(mySRCdir)/ATL_bcRm2am.c
+ATL_cbcAblk2cmat.o : $(mySRCdir)/ATL_bcAblk2cmat.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcAblk2cmat.o -DSCPLX \
+              $(mySRCdir)/ATL_bcAblk2cmat.c
+ATL_cbcL2G_blkcpy.o : $(mySRCdir)/ATL_bcL2G_blkcpy.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcL2G_blkcpy.o -DSCPLX \
+              $(mySRCdir)/ATL_bcL2G_blkcpy.c
+ATL_cgetrf_bcAmm.o : $(mySRCdir)/ATL_getrf_bcAmm.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cgetrf_bcAmm.o -DSCPLX \
+              $(mySRCdir)/ATL_getrf_bcAmm.c
+ATL_cgetrf_bcAmm_info.o : $(mySRCdir)/ATL_getrf_bcAmm_info.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cgetrf_bcAmm_info.o -DSCPLX \
+              $(mySRCdir)/ATL_getrf_bcAmm_info.c
+ATL_cbcLaswp_amm.o : $(mySRCdir)/ATL_bcLaswp_amm.c $(deps) $(cdep)
+	$(CKC) $(cKCFLAGS) -c -o ATL_cbcLaswp_amm.o -DSCPLX \
+              $(mySRCdir)/ATL_bcLaswp_amm.c
+
+sumd/zuAMMFRC.sum : 
+	$(MAKE) sumd
+	cd $(MMTdir) ; make zuamm_getrf
+ATL_zbcAm2rm.o : $(mySRCdir)/ATL_bcAm2rm.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcAm2rm.o -DDCPLX \
+              $(mySRCdir)/ATL_bcAm2rm.c
+ATL_zbcL2G_cpy.o : $(mySRCdir)/ATL_bcL2G_cpy.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcL2G_cpy.o -DDCPLX \
+              $(mySRCdir)/ATL_bcL2G_cpy.c
+ATL_zbcG2L_cpy.o : $(mySRCdir)/ATL_bcG2L_cpy.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcG2L_cpy.o -DDCPLX \
+              $(mySRCdir)/ATL_bcG2L_cpy.c
+ATL_zbcRm2am.o : $(mySRCdir)/ATL_bcRm2am.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcRm2am.o -DDCPLX \
+              $(mySRCdir)/ATL_bcRm2am.c
+ATL_zbcAblk2cmat.o : $(mySRCdir)/ATL_bcAblk2cmat.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcAblk2cmat.o -DDCPLX \
+              $(mySRCdir)/ATL_bcAblk2cmat.c
+ATL_zbcL2G_blkcpy.o : $(mySRCdir)/ATL_bcL2G_blkcpy.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcL2G_blkcpy.o -DDCPLX \
+              $(mySRCdir)/ATL_bcL2G_blkcpy.c
+ATL_zgetrf_bcAmm.o : $(mySRCdir)/ATL_getrf_bcAmm.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zgetrf_bcAmm.o -DDCPLX \
+              $(mySRCdir)/ATL_getrf_bcAmm.c
+ATL_zgetrf_bcAmm_info.o : $(mySRCdir)/ATL_getrf_bcAmm_info.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zgetrf_bcAmm_info.o -DDCPLX \
+              $(mySRCdir)/ATL_getrf_bcAmm_info.c
+ATL_zbcLaswp_amm.o : $(mySRCdir)/ATL_bcLaswp_amm.c $(deps) $(zdep)
+	$(ZKC) $(zKCFLAGS) -c -o ATL_zbcLaswp_amm.o -DDCPLX \
+              $(mySRCdir)/ATL_bcLaswp_amm.c
+

@@ -1,0 +1,35 @@
+include Make.inc
+mySRCdir = $(SRCdir)/src/threads/cbc
+all : lib
+lib : ilib
+double    : dlib
+single    : slib
+complex   : clib
+complex16 : zlib
+clean : iclean dclean sclean cclean zclean
+zlib:
+zclean:
+clib:
+cclean:
+dlib:
+dclean:
+slib:
+sclean:
+
+deps = $(INCSdir)/atlas_misc.h
+iobj = ATL_cbc_misc.o ATL_cbc_LU.o ATL_cbc_barrier.o
+iclean:
+	rm -f $(iobj) ilib.grd
+ilib : ilib.grd
+ilib.grd : $(iobj)
+	$(ARCHIVER) $(ARFLAGS) $(ATLASlib) $(iobj)
+	$(RANLIB) $(ATLASlib)
+	touch ilib.grd
+
+ATL_cbc_barrier.o : $(mySRCdir)/ATL_cbc_barrier.c $(deps)
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cbc_barrier.c
+ATL_cbc_LU.o : $(mySRCdir)/ATL_cbc_LU.c $(deps)
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cbc_LU.c
+ATL_cbc_misc.o : $(mySRCdir)/ATL_cbc_misc.c $(deps)
+	$(KC) $(KCFLAGS) -o $@ -c $(mySRCdir)/ATL_cbc_misc.c
+
