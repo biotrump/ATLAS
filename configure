@@ -591,7 +591,11 @@ echo flapackgit=$flapackgit
 #	  git clone --depth=1 $flapackgit reference
 	  git clone $flapackgit reference
 	  cd reference
-	  git checkout -b $flapackbranch $flapackrbranch
+#	  echo flapackbranch=$flapackbranch
+#	  echo flapackrbranch=$flapackrbranch
+	  if [ -n "$flapackbranch" -a -n "$flapackrbranch" ]; then
+		git checkout -b $flapackbranch $flapackrbranch
+	  fi
 	  git branch -a
 #	  rm -rf reference/.git
 	  ls

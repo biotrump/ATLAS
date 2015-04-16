@@ -1,5 +1,5 @@
 #!/bin/bash
-ATLAS_OUT=${ATLAS_OUT:-`pwd`/build}
+ATLAS_OUT=${ATLAS_OUT:-`pwd`/build_x86}
 ATLAS_SRC=${ATLAS_SRC:-`pwd`}
 ATLAS_BRANCH=${ATLAS_BRANCH:-Rev1531}
 
@@ -102,8 +102,13 @@ case $1 in
 	#-b 64 : which says to perform a 64 bit compile
 	#echo $ATLAS_SRC
 
+#git clone lapack from local folder
 	${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
-	--with-netlib-lapack-git=https://github.com/biotrump/lapack.git,${ATLAS_BRANCH}:remotes/origin/${ATLAS_BRANCH}
+	--with-netlib-lapack-git=${ATLAS_SRC}/LAPACK,:
+
+#git clone from remote repo
+#	--with-netlib-lapack-git=/home/thomas/build/bcv/dsp/LAPACK,${ATLAS_BRANCH}:remotes/origin/${ATLAS_BRANCH}
+#	--with-netlib-lapack-git=https://github.com/biotrump/lapack.git,${ATLAS_BRANCH}:remotes/origin/${ATLAS_BRANCH}
 
 #	${ATLAS_SRC}/configure -Fa alg -fPIC --nof77 ${DMAX_SPEED} -b 64 \
 #	--with-netlib-lapack-git=https://github.com/biotrump/lapack.git,${ATLAS_BRANCH}:remotes/origin/${ATLAS_BRANCH}
