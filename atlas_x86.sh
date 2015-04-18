@@ -104,7 +104,8 @@ case $1 in
 
 #git clone lapack from local folder
 	${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
-	--with-netlib-lapack-git=${ATLAS_SRC}/LAPACK,:
+	--with-netlib-lapack=${ATLAS_SRC}/LAPACK/liblapack.a
+#	--with-netlib-lapack-git=${ATLAS_SRC}/LAPACK,:
 
 #git clone from remote repo
 #	--with-netlib-lapack-git=/home/thomas/build/bcv/dsp/LAPACK,${ATLAS_BRANCH}:remotes/origin/${ATLAS_BRANCH}
@@ -140,10 +141,14 @@ case $1 in
 	;;
 
 	"build" )
-	pushd ${ATLAS_OUT}
-	pushd ${ATLAS_OUT}/src/lapack/reference
-	git pull
+#	pushd ${ATLAS_OUT}
+#	pushd ${ATLAS_OUT}/src/lapack/reference
+#	git pull
+#	popd
+	pushd LAPACK
+	./build_x86.sh
 	popd
+	pushd ${ATLAS_OUT}
 	#   make              ! tune and compile library
 	#   make check        ! perform sanity tests
 	#   make ptcheck      ! checks of threaded code for multiprocessor systems
@@ -170,11 +175,12 @@ case $1 in
 	#    kGER      166.9   155.7    320.9   300.2     78.5    75.3    160.5   151.8
 	#make -j ${CORE_COUNT}
 	make
-	pushd ${ATLAS_OUT}/src/lapack/reference/
-	./build_x86.sh
-	popd
+	#pushd ${ATLAS_OUT}/src/lapack/reference/
+	#./build_x86.sh
+	#popd
 	#we need lapacke to export c api
-	ln -s ${ATLAS_OUT}/src/lapack/reference/liblapacke.a ${ATLAS_OUT}/lib
+	#ln -s ${ATLAS_OUT}/src/lapack/reference/liblapacke.a ${ATLAS_OUT}/lib
+	ln -s ${ATLAS_SRC}/LAPACK/liblapacke.a ${ATLAS_OUT}/lib
 	make check
 	make time
 	popd
