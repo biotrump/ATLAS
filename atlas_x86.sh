@@ -181,6 +181,7 @@ case $1 in
 	#we need lapacke to export c api
 	#ln -s ${ATLAS_OUT}/src/lapack/reference/liblapacke.a ${ATLAS_OUT}/lib
 	ln -s ${ATLAS_SRC}/LAPACK/liblapacke.a ${ATLAS_OUT}/lib
+	#ln -s ${ATLAS_SRC}/LAPACK/liblapack.a ${ATLAS_OUT}/lib
 	make check
 	make time
 	popd
