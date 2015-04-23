@@ -49,15 +49,18 @@ int GetIntProbe(int verb, char *targarg, char *prb, char *id, int N)
    assert(ln);
    sprintf(ln, "make IRun_%s args=\"-v %d %s\" | fgrep '%s='",
            prb, verb, targarg, id);
+   printf("ln=%s\n",ln);
    if (verb > 1)
       printf("cmnd=%s\n", ln);
    res = atlsys_1L(NULL, ln, verb, 0);
    free(ln);
+   printf("res=%s\n", res);
    if (res)
    {
       iret = GetLastInt(res);
       free(res);
    }
+  printf("iret=%d\n", iret);
    if (N)
    {
       if (iret > N || iret < 1)
@@ -716,12 +719,13 @@ int ProbeCPUThrottle(int verb, char *targarg, enum OSTYPE OS, enum ASMDIA asmb)
    i = strlen(targarg) + 22 + 12;
    ln = malloc(i*sizeof(char));
    assert(ln);
+   printf("targarg=%s\n", targarg);
    sprintf(ln, "%s -O %d -s %d -t", targarg, OS, asmb);
    iret = GetIntProbe(verb, ln, "arch", "CPU THROTTLE", 0);
    free(ln);
    if (iret) printf("CPU Throttling apparently enabled!\n");
    else printf("Cannot detect CPU throttling.\n");
-   return(iret);
+   return(iret=0);
 }
 
 char *NewAppendedString_SFLAG(char *old, char *flag, char *str)
@@ -1034,7 +1038,7 @@ void GetFlags(int nargs,                /* nargs as passed into main */
    *verb = 0;
    *NoCygwin = 0;
    *NoF77 = 0;
-   *ThrChk = 1;
+   *ThrChk = 0;
    *nthreads = -1;
    *tids = NULL;
    *omp = *AntThr = 0;

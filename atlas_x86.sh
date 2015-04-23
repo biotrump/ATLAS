@@ -128,7 +128,12 @@ case $1 in
 	"Linux")
 		for((i=0;i<CORE_COUNT;i=i+1))
 		do
-			sudo cpufreq-set -c $i -g ondemand
+		#ubuntu14.04 uses intel_pstate, so it has two states only : powersave and performance
+		  if [[ `cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_driver` =~ "intel_pstate" ]];then
+		    sudo cpufreq-set -c $i -g powersave
+		  else
+		    sudo cpufreq-set -c $i -g ondemand
+		  fi
 		done
 		;;
 	CYGWIN*)
