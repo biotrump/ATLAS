@@ -23,6 +23,13 @@ fi
 #fi
 #if [[ "$#" -eq 0 || "$#" -eq 1 && "$1" == "-j"* ]]; then
 
+if [ -d LAPACK ]; then
+pushd LAPACK
+echo building ATLAS/LAPACK before atlas config
+./build_x86.sh
+popd
+fi
+
 case `uname` in
 "Darwin")
 	# Should also work on other BSDs
@@ -150,9 +157,6 @@ case $1 in
 #	pushd ${ATLAS_OUT}/src/lapack/reference
 #	git pull
 #	popd
-	pushd LAPACK
-	./build_x86.sh
-	popd
 	pushd ${ATLAS_OUT}
 	#   make              ! tune and compile library
 	#   make check        ! perform sanity tests
