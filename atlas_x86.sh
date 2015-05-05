@@ -1,11 +1,15 @@
 #!/bin/bash
-ATLAS_OUT=${ATLAS_OUT:-`pwd`/build_x86}
-ATLAS_SRC=${ATLAS_SRC:-`pwd`}
-ATLAS_BRANCH=${ATLAS_BRANCH:-Rev1531}
 
-export ATLAS_OUT
-export ATLAS_SRC
-export ATLAS_BRANCH
+if [ -z "$ATLAS_SRC" ]; then
+	ATLAS_OUT=${ATLAS_OUT:-`pwd`/build_x86}
+	ATLAS_SRC=${ATLAS_SRC:-`pwd`}
+	ATLAS_BRANCH=${ATLAS_BRANCH:-Rev1531}
+
+	export ATLAS_OUT
+	export ATLAS_SRC
+	export ATLAS_BRANCH
+fi
+
 echo $ATLAS_OUT
 echo $ATLAS_SRC
 #exit
@@ -15,7 +19,7 @@ echo $ATLAS_SRC
 #fi
 if [ ! -d ${ATLAS_OUT} ]; then
   echo "${ATLAS_OUT} does not exist. mkdir"
-  mkdir ${ATLAS_OUT}
+  mkdir -p ${ATLAS_OUT}
 fi
 #if [ ! -d ${ATLAS_OUT} ]; then
 #  echo "${ATLAS_OUT} does not exis. mkdir"
@@ -24,12 +28,15 @@ fi
 #if [[ "$#" -eq 0 || "$#" -eq 1 && "$1" == "-j"* ]]; then
 
 if [ -d LAPACK ]; then
-pushd LAPACK
-echo building ATLAS/LAPACK before atlas config
-./build_x86.sh
-popd
+	pushd LAPACK
+	echo building ATLAS/LAPACK before atlas config
+	./build_x86.sh
+	mkdir -p ${ATLAS_OUT}/lib
+	ln -s `pwd`/liblapack.a ${ATLAS_OUT}/lib/liblapack.a
+	popd
 fi
 
+if [ -z "$MAKE_FLAGS" ]; then
 case `uname` in
 "Darwin")
 	# Should also work on other BSDs
@@ -45,6 +52,8 @@ CYGWIN*)
 	echo Unsupported platform: `uname`
 	exit -1
 esac
+export MAKE_FLAGS=-j${CORE_COUNT}
+fi
 
 #config or build
 case $1 in
@@ -109,9 +118,14 @@ case $1 in
 	#-b 64 : which says to perform a 64 bit compile
 	#echo $ATLAS_SRC
 
-#git clone lapack from local folder
-	${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
-	--with-netlib-lapack=${ATLAS_SRC}/LAPACK/liblapack.a
+	#git clone lapack from local folder
+	if [ -n "$ATLAS_OUT" ];then
+		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
+		--with-netlib-lapack=${ATLAS_OUT}/liblapack.a
+	else
+		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
+		--with-netlib-lapack=${ATLAS_SRC}/LAPACK/liblapack.a
+	fi
 #	--with-netlib-lapack-git=${ATLAS_SRC}/LAPACK,:
 
 #git clone from remote repo
