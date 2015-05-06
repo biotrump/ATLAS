@@ -1,5 +1,4 @@
 #!/bin/bash
-
 if [ -z "$ATLAS_SRC" ]; then
 	ATLAS_OUT=${ATLAS_OUT:-`pwd`/build_x86}
 	ATLAS_SRC=${ATLAS_SRC:-`pwd`}
@@ -21,12 +20,13 @@ if [ ! -d ${ATLAS_OUT} ]; then
   echo "${ATLAS_OUT} does not exist. mkdir"
   mkdir -p ${ATLAS_OUT}
 fi
+
 #if [ ! -d ${ATLAS_OUT} ]; then
 #  echo "${ATLAS_OUT} does not exis. mkdir"
 #  mkdir ${ATLAS_OUT}
 #fi
 #if [[ "$#" -eq 0 || "$#" -eq 1 && "$1" == "-j"* ]]; then
-
+function build_lapack(){
 if [ -d LAPACK ]; then
 	pushd LAPACK
 	echo building ATLAS/LAPACK before atlas config
@@ -35,8 +35,8 @@ if [ -d LAPACK ]; then
 	ln -s `pwd`/liblapack.a ${ATLAS_OUT}/lib/liblapack.a
 	popd
 fi
+}
 
-if [ -z "$MAKE_FLAGS" ]; then
 case `uname` in
 "Darwin")
 	# Should also work on other BSDs
@@ -52,9 +52,10 @@ CYGWIN*)
 	echo Unsupported platform: `uname`
 	exit -1
 esac
-export MAKE_FLAGS=-j${CORE_COUNT}
-fi
 
+#if [ -z "$MAKE_FLAGS" ]; then
+#	export MAKE_FLAGS=-j${CORE_COUNT}
+#fi
 #config or build
 case $1 in
 	"config" )
@@ -67,23 +68,27 @@ case $1 in
 	#http://www.vesperix.com/arm/atlas-arm/source/
 	case `uname` in
 	"Linux")
-		if [[ "$#" -eq 1 && `uname -m` =~ "x86" ]]; then
+#		if [[ "$#" -eq 1 && `uname -m` =~ "x86" ]]; then
+		if [[ `uname -m` =~ "x86" ]]; then
 		#default build is x86: convert KHz to MHz
 			MAX_FREQ=`cat /sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq | awk '{printf "%d\n", $1/1000}'`
 			DMAX_SPEED="-D c -DPentiumCPS=${MAX_FREQ}"
 #			MACHINE_FLAG="-Fa alg -fPIC --nof77 -b 64 ${DMAX_SPEED}"
 			MACHINE_FLAG="-Fa alg -fPIC -b 64 ${DMAX_SPEED}"
 			echo MACHINE_FLAG=$MACHINE_FLAG
+			echo MAX_FREQ=$MAX_FREQ
+			echo DMAX_SPEED=$DMAX_SPEED
+			echo CORE_COUNT=${CORE_COUNT}
 			#disabling cpu freq to top speed
 			for((i=0;i<${CORE_COUNT};i=i+1))
 			do
 				sudo cpufreq-set -c $i -g performance
 			done
-		else
-			if [[ "$#" -eq 2 && "$2" =~ "arm" ]]; then
-#			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC --nof77"
-			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC"
-			fi
+#		else
+#			if [[ "$#" -eq 2 && "$2" =~ "arm" ]]; then
+##			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC --nof77"
+#			MACHINE_FLAG="-Si archdef 0 -Fa al -mtune=native -fPIC"
+#			fi
 		fi
 		;;
 
@@ -121,7 +126,7 @@ case $1 in
 	#git clone lapack from local folder
 	if [ -n "$ATLAS_OUT" ];then
 		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
-		--with-netlib-lapack=${ATLAS_OUT}/liblapack.a
+		--with-netlib-lapack=${ATLAS_OUT}/lib/liblapack.a
 	else
 		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
 		--with-netlib-lapack=${ATLAS_SRC}/LAPACK/liblapack.a
@@ -211,6 +216,6 @@ case $1 in
 	;;
 
 	* )
-	echo "atlas.sh config/build"
+	echo "$0 config/build"
 	;;
 esac
