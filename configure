@@ -605,8 +605,28 @@ echo flapackgit=$flapackgit
 cd $blddir
 if test $flapack != "ATL_NoOverride"
 then
-   cp -f $flapack lib/liblapack.a
-   ar d lib/liblapack.a lsame.o xerbla.o csrot.o zdrot.o
+#   cp -f $flapack lib/liblapack.a
+#TODO TODO : ar d will delete modules from liblapack.a
+#The link will fail, beacuse some moudles are deleted!
+#   ar d lib/liblapack.a lsame.o xerbla.o csrot.o zdrot.o
+#https://github.com/cournape/atlas-nosse/blob/master/doc/LibReadme.txt
+	if [ -d ${ATLAS_OUT}/lib/tmp ];then
+		rm -rf ${ATLAS_OUT}/lib/tmp
+	else
+		mkdir -p ${ATLAS_OUT}/lib/tmp
+	fi
+  cd ${ATLAS_OUT}/lib/tmp
+  #extract ATLAS's liblapack.a to *.o
+  ar x ../liblapack.a
+  #cp LAPACK/liblapack.a
+  cp -f ../liblapack.a ../liblapack.atlas.a
+  cp -f $flapack ../liblapack.a
+  #delete modules from LAPACK/liblapack.a
+  ar d ../liblapack.a lsame.o xerbla.o csrot.o zdrot.o
+  #replace LAPACK/liblapack.a with ATLAS's *.o
+  ar r ../liblapack.a *.o
+  cd ${ATLAS_SRC}
+
 fi
 #
 # Provide INSTALL directories to lib/Makefile

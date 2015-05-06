@@ -32,7 +32,7 @@ if [ -d LAPACK ]; then
 	echo building ATLAS/LAPACK before atlas config
 	./build_x86.sh
 	mkdir -p ${ATLAS_OUT}/lib
-	ln -s `pwd`/liblapack.a ${ATLAS_OUT}/lib/liblapack.a
+#	ln -s `pwd`/liblapack.a ${ATLAS_OUT}/lib/liblapack.a
 	popd
 fi
 }
@@ -59,7 +59,7 @@ esac
 #config or build
 case $1 in
 	"config" )
-
+	build_lapack
 	pushd ${ATLAS_OUT}
 	#x86 target : speed up to top speed,
 	#so ATALAS can tune it for x86.
@@ -124,13 +124,13 @@ case $1 in
 	#echo $ATLAS_SRC
 
 	#git clone lapack from local folder
-	if [ -n "$ATLAS_OUT" ];then
-		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
-		--with-netlib-lapack=${ATLAS_OUT}/lib/liblapack.a
-	else
-		${ATLAS_SRC}/configure ${MACHINE_FLAG}  \
+#	if [ -n "$ATLAS_OUT" ];then
+#		${ATLAS_SRC}/configure ${MACHINE_FLAG} \
+#		--with-netlib-lapack=${ATLAS_OUT}/lib/liblapack.a
+#	else
+		${ATLAS_SRC}/configure ${MACHINE_FLAG} \
 		--with-netlib-lapack=${ATLAS_SRC}/LAPACK/liblapack.a
-	fi
+#	fi
 #	--with-netlib-lapack-git=${ATLAS_SRC}/LAPACK,:
 
 #git clone from remote repo
@@ -209,7 +209,7 @@ case $1 in
 	#we need lapacke to export c api
 	#ln -s ${ATLAS_OUT}/src/lapack/reference/liblapacke.a ${ATLAS_OUT}/lib
 	ln -s ${ATLAS_SRC}/LAPACK/liblapacke.a ${ATLAS_OUT}/lib
-	#ln -s ${ATLAS_SRC}/LAPACK/liblapack.a ${ATLAS_OUT}/lib
+#	ln -s ${ATLAS_SRC}/LAPACK/liblapack.a ${ATLAS_OUT}/lib
 	make check
 	make time
 	popd
